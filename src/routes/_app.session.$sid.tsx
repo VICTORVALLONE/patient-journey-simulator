@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useChildMatches, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Clock, Dumbbell, PlayCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePatientStore, todaySessionInfo } from "@/store/patient";
@@ -18,6 +18,8 @@ const phaseLabel: Record<string, string> = {
 
 function SessionOverview() {
   const navigate = useNavigate();
+  const childMatches = useChildMatches();
+  if (childMatches.length > 0) return <Outlet />;
   const progress = usePatientStore((s) => s.progress);
   const prescription = usePatientStore((s) => s.prescription);
   const today = todaySessionInfo(progress, prescription.protocol_id);
