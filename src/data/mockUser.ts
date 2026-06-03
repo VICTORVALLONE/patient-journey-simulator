@@ -1,5 +1,7 @@
 import type { BadgeId, PainEntry, Treatment, User, WeekFrequency } from "@/lib/types";
+import type { Session } from "@/lib/types";
 import { getProtocol, totalSessionsForProtocol } from "@/data/protocols";
+import avatarAlexandre from "@/assets/avatar-alexandre.jpg";
 
 export const MOCK_USER: User = {
   id: "user_alexandre",
@@ -11,6 +13,7 @@ export const MOCK_USER: User = {
   height_cm: 182,
   recovery_goal: "sports",
   created_at: "2024-10-15T10:00:00Z",
+  avatar_url: avatarAlexandre,
 };
 
 const EMPTY_WEEKLY: WeekFrequency[] = [

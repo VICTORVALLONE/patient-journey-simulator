@@ -14,6 +14,7 @@ export interface User {
   height_cm: number;
   recovery_goal: RecoveryGoal;
   created_at: string;
+  avatar_url?: string;
 }
 
 export interface Exercise {
