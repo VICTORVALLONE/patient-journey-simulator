@@ -1,42 +1,58 @@
-## Plano de ajustes
+## Objetivo
+Garantir 1 sessão por dia no histórico, substituir indicadores genéricos por métricas mais diretas de progresso clínico, e adicionar uma linha do tempo do tratamento mostrando o ponto atual do paciente.
 
-### 1. Botão "Reiniciar conversa" no AI Doctor
-- Em `src/components/support/AiDoctorChat.tsx`, adicionar um botão visível no header (ícone `RotateCcw` + label "Reiniciar") que chama `setMessages([])` e limpa `localStorage[fisiocare-aidoctor-v1]`.
-- Mostrar confirmação leve via `toast` (sonner) e reaplicar sugestões iniciais.
+## 1. Histórico: 1 sessão por dia
 
-### 2. Popup do AI Doctor durante exercícios
-- Criar `src/components/support/AiDoctorSheet.tsx`: um `Sheet`/`Dialog` (shadcn) que envolve `<AiDoctorChat />` com altura ~85vh.
-- Em `src/routes/_app.session.$sid.exercise.$eid.tsx`, adicionar um FAB flutuante (canto inferior direito, acima do rodapé fixo, ícone de balão/estetoscópio com avatar do AI Doctor) que abre o sheet.
-- O chat reutiliza a mesma chave de `localStorage`, mantendo a continuidade da conversa.
-- O popup só aparece no estágio `exercise` (não em `checkin`/`celebrate`).
+**`src/data/mockUser.ts` — `MOCK_TREATMENT_PATELLO_DONE`**
+- Substituir a interpolação `startMs..endMs` por geração de datas em dias distintos respeitando `sessions_per_week` da fase (ex.: seg/qua/sex). Algoritmo: para cada fase, percorrer semanas e distribuir as N sessões da semana em dias fixos da semana sem repetir data.
+- `weekly_frequency`: passar a representar a **última semana** com valores 0 ou 1 por dia (não 3), refletindo a regra "1/dia".
 
-### 3. Corrigir jornada das fases da sessão (warmup → ativo → pico → descanso)
-- Causa: os exercícios em `src/data/protocols.ts` aparecem em ordem livre (ex.: `active`, `active`, `warmup`, `warmup`), então o `SessionStepper` salta de "Ativo" para "Aquecimento" conforme avança.
-- Em `src/store/patient.ts` (`todaySessionInfoOf` ou novo helper `orderedExercisesOf(phase)`), ordenar os exercícios da fase ativa por `session_phase` na ordem fixa `warmup → active → peak → rest` (estável dentro de cada fase).
-- Aplicar essa ordenação ao construir `today.phase.exercises` consumido por `_app.session.$sid.tsx` e `_app.session.$sid.exercise.$eid.tsx` para que `SessionStepper` avance corretamente.
-- O `SessionStepper` continua mostrando a fase do exercício atual; com a nova ordenação a barra preenche progressivamente.
+**`MOCK_TREATMENT_LCA_ACTIVE`**
+- Popular `sessions` com 24 sessões em dias distintos terminando ontem (3x/semana), para o histórico aparecer também no tratamento ativo.
+- `weekly_frequency`: 0/1 por dia da semana atual.
 
-### 4. Foto do Alexandre no perfil
-- Causa provável: o `zustand/persist` guardou o `user` antes do campo `avatar_url` existir; o snapshot do localStorage sobrescreve o `MOCK_USER` atualizado.
-- Em `src/store/patient.ts`, no `persist`, adicionar `version: 2` e `migrate` que injeta `avatar_url` no usuário existente se for o `MOCK_USER` (mesmo `id`) e estiver vazio.
-- Como complemento de robustez, também mostrar o avatar via fallback do `MOCK_USER` quando o `user.id` coincidir.
+**`src/store/patient.ts` — `completeSession`**
+- Se já existir `session.scheduled_date === todayISO()` no tratamento ativo, **não criar nova sessão** (no-op com retorno seguro). Evita duplicatas durante testes.
+- `weekly_frequency`: marcar `sessions_done = 1` (não incrementar) no dia atual; `sessions_planned` permanece 0 ou 1.
 
-### 5. Jornada de criação de perfil (para testes)
-- Em `src/routes/_app.profile.tsx`, adicionar item na seção de configurações: "Testar criação de perfil" (ícone `UserPlus`).
-- Ao clicar: `logout()` + `navigate({ to: "/onboarding" })` para executar do zero a coleta de dados pessoais (`onboarding.tsx`) seguida de `onboarding.treatment.tsx`.
-- Manter os botões existentes "Resetar para demo" e "Resetar para inicial".
+## 2. Indicadores mais diretos
 
-### 6. Realismo das imagens
-- Regenerar com `imagegen` no modelo `premium` e prompts mais específicos/fotográficos:
-  - `src/assets/avatar-alexandre.jpg`: retrato realista de homem brasileiro ~35 anos, sorriso natural, fundo neutro suave, luz de estúdio, foto profissional.
-  - `src/assets/thumb-joelho.jpg`, `thumb-quadril.jpg`, `thumb-tornozelo.jpg`, `thumb-core.jpg`: still frames realistas de fisioterapia (paciente + fisioterapeuta) focados na região correspondente, sem texto, sem rostos distorcidos, paleta consistente (clínica clara, tons azulados).
-- Validar visualmente cada imagem antes de finalizar.
+**Home (`_app.home.tsx`) — 3 cards:**
+1. **Redução de dor** `((dorInicial − dorAtual) / dorInicial) × 100%` com seta ↓.
+2. **Fase atual** `Fase X de N` com mini-barra.
+3. **Sessões** `concluídas / prescritas`.
+- "Dias seguidos" vira linha secundária, não KPI principal.
 
-### Dependências/arquivos tocados
-- Edita: `AiDoctorChat.tsx`, `_app.session.$sid.exercise.$eid.tsx`, `store/patient.ts`, `_app.profile.tsx`, `data/protocols.ts` (apenas se for necessário desempate de ordem).
-- Cria: `components/support/AiDoctorSheet.tsx`.
-- Regenera assets em `src/assets/`.
+**Progresso (`_app.progress.tsx`) — bloco navy:**
+- Mostrar **Redução de dor**, **Semanas concluídas / total**, **Sessões concluídas / prescritas**.
+- Substituir "% adesão" (que era só completion) por **adesão real** = `sessoes_feitas / sessoes_esperadas_ate_hoje` (com `started_at` + `sessions_per_week`). Cap 100%.
 
-### Observações técnicas
-- O `AiDoctorChat` aceita renderizar dentro de um `Sheet`; como já usa `localStorage`, instâncias paralelas (Support e popup) compartilham histórico via storage, mas mantendo o mesmo `id="ai-doctor"` no `useChat` evita divergência de estado entre abertas/fechadas (recarrega ao montar).
-- Migração do `persist`: bump de `version` invalida apenas o snapshot antigo; usuários no demo voltam a ter avatar.
+**`src/lib/dynamicMessages.ts`**
+- `getEvolutionMessage`: usar redução de dor + fase. Ex.: "Dor reduziu 58% · Fase 2 de 4".
+- `getDynamicMessage`: priorizar redução de dor quando houver ≥2 entradas; streak depois.
+
+## 3. Linha do tempo do tratamento (novo)
+
+**Novo componente:** `src/components/progress/TreatmentTimeline.tsx`
+- Renderiza uma barra horizontal segmentada por **fase** do protocolo (largura proporcional a `duration_weeks × sessions_per_week`).
+- Cada segmento: nome da fase + nº de sessões.
+- Preenchimento: porção concluída de cada fase em cor `primary`; restante em `muted`.
+- Marcador "Você está aqui" (ícone + label) posicionado em `total_sessions_completed / total_sessions_prescribed`.
+- Abaixo: datas-chave: `Início` (started_at), `Hoje`, `Previsão de término` (started_at + total_weeks × 7 dias).
+- Texto resumo: "Semana X de N · Sessão Y de Z".
+- Layout mobile-first; usa tokens semânticos (`bg-primary`, `bg-muted`, `text-foreground`).
+
+**Integração em `_app.progress.tsx`:**
+- Adicionar nova `<section>` "Linha do tempo" logo após o bloco navy de visão geral, antes de "Conquistas".
+- Recebe `treatment` + `protocol` (já buscado via `getProtocol`).
+
+## 4. Arquivos tocados
+- `src/data/mockUser.ts` — geração de sessões (1/dia) + weekly_frequency 0/1; popular LCA com 24 sessões.
+- `src/store/patient.ts` — guarda contra duplicata no dia; weekly_frequency idempotente.
+- `src/lib/dynamicMessages.ts` — novas mensagens baseadas em dor/fase.
+- `src/routes/_app.home.tsx` — novos 3 cards.
+- `src/routes/_app.progress.tsx` — novos KPIs no bloco navy + seção da timeline.
+- **Novo:** `src/components/progress/TreatmentTimeline.tsx`.
+
+## Observação
+Mantém compatibilidade com onboarding novo (treatments começam vazios; fórmulas tratam ausência de dados com fallback "—" e timeline 0%).
