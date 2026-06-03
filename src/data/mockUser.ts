@@ -94,6 +94,47 @@ export const MOCK_TREATMENT_LCA_ACTIVE: Treatment = {
 export const MOCK_TREATMENT_PATELLO_DONE: Treatment = (() => {
   const protocol = getProtocol("proto_patellofemoral");
   const total = totalSessionsForProtocol(protocol);
+  const startMs = new Date("2023-06-01T09:00:00Z").getTime();
+  const endMs = new Date("2023-09-29T19:00:00Z").getTime();
+  const NOTES = [
+    "Senti menos dor ao subir escadas hoje.",
+    "Joelho estalou no início, mas firmou.",
+    "Conseguir manter a postura ficou mais fácil.",
+    "VMO ativando bem, sem dor.",
+    "Caminhei 30 minutos antes — sem incômodo.",
+  ];
+  const sessions: Session[] = [];
+  let absoluteIdx = 0;
+  for (const ph of protocol.phases) {
+    const sessionsInPhase = ph.duration_weeks * ph.sessions_per_week;
+    const exerciseIds = ph.exercises.map((e) => e.id);
+    for (let s = 0; s < sessionsInPhase; s++) {
+      const t = absoluteIdx / Math.max(1, total - 1);
+      const ms = startMs + (endMs - startMs) * t;
+      const date = new Date(ms);
+      // Pain decreases from ~6.5 to ~0.3 over time, with small noise.
+      const basePain = 6.5 * (1 - t);
+      const noise = ((absoluteIdx * 7) % 5) / 10; // 0..0.4
+      const pain = Math.max(0, Math.min(10, Math.round((basePain + noise) * 10) / 10));
+      const diff: 1 | 2 | 3 = t < 0.33 ? 3 : t < 0.7 ? 2 : 1;
+      sessions.push({
+        id: `sess_patello_${absoluteIdx}`,
+        treatment_id: "tr_patello_done",
+        phase_number: ph.phase_number,
+        session_number: s + 1,
+        scheduled_date: date.toISOString().slice(0, 10),
+        completed_at: date.toISOString(),
+        exercises_completed: exerciseIds,
+        pain_level: pain,
+        difficulty_rating: diff,
+        notes: absoluteIdx % 6 === 0 ? NOTES[absoluteIdx % NOTES.length] : undefined,
+        duration_minutes: 22 + ((absoluteIdx * 3) % 14),
+      });
+      absoluteIdx++;
+    }
+  }
+  // Most recent first.
+  sessions.reverse();
   return {
     id: "tr_patello_done",
     user_id: MOCK_USER.id,
@@ -116,9 +157,17 @@ export const MOCK_TREATMENT_PATELLO_DONE: Treatment = (() => {
     longest_streak: 28,
     pain_history: [
       { week: 1, average_pain: 6.4, session_count: 3 },
-      { week: 4, average_pain: 4.2, session_count: 3 },
-      { week: 8, average_pain: 2.1, session_count: 3 },
-      { week: 12, average_pain: 0.6, session_count: 3 },
+      { week: 2, average_pain: 5.9, session_count: 3 },
+      { week: 3, average_pain: 5.2, session_count: 3 },
+      { week: 4, average_pain: 4.6, session_count: 4 },
+      { week: 5, average_pain: 4.0, session_count: 4 },
+      { week: 6, average_pain: 3.4, session_count: 4 },
+      { week: 7, average_pain: 2.8, session_count: 4 },
+      { week: 8, average_pain: 2.1, session_count: 4 },
+      { week: 9, average_pain: 1.6, session_count: 3 },
+      { week: 10, average_pain: 1.2, session_count: 3 },
+      { week: 11, average_pain: 0.8, session_count: 3 },
+      { week: 12, average_pain: 0.4, session_count: 3 },
     ],
     weekly_frequency: [
       { week_label: "Seg", sessions_done: 3, sessions_planned: 3 },
@@ -129,7 +178,7 @@ export const MOCK_TREATMENT_PATELLO_DONE: Treatment = (() => {
       { week_label: "Sáb", sessions_done: 0, sessions_planned: 0 },
       { week_label: "Dom", sessions_done: 0, sessions_planned: 0 },
     ],
-    sessions: [],
+    sessions,
   };
 })();
 
