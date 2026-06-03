@@ -14,6 +14,7 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OnboardingTreatmentRouteImport } from './routes/onboarding.treatment'
+import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AppTreatmentsRouteImport } from './routes/_app.treatments'
 import { Route as AppSupportRouteImport } from './routes/_app.support'
 import { Route as AppProgressRouteImport } from './routes/_app.progress'
@@ -47,6 +48,11 @@ const OnboardingTreatmentRoute = OnboardingTreatmentRouteImport.update({
   id: '/treatment',
   path: '/treatment',
   getParentRoute: () => OnboardingRoute,
+} as any)
+const ApiChatRoute = ApiChatRouteImport.update({
+  id: '/api/chat',
+  path: '/api/chat',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AppTreatmentsRoute = AppTreatmentsRouteImport.update({
   id: '/treatments',
@@ -105,6 +111,7 @@ export interface FileRoutesByFullPath {
   '/progress': typeof AppProgressRoute
   '/support': typeof AppSupportRoute
   '/treatments': typeof AppTreatmentsRouteWithChildren
+  '/api/chat': typeof ApiChatRoute
   '/onboarding/treatment': typeof OnboardingTreatmentRoute
   '/session/$sid': typeof AppSessionSidRouteWithChildren
   '/treatments/$tid': typeof AppTreatmentsTidRoute
@@ -120,6 +127,7 @@ export interface FileRoutesByTo {
   '/progress': typeof AppProgressRoute
   '/support': typeof AppSupportRoute
   '/treatments': typeof AppTreatmentsRouteWithChildren
+  '/api/chat': typeof ApiChatRoute
   '/onboarding/treatment': typeof OnboardingTreatmentRoute
   '/session/$sid': typeof AppSessionSidRouteWithChildren
   '/treatments/$tid': typeof AppTreatmentsTidRoute
@@ -137,6 +145,7 @@ export interface FileRoutesById {
   '/_app/progress': typeof AppProgressRoute
   '/_app/support': typeof AppSupportRoute
   '/_app/treatments': typeof AppTreatmentsRouteWithChildren
+  '/api/chat': typeof ApiChatRoute
   '/onboarding/treatment': typeof OnboardingTreatmentRoute
   '/_app/session/$sid': typeof AppSessionSidRouteWithChildren
   '/_app/treatments/$tid': typeof AppTreatmentsTidRoute
@@ -154,6 +163,7 @@ export interface FileRouteTypes {
     | '/progress'
     | '/support'
     | '/treatments'
+    | '/api/chat'
     | '/onboarding/treatment'
     | '/session/$sid'
     | '/treatments/$tid'
@@ -169,6 +179,7 @@ export interface FileRouteTypes {
     | '/progress'
     | '/support'
     | '/treatments'
+    | '/api/chat'
     | '/onboarding/treatment'
     | '/session/$sid'
     | '/treatments/$tid'
@@ -185,6 +196,7 @@ export interface FileRouteTypes {
     | '/_app/progress'
     | '/_app/support'
     | '/_app/treatments'
+    | '/api/chat'
     | '/onboarding/treatment'
     | '/_app/session/$sid'
     | '/_app/treatments/$tid'
@@ -196,6 +208,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
   OnboardingRoute: typeof OnboardingRouteWithChildren
   WelcomeRoute: typeof WelcomeRoute
+  ApiChatRoute: typeof ApiChatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -234,6 +247,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/onboarding/treatment'
       preLoaderRoute: typeof OnboardingTreatmentRouteImport
       parentRoute: typeof OnboardingRoute
+    }
+    '/api/chat': {
+      id: '/api/chat'
+      path: '/api/chat'
+      fullPath: '/api/chat'
+      preLoaderRoute: typeof ApiChatRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_app/treatments': {
       id: '/_app/treatments'
@@ -364,6 +384,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
   OnboardingRoute: OnboardingRouteWithChildren,
   WelcomeRoute: WelcomeRoute,
+  ApiChatRoute: ApiChatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

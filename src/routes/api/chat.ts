@@ -71,7 +71,7 @@ export const Route = createFileRoute("/api/chat")({
         const result = streamText({
           model,
           system: BASE_SYSTEM + contextBlock(body.treatmentContext ?? null),
-          messages: convertToModelMessages(messages),
+          messages: await convertToModelMessages(messages),
         });
 
         return result.toUIMessageStreamResponse({ originalMessages: messages });
