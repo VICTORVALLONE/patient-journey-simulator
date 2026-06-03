@@ -1,26 +1,67 @@
 import type { Treatment } from "@/lib/types";
+import { getProtocol, totalSessionsForProtocol } from "@/data/protocols";
+
+/** Redução percentual da dor entre primeira e última semana registrada.
+ * Retorna null quando não há dados suficientes. */
+export function painReductionPct(treatment: Treatment): number | null {
+  const h = treatment.pain_history;
+  if (h.length < 2) return null;
+  const first = h[0]?.average_pain ?? 0;
+  const last = h[h.length - 1]?.average_pain ?? 0;
+  if (first <= 0) return null;
+  return Math.max(0, Math.round(((first - last) / first) * 100));
+}
+
+/** Adesão real = sessões feitas / sessões esperadas até hoje, baseado em
+ * started_at e sessions_per_week do protocolo. Cap em 100. */
+export function realAdherencePct(treatment: Treatment): number {
+  const start = new Date(treatment.started_at);
+  if (Number.isNaN(start.getTime())) return treatment.adherence_rate;
+  const today = new Date();
+  const days = Math.max(1, Math.floor((today.getTime() - start.getTime()) / 86400000) + 1);
+  const protocol = getProtocol(treatment.protocol_id);
+  const spw = protocol.sessions_per_week || 3;
+  const totalPrescribed = totalSessionsForProtocol(protocol);
+  const expected = Math.min(totalPrescribed, Math.ceil((days / 7) * spw));
+  if (expected <= 0) return 0;
+  return Math.min(100, Math.round((treatment.total_sessions_completed / expected) * 100));
+}
+
+/** Semanas concluídas (aprox) com base em sessões feitas e spw. */
+export function weeksProgress(treatment: Treatment): { done: number; total: number } {
+  const protocol = getProtocol(treatment.protocol_id);
+  const spw = protocol.sessions_per_week || 3;
+  const done = Math.min(
+    protocol.total_weeks,
+    Math.round(treatment.total_sessions_completed / spw),
+  );
+  return { done, total: protocol.total_weeks };
+}
 
 export function getDynamicMessage(treatment: Treatment): string {
-  const painHistory = treatment.pain_history;
-  const latestPain = painHistory[painHistory.length - 1]?.average_pain ?? 10;
-  const firstPain = painHistory[0]?.average_pain ?? 10;
-  const painReduction = firstPain > 0 ? Math.round(((firstPain - latestPain) / firstPain) * 100) : 0;
+  const reduction = painReductionPct(treatment);
   const sessionsLeft = Math.max(
     0,
     treatment.total_sessions_prescribed - treatment.total_sessions_completed,
   );
-
-  if (treatment.current_streak >= 21) return `🔥 ${treatment.current_streak} dias de sequência. Você está construindo algo real.`;
-  if (treatment.current_streak >= 7) return `🔥 ${treatment.current_streak} dias seguidos. Hábito em formação.`;
-  if (painReduction >= 30) return `📉 Sua dor reduziu ${painReduction}% desde o início. Está funcionando.`;
-  if (treatment.adherence_rate >= 80) return `Você está a ${sessionsLeft} sessões de voltar à sua rotina.`;
+  if (reduction !== null && reduction >= 20) {
+    return `📉 Sua dor reduziu ${reduction}% desde o início. Está funcionando.`;
+  }
+  if (treatment.current_streak >= 7) {
+    return `🔥 ${treatment.current_streak} dias seguidos. Hábito em formação.`;
+  }
+  if (sessionsLeft > 0 && treatment.total_sessions_completed > 0) {
+    return `Faltam ${sessionsLeft} sessões para concluir o protocolo.`;
+  }
   return `Cada sessão conta. Continue.`;
 }
 
 export function getEvolutionMessage(treatment: Treatment): string {
-  const pct = Math.round(treatment.adherence_rate);
-  const remaining = Math.max(0, 100 - pct);
-  return `Você está ${remaining}% mais perto da recuperação total.`;
+  const reduction = painReductionPct(treatment);
+  const protocol = getProtocol(treatment.protocol_id);
+  const phaseInfo = `Fase ${treatment.current_phase} de ${protocol.phases.length}`;
+  if (reduction !== null) return `Dor reduziu ${reduction}% · ${phaseInfo}`;
+  return phaseInfo;
 }
 
 export function greeting(name: string): string {
