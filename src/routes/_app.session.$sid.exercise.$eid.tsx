@@ -341,9 +341,9 @@ function CelebrationScreen({
             Recuperação completa em {protocol.total_weeks} semanas.
           </p>
           <div className="mt-6 w-full rounded-2xl border border-border bg-card p-4 text-left text-sm">
-            <div className="flex justify-between"><span className="text-muted-foreground">Sessões</span><span className="font-semibold">{progress.total_sessions_completed} / {progress.total_sessions_prescribed}</span></div>
-            <div className="mt-2 flex justify-between"><span className="text-muted-foreground">Taxa de adesão</span><span className="font-semibold">{progress.adherence_rate}%</span></div>
-            <div className="mt-2 flex justify-between"><span className="text-muted-foreground">Maior sequência</span><span className="font-semibold">{progress.longest_streak} dias</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Sessões</span><span className="font-semibold">{treatment?.total_sessions_completed} / {treatment?.total_sessions_prescribed}</span></div>
+            <div className="mt-2 flex justify-between"><span className="text-muted-foreground">Taxa de adesão</span><span className="font-semibold">{treatment?.adherence_rate}%</span></div>
+            <div className="mt-2 flex justify-between"><span className="text-muted-foreground">Maior sequência</span><span className="font-semibold">{treatment?.longest_streak} dias</span></div>
           </div>
         </>
       ) : completedPhase ? (
@@ -374,7 +374,7 @@ function CelebrationScreen({
           </div>
           <h1 className="text-3xl font-bold text-foreground">Sessão concluída! 🎉</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            🔥 {progress.current_streak} dias seguidos
+            🔥 {treatment?.current_streak ?? 0} dias seguidos
           </p>
         </>
       )}
