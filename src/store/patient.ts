@@ -13,7 +13,9 @@ import type {
   AffectedSide,
   BadgeId,
   InjuryType,
+  ExerciseTemplate,
   ProtocolPhase,
+  SessionPhase,
   RecoveryGoal,
   Session,
   Treatment,
@@ -352,6 +354,18 @@ export const usePatientStore = create<PatientState>()(
     }),
     {
       name: "fisiocare-patient-v2",
+      version: 3,
+      migrate: (persisted: unknown, version) => {
+        if (!persisted || typeof persisted !== "object") return persisted as PatientState;
+        const state = persisted as Partial<PatientState>;
+        if (version < 3) {
+          // v3: inject avatar_url for the demo mock user if missing.
+          if (state.user && state.user.id === MOCK_USER.id && !state.user.avatar_url) {
+            state.user = { ...state.user, avatar_url: MOCK_USER.avatar_url };
+          }
+        }
+        return state as PatientState;
+      },
       storage: createJSONStorage(() => {
         if (typeof window === "undefined") {
           return {
