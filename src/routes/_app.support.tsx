@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, ClientOnly } from "@tanstack/react-router";
 import { ChevronDown, MessageCircle, Phone, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -60,7 +60,9 @@ function SupportPage() {
       </header>
 
       <section className="mt-5">
-        <AiDoctorChat />
+        <ClientOnly fallback={<div className="h-[70vh] min-h-[460px] rounded-2xl border border-border bg-card" />}>
+          <AiDoctorChat />
+        </ClientOnly>
       </section>
 
       <section className="mt-6">
