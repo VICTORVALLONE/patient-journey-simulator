@@ -22,6 +22,8 @@ const GOAL_OPTIONS: { value: RecoveryGoal; label: string; desc: string; icon: Re
   { value: "work", label: "Retornar ao trabalho", desc: "Recuperar capacidade profissional", icon: <Briefcase className="h-6 w-6" /> },
 ];
 
+const EMPTY_PERSONAL_DRAFT: PersonalOnboardingDraft = {};
+
 function OnboardingPage() {
   const childMatches = useChildMatches();
 
@@ -33,7 +35,7 @@ function OnboardingPage() {
 function PersonalOnboardingPage() {
   const hydrated = useHydratedStore();
   const navigate = useNavigate();
-  const draft = usePatientStore((s) => s.onboardingDraft.user ?? {});
+  const draft = usePatientStore((s) => s.onboardingDraft.user ?? EMPTY_PERSONAL_DRAFT);
   const setPersonalDraft = usePatientStore((s) => s.setPersonalDraft);
   const completePersonalOnboarding = usePatientStore((s) => s.completePersonalOnboarding);
 
