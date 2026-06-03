@@ -13,11 +13,10 @@ import type {
   AffectedSide,
   BadgeId,
   InjuryType,
-  ExerciseTemplate,
   ProtocolPhase,
-  SessionPhase,
   RecoveryGoal,
   Session,
+  SessionPhase,
   Treatment,
   User,
 } from "@/lib/types";
