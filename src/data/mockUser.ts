@@ -3,6 +3,72 @@ import type { Session } from "@/lib/types";
 import { getProtocol, totalSessionsForProtocol } from "@/data/protocols";
 import avatarAlexandre from "@/assets/avatar-alexandre.jpg";
 
+// --- Helpers (1 sessão por dia, respeitando spw) ---------------------------
+
+const WEEK_LABELS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"] as const;
+
+function isoDayMon1(d: Date): number {
+  return ((d.getDay() + 6) % 7) + 1;
+}
+
+function patternWeekdays(spw: number): number[] {
+  switch (spw) {
+    case 1: return [3];
+    case 2: return [2, 4];
+    case 3: return [1, 3, 5];
+    case 4: return [1, 2, 4, 5];
+    case 5: return [1, 2, 3, 4, 5];
+    case 6: return [1, 2, 3, 4, 5, 6];
+    default: return [1, 2, 3, 4, 5, 6, 7].slice(0, spw);
+  }
+}
+
+function dateOnly(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+function datesBackward(endDate: Date, count: number, spw: number): Date[] {
+  const days = new Set(patternWeekdays(spw));
+  const result: Date[] = [];
+  const cur = new Date(endDate);
+  let safety = count * 30 + 30;
+  while (result.length < count && safety-- > 0) {
+    if (days.has(isoDayMon1(cur))) result.push(new Date(cur));
+    cur.setDate(cur.getDate() - 1);
+  }
+  return result.reverse();
+}
+
+function datesForwardFromDate(start: Date, count: number, spw: number): Date[] {
+  const days = new Set(patternWeekdays(spw));
+  const result: Date[] = [];
+  const cur = new Date(start);
+  let safety = count * 30 + 30;
+  while (result.length < count && safety-- > 0) {
+    if (days.has(isoDayMon1(cur))) result.push(new Date(cur));
+    cur.setDate(cur.getDate() + 1);
+  }
+  return result;
+}
+
+function weeklyFrequencyForCurrentWeek(sessions: Session[], spw: number): WeekFrequency[] {
+  const today = new Date();
+  const offsetToMonday = isoDayMon1(today) - 1;
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - offsetToMonday);
+  monday.setHours(0, 0, 0, 0);
+  const days = new Set(patternWeekdays(spw));
+  const doneISO = new Set(sessions.map((s) => s.scheduled_date));
+  return WEEK_LABELS.map((label, idx) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + idx);
+    const iso = dateOnly(d);
+    const planned = days.has(idx + 1) ? 1 : 0;
+    const done = doneISO.has(iso) ? 1 : 0;
+    return { week_label: label, sessions_done: done, sessions_planned: planned };
+  });
+}
+
 export const MOCK_USER: User = {
   id: "user_alexandre",
   name: "Alexandre Silva",
@@ -57,45 +123,73 @@ const DEMO_BADGES_PATELLO: BadgeId[] = [
 ];
 
 /** Demo: tratamento de LCA atualmente ativo na fase 2, ~67% concluído. */
-export const MOCK_TREATMENT_LCA_ACTIVE: Treatment = {
-  id: "tr_lca_active",
-  user_id: MOCK_USER.id,
-  nickname: "Joelho direito (LCA)",
-  protocol_id: "proto_lca",
-  injury_type: "lca",
-  affected_side: "right",
-  surgery_date: "2024-10-10",
-  started_at: "2024-10-15",
-  prescribed_by: "Dr. Carlos Mendes",
-  reminder_time: "09:00",
-  status: "active",
-  current_phase: 2,
-  phases_completed: [1],
-  badges_unlocked: DEMO_BADGES_LCA,
-  total_sessions_prescribed: 36,
-  total_sessions_completed: 24,
-  adherence_rate: 67,
-  current_streak: 12,
-  longest_streak: 12,
-  pain_history: DEMO_PAIN_HISTORY,
-  weekly_frequency: [
-    { week_label: "Seg", sessions_done: 3, sessions_planned: 3 },
-    { week_label: "Ter", sessions_done: 3, sessions_planned: 3 },
-    { week_label: "Qua", sessions_done: 4, sessions_planned: 4 },
-    { week_label: "Qui", sessions_done: 4, sessions_planned: 4 },
-    { week_label: "Sex", sessions_done: 4, sessions_planned: 4 },
-    { week_label: "Sáb", sessions_done: 3, sessions_planned: 4 },
-    { week_label: "Dom", sessions_done: 3, sessions_planned: 3 },
-  ],
-  sessions: [],
-};
+export const MOCK_TREATMENT_LCA_ACTIVE: Treatment = (() => {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  yesterday.setHours(9, 0, 0, 0);
+  const dates = datesBackward(yesterday, 24, 3);
+  const startedAt = dates[0] ?? yesterday;
+  const NOTES = [
+    "Inchaço menor hoje.",
+    "Joelho mais estável ao final.",
+    "Consegui completar todas as séries.",
+    "Amplitude melhorou.",
+    "Sem dor durante os exercícios.",
+  ];
+  const sessions: Session[] = dates.map((d, i) => {
+    const phase = i < 6 ? 1 : 2;
+    const sessionNumber = i < 6 ? i + 1 : i - 5;
+    const t = i / 23;
+    const pain = Math.max(0, Math.round((7.5 - 5 * t + ((i * 7) % 5) / 10) * 10) / 10);
+    const diff: 1 | 2 | 3 = t < 0.33 ? 3 : t < 0.7 ? 2 : 1;
+    const dt = new Date(d);
+    dt.setHours(9 + (i % 4), (i * 13) % 60, 0, 0);
+    return {
+      id: `sess_lca_${i}`,
+      treatment_id: "tr_lca_active",
+      phase_number: phase,
+      session_number: sessionNumber,
+      scheduled_date: dateOnly(dt),
+      completed_at: dt.toISOString(),
+      exercises_completed: [],
+      pain_level: pain,
+      difficulty_rating: diff,
+      notes: i % 5 === 0 ? NOTES[i % NOTES.length] : undefined,
+      duration_minutes: 22 + ((i * 3) % 14),
+    };
+  });
+  sessions.reverse();
+
+  return {
+    id: "tr_lca_active",
+    user_id: MOCK_USER.id,
+    nickname: "Joelho direito (LCA)",
+    protocol_id: "proto_lca",
+    injury_type: "lca",
+    affected_side: "right",
+    surgery_date: dateOnly(new Date(startedAt.getTime() - 5 * 86400000)),
+    started_at: dateOnly(startedAt),
+    prescribed_by: "Dr. Carlos Mendes",
+    reminder_time: "09:00",
+    status: "active",
+    current_phase: 2,
+    phases_completed: [1],
+    badges_unlocked: DEMO_BADGES_LCA,
+    total_sessions_prescribed: 36,
+    total_sessions_completed: 24,
+    adherence_rate: 67,
+    current_streak: 12,
+    longest_streak: 12,
+    pain_history: DEMO_PAIN_HISTORY,
+    weekly_frequency: weeklyFrequencyForCurrentWeek(sessions, 3),
+    sessions,
+  };
+})();
 
 /** Demo: tratamento de patelofemoral previamente concluído (histórico). */
 export const MOCK_TREATMENT_PATELLO_DONE: Treatment = (() => {
   const protocol = getProtocol("proto_patellofemoral");
   const total = totalSessionsForProtocol(protocol);
-  const startMs = new Date("2023-06-01T09:00:00Z").getTime();
-  const endMs = new Date("2023-09-29T19:00:00Z").getTime();
   const NOTES = [
     "Senti menos dor ao subir escadas hoje.",
     "Joelho estalou no início, mas firmou.",
@@ -103,15 +197,18 @@ export const MOCK_TREATMENT_PATELLO_DONE: Treatment = (() => {
     "VMO ativando bem, sem dor.",
     "Caminhei 30 minutos antes — sem incômodo.",
   ];
+  const startDate = new Date("2023-06-05T09:00:00Z"); // segunda-feira
   const sessions: Session[] = [];
   let absoluteIdx = 0;
+  let phaseCursor = new Date(startDate);
   for (const ph of protocol.phases) {
     const sessionsInPhase = ph.duration_weeks * ph.sessions_per_week;
     const exerciseIds = ph.exercises.map((e) => e.id);
+    const phaseDates = datesForwardFromDate(phaseCursor, sessionsInPhase, ph.sessions_per_week);
     for (let s = 0; s < sessionsInPhase; s++) {
       const t = absoluteIdx / Math.max(1, total - 1);
-      const ms = startMs + (endMs - startMs) * t;
-      const date = new Date(ms);
+      const date = new Date(phaseDates[s]!);
+      date.setHours(9 + ((s + absoluteIdx) % 9), (absoluteIdx * 17) % 60, 0, 0);
       // Pain decreases from ~6.5 to ~0.3 over time, with small noise.
       const basePain = 6.5 * (1 - t);
       const noise = ((absoluteIdx * 7) % 5) / 10; // 0..0.4
@@ -122,7 +219,7 @@ export const MOCK_TREATMENT_PATELLO_DONE: Treatment = (() => {
         treatment_id: "tr_patello_done",
         phase_number: ph.phase_number,
         session_number: s + 1,
-        scheduled_date: date.toISOString().slice(0, 10),
+        scheduled_date: dateOnly(date),
         completed_at: date.toISOString(),
         exercises_completed: exerciseIds,
         pain_level: pain,
@@ -132,7 +229,13 @@ export const MOCK_TREATMENT_PATELLO_DONE: Treatment = (() => {
       });
       absoluteIdx++;
     }
+    const last = phaseDates[phaseDates.length - 1];
+    if (last) {
+      phaseCursor = new Date(last);
+      phaseCursor.setDate(phaseCursor.getDate() + 1);
+    }
   }
+  const completedAt = sessions[sessions.length - 1]?.completed_at?.slice(0, 10) ?? "2023-09-30";
   // Most recent first.
   sessions.reverse();
   return {
@@ -142,8 +245,8 @@ export const MOCK_TREATMENT_PATELLO_DONE: Treatment = (() => {
     protocol_id: "proto_patellofemoral",
     injury_type: "patellofemoral",
     affected_side: "left",
-    started_at: "2023-06-01",
-    completed_at: "2023-09-30",
+    started_at: dateOnly(startDate),
+    completed_at: completedAt,
     prescribed_by: "Dra. Marina Costa",
     reminder_time: "19:00",
     status: "completed",
@@ -170,11 +273,11 @@ export const MOCK_TREATMENT_PATELLO_DONE: Treatment = (() => {
       { week: 12, average_pain: 0.4, session_count: 3 },
     ],
     weekly_frequency: [
-      { week_label: "Seg", sessions_done: 3, sessions_planned: 3 },
+      { week_label: "Seg", sessions_done: 0, sessions_planned: 1 },
       { week_label: "Ter", sessions_done: 0, sessions_planned: 0 },
-      { week_label: "Qua", sessions_done: 3, sessions_planned: 3 },
+      { week_label: "Qua", sessions_done: 0, sessions_planned: 1 },
       { week_label: "Qui", sessions_done: 0, sessions_planned: 0 },
-      { week_label: "Sex", sessions_done: 3, sessions_planned: 3 },
+      { week_label: "Sex", sessions_done: 0, sessions_planned: 1 },
       { week_label: "Sáb", sessions_done: 0, sessions_planned: 0 },
       { week_label: "Dom", sessions_done: 0, sessions_planned: 0 },
     ],
