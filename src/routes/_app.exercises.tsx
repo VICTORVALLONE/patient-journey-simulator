@@ -101,17 +101,23 @@ function ExercisesPage() {
           </p>
         ) : (
           filtered.map(({ ex, phase }) => (
-            <ExerciseCard
+            <Link
               key={`${phase}-${ex.id}`}
-              exercise={ex}
-              status={
-                phase < treatment.current_phase
-                  ? "done"
-                  : phase === treatment.current_phase
-                    ? "current"
-                    : "next"
-              }
-            />
+              to="/session/$sid/exercise/$eid"
+              params={{ sid: "today", eid: ex.id }}
+              className="block transition-transform active:scale-[0.98]"
+            >
+              <ExerciseCard
+                exercise={ex}
+                status={
+                  phase < treatment.current_phase
+                    ? "done"
+                    : phase === treatment.current_phase
+                      ? "current"
+                      : "next"
+                }
+              />
+            </Link>
           ))
         )}
       </section>
