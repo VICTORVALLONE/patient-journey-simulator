@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { MobileFrame } from "@/components/layout/MobileFrame";
 import { ConfettiBurst } from "@/components/celebration/Confetti";
 import { usePatientStore } from "@/store/patient";
+import type { OnboardingDraft } from "@/store/patient";
 import { useHydratedStore } from "@/hooks/useHydratedStore";
 import { getProtocol, totalSessionsForProtocol } from "@/data/protocols";
 import type { InjuryType, RecoveryGoal } from "@/lib/types";
@@ -128,7 +129,7 @@ function Step1(props: {
   injury: InjuryType;
   prescribedBy: string;
   affectedSide: "left" | "right" | "bilateral";
-  onChange: (v: Partial<Parameters<typeof usePatientStore.getState>[0] extends never ? never : ReturnType<typeof usePatientStore.getState>["onboardingDraft"]>) => void;
+  onChange: (v: OnboardingDraft) => void;
   onNext: () => void;
   protocolName: string;
   totalWeeks: number;
@@ -206,8 +207,8 @@ function Step2({
   onChange,
   onNext,
 }: {
-  draft: ReturnType<typeof usePatientStore.getState>["onboardingDraft"];
-  onChange: (v: ReturnType<typeof usePatientStore.getState>["onboardingDraft"]) => void;
+  draft: OnboardingDraft;
+  onChange: (v: OnboardingDraft) => void;
   onNext: () => void;
 }) {
   const canContinue = !!draft.name && !!draft.birth_date && !!draft.weight_kg && !!draft.height_cm;
