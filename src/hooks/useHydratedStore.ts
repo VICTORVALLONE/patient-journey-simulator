@@ -10,7 +10,7 @@ export function useHydratedStore(): boolean {
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
     let mounted = true;
-    void usePatientStore.persist.rehydrate().finally(() => {
+    void Promise.resolve(usePatientStore.persist.rehydrate()).finally(() => {
       if (mounted) setHydrated(true);
     });
     return () => {
