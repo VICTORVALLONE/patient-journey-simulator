@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { usePatientStore } from "@/store/patient";
 import { getProtocol } from "@/data/protocols";
 import { BadgeGrid } from "@/components/progress/BadgeGrid";
+import { PainTrendChart } from "@/components/progress/PainTrendChart";
+import { WeeklyFrequencyChart } from "@/components/progress/WeeklyFrequencyChart";
 import { generateDoctorReport } from "@/lib/pdfReport";
 
 export const Route = createFileRoute("/_app/treatments/$tid")({
@@ -36,6 +38,19 @@ function TreatmentDetailPage() {
   }
 
   const protocol = getProtocol(treatment.protocol_id);
+  const isCompleted = treatment.status === "completed";
+  const recentSessions = treatment.sessions.slice(0, 8);
+
+  // Derive duration in weeks + pain delta for header summary on completed.
+  let durationWeeks: number | null = null;
+  if (treatment.completed_at) {
+    const ms =
+      new Date(treatment.completed_at).getTime() -
+      new Date(treatment.started_at).getTime();
+    durationWeeks = Math.max(1, Math.round(ms / (7 * 86400 * 1000)));
+  }
+  const firstPain = treatment.pain_history[0]?.average_pain;
+  const lastPain = treatment.pain_history[treatment.pain_history.length - 1]?.average_pain;
 
   return (
     <div className="px-5 pt-6 pb-8">
@@ -89,6 +104,89 @@ function TreatmentDetailPage() {
           <BadgeGrid unlocked={treatment.badges_unlocked} />
         </div>
       </section>
+
+      {isCompleted && (
+        <>
+          {durationWeeks !== null && firstPain !== undefined && lastPain !== undefined && (
+            <section className="mt-6 grid grid-cols-2 gap-3">
+              <Stat label="Duração" value={`${durationWeeks} semanas`} />
+              <Stat
+                label="Redução de dor"
+                value={`${firstPain.toFixed(1)} → ${lastPain.toFixed(1)}`}
+              />
+            </section>
+          )}
+
+          {treatment.pain_history.length > 1 && (
+            <section className="mt-6">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Evolução da dor
+              </p>
+              <div className="mt-2 rounded-2xl border border-border bg-card p-3">
+                <PainTrendChart data={treatment.pain_history} />
+              </div>
+            </section>
+          )}
+
+          <section className="mt-6">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Frequência semanal
+            </p>
+            <div className="mt-2 rounded-2xl border border-border bg-card p-3">
+              <WeeklyFrequencyChart data={treatment.weekly_frequency} />
+            </div>
+          </section>
+
+          {recentSessions.length > 0 && (
+            <section className="mt-6">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Últimas sessões
+                </p>
+                <span className="text-[11px] text-muted-foreground">
+                  {treatment.sessions.length} no total
+                </span>
+              </div>
+              <div className="mt-2 overflow-hidden rounded-2xl border border-border bg-card">
+                {recentSessions.map((s, i) => (
+                  <div
+                    key={s.id}
+                    className={
+                      "flex items-center gap-3 px-3 py-2.5 " +
+                      (i < recentSessions.length - 1 ? "border-b border-border" : "")
+                    }
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-foreground">
+                        Fase {s.phase_number} · Sessão {s.session_number}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {new Date(s.completed_at ?? s.scheduled_date).toLocaleDateString("pt-BR", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                        {" · "}
+                        {s.duration_minutes ?? "—"} min
+                      </p>
+                    </div>
+                    <div className="text-right text-[11px]">
+                      <p className="font-semibold text-foreground">Dor {s.pain_level?.toFixed(1)}</p>
+                      <p className="text-muted-foreground">
+                        {s.difficulty_rating === 1
+                          ? "Fácil"
+                          : s.difficulty_rating === 3
+                            ? "Difícil"
+                            : "Na medida"}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+        </>
+      )}
 
       <div className="mt-6 space-y-2">
         <Button

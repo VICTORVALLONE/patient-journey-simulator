@@ -34,9 +34,20 @@ function ProfilePage() {
   return (
     <div className="px-5 pt-6 pb-4">
       <header className="flex flex-col items-center text-center">
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary text-3xl font-bold text-primary-foreground">
-          {initial}
-        </div>
+        {user.avatar_url ? (
+          <img
+            src={user.avatar_url}
+            alt={user.name}
+            loading="lazy"
+            width={80}
+            height={80}
+            className="h-20 w-20 rounded-full object-cover ring-2 ring-primary/20"
+          />
+        ) : (
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary text-3xl font-bold text-primary-foreground">
+            {initial}
+          </div>
+        )}
         <h1 className="mt-3 text-xl font-bold text-foreground">{user.name}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {goalLabel[user.recovery_goal] ?? user.recovery_goal}

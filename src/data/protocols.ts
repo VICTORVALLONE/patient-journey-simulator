@@ -1,15 +1,24 @@
-import type { Protocol } from "@/lib/types";
+import type { BodyRegion, Protocol } from "@/lib/types";
+import thumbJoelho from "@/assets/thumb-joelho.jpg";
+import thumbQuadril from "@/assets/thumb-quadril.jpg";
+import thumbTornozelo from "@/assets/thumb-tornozelo.jpg";
+import thumbCore from "@/assets/thumb-core.jpg";
 
 // Placeholder media — vídeos reais virão do Bunny.net no backend.
 const PLACEHOLDER_VIDEO = "";
-const thumb = (color: string) =>
-  `data:image/svg+xml;utf8,${encodeURIComponent(
-    `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 180'><rect width='320' height='180' fill='${color}'/><circle cx='160' cy='90' r='28' fill='white' opacity='0.85'/><polygon points='152,78 152,102 178,90' fill='${color}'/></svg>`,
-  )}`;
 
-const T1 = thumb("#1E3A8A");
-const T2 = thumb("#2563EB");
-const T3 = thumb("#0F1C47");
+const THUMB_BY_REGION: Record<BodyRegion, string> = {
+  joelho: thumbJoelho,
+  quadril: thumbQuadril,
+  tornozelo: thumbTornozelo,
+  core: thumbCore,
+};
+
+// Aliases kept for backwards-compat of existing object literals below.
+// Each exercise's thumbnail will be overridden by body_region after the fact.
+const T1 = thumbJoelho;
+const T2 = thumbQuadril;
+const T3 = thumbTornozelo;
 
 export const PROTOCOL_LCA: Protocol = {
   id: "proto_lca",
@@ -734,6 +743,16 @@ export const PROTOCOLS: Record<string, Protocol> = {
   proto_meniscus: PROTOCOL_MENISCUS,
   proto_patellofemoral: PROTOCOL_PATELLOFEMORAL,
 };
+
+// Override every exercise thumbnail with the region-appropriate photo,
+// so any new exercise added just needs a valid `body_region`.
+for (const protocol of Object.values(PROTOCOLS)) {
+  for (const phase of protocol.phases) {
+    for (const ex of phase.exercises) {
+      ex.thumbnail_url = THUMB_BY_REGION[ex.body_region] ?? thumbJoelho;
+    }
+  }
+}
 
 export function getProtocol(id: string): Protocol {
   return PROTOCOLS[id] ?? PROTOCOL_LCA;

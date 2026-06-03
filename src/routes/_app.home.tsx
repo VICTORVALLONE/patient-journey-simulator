@@ -23,9 +23,7 @@ function HomePage() {
             <h1 className="text-2xl font-bold text-foreground">{greeting(user.name)} 👋</h1>
             <p className="text-sm text-muted-foreground">Você ainda não tem tratamento ativo</p>
           </div>
-          <Link to="/profile" className="rounded-full bg-primary-muted p-2.5 text-primary-dark">
-            <UserIcon className="h-5 w-5" />
-          </Link>
+          <ProfileAvatarLink avatarUrl={user.avatar_url} name={user.name} />
         </header>
         <EmptyTreatmentState />
       </div>
@@ -60,9 +58,7 @@ function HomePage() {
           <button className="rounded-full bg-muted p-2.5 text-muted-foreground">
             <Bell className="h-5 w-5" />
           </button>
-          <Link to="/profile" className="rounded-full bg-primary-muted p-2.5 text-primary-dark">
-            <UserIcon className="h-5 w-5" />
-          </Link>
+          <ProfileAvatarLink avatarUrl={user.avatar_url} name={user.name} />
         </div>
       </header>
 
@@ -160,5 +156,27 @@ function StatCard({ icon, value, label }: { icon: React.ReactNode; value: string
       <p className="mt-1 text-xl font-bold text-foreground">{value}</p>
       <p className="text-[11px] text-muted-foreground">{label}</p>
     </div>
+  );
+}
+
+function ProfileAvatarLink({ avatarUrl, name }: { avatarUrl?: string; name: string }) {
+  if (avatarUrl) {
+    return (
+      <Link to="/profile" className="block h-10 w-10 overflow-hidden rounded-full ring-2 ring-primary/20">
+        <img
+          src={avatarUrl}
+          alt={name}
+          loading="lazy"
+          width={40}
+          height={40}
+          className="h-full w-full object-cover"
+        />
+      </Link>
+    );
+  }
+  return (
+    <Link to="/profile" className="rounded-full bg-primary-muted p-2.5 text-primary-dark">
+      <UserIcon className="h-5 w-5" />
+    </Link>
   );
 }
