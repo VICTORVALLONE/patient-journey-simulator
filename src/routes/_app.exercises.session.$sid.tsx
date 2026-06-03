@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Clock, Dumbbell, PlayCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePatientStore, todaySessionInfo } from "@/store/patient";
