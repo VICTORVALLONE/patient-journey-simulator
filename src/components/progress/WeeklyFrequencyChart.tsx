@@ -16,7 +16,7 @@ export function WeeklyFrequencyChart({ data }: { data: WeekFrequency[] }) {
               border: "1px solid oklch(0.92 0.012 256)",
               fontSize: 12,
             }}
-            formatter={(v: number) => [`${v} sessões`, "Concluídas"]}
+            formatter={(v) => [`${v ?? 0} sessões`, "Concluídas"]}
           />
           <Bar dataKey="sessions_done" fill="oklch(0.54 0.21 263)" radius={[8, 8, 0, 0]} maxBarSize={28} />
         </BarChart>
