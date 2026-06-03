@@ -235,6 +235,11 @@ export const usePatientStore = create<PatientState>()(
         if (!treatment) {
           return { newBadges: [], protocolCompleted: false };
         }
+        // Guarda: 1 sessão por dia. Se já houver sessão hoje, no-op.
+        const todayStr = todayISO();
+        if (treatment.sessions.some((s) => s.scheduled_date === todayStr)) {
+          return { newBadges: [], protocolCompleted: treatment.status === "completed" };
+        }
         const protocol = getProtocol(treatment.protocol_id);
         const totalPhases = protocol.phases.length;
 
@@ -284,8 +289,8 @@ export const usePatientStore = create<PatientState>()(
           w.week_label === todayLabel
             ? {
                 ...w,
-                sessions_done: w.sessions_done + 1,
-                sessions_planned: Math.max(w.sessions_planned, w.sessions_done + 1),
+                sessions_done: 1,
+                sessions_planned: Math.max(w.sessions_planned, 1),
               }
             : w,
         );
