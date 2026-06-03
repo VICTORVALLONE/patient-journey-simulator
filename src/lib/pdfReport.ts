@@ -1,13 +1,13 @@
-import jsPDF from "jspdf";
 import type { Prescription, Progress, User } from "@/lib/types";
 import { BADGES } from "@/data/badges";
 
-export function generateDoctorReport(
+export async function generateDoctorReport(
   user: User,
   prescription: Prescription,
   progress: Progress,
   protocolName: string,
-): void {
+): Promise<void> {
+  const { default: jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
   let y = 56;

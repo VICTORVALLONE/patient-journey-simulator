@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { ClientOnly } from "@tanstack/react-router";
 import { ArrowUpRight, Download, Share2, TrendingDown, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { WeeklyFrequencyChart } from "@/components/progress/WeeklyFrequencyChart";
@@ -81,7 +82,9 @@ function ProgressPage() {
           </span>
         </div>
         <div className="mt-2">
-          <WeeklyFrequencyChart data={progress.weekly_frequency} />
+          <ClientOnly fallback={<div className="h-48 w-full" />}>
+            <WeeklyFrequencyChart data={progress.weekly_frequency} />
+          </ClientOnly>
         </div>
       </section>
 
@@ -98,7 +101,9 @@ function ProgressPage() {
               Complete sua primeira sessão para começar a registrar a dor.
             </p>
           ) : (
-            <PainTrendChart data={painHistory} />
+            <ClientOnly fallback={<div className="h-48 w-full" />}>
+              <PainTrendChart data={painHistory} />
+            </ClientOnly>
           )}
         </div>
       </section>
