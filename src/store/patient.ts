@@ -1,32 +1,47 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
-import { MOCK_USER, MOCK_PRESCRIPTION, MOCK_PROGRESS, INITIAL_PROGRESS } from "@/data/mockUser";
+import {
+  MOCK_USER,
+  MOCK_TREATMENT_LCA_ACTIVE,
+  MOCK_TREATMENT_PATELLO_DONE,
+  emptyWeeklyFrequency,
+} from "@/data/mockUser";
 import { getProtocol, totalSessionsForProtocol } from "@/data/protocols";
 import { checkNewBadges } from "@/lib/badges";
 import type {
+  AffectedSide,
   BadgeId,
   InjuryType,
-  Prescription,
-  Progress,
   ProtocolPhase,
+  RecoveryGoal,
   Session,
+  Treatment,
   User,
 } from "@/lib/types";
 
-export type OnboardingDraft = Partial<{
-  name: string;
-  birth_date: string;
-  weight_kg: number;
-  height_cm: number;
-  surgery_date: string;
-  recovery_goal: User["recovery_goal"];
-  injury_type: InjuryType;
-  affected_side: Prescription["affected_side"];
-  prescribed_by: string;
-  reminder_time: string;
-  notifications_enabled: boolean;
-}>;
+export interface PersonalOnboardingDraft {
+  name?: string;
+  birth_date?: string;
+  weight_kg?: number;
+  height_cm?: number;
+  recovery_goal?: RecoveryGoal;
+}
+
+export interface TreatmentOnboardingDraft {
+  injury_type?: InjuryType;
+  affected_side?: AffectedSide;
+  surgery_date?: string;
+  prescribed_by?: string;
+  reminder_time?: string;
+  notifications_enabled?: boolean;
+  nickname?: string;
+}
+
+interface OnboardingDraft {
+  user?: PersonalOnboardingDraft;
+  treatment?: TreatmentOnboardingDraft;
+}
 
 interface CompleteSessionInput {
   pain_level: number;
@@ -45,18 +60,26 @@ interface CompleteSessionResult {
 interface PatientState {
   isOnboarded: boolean;
   user: User;
-  prescription: Prescription;
-  progress: Progress;
-  sessions: Session[];
+  treatments: Treatment[];
+  activeTreatmentId: string | null;
   onboardingDraft: OnboardingDraft;
 
-  // actions
-  setOnboardingDraft: (d: OnboardingDraft) => void;
-  completeOnboarding: () => void;
+  // personal-level
+  setPersonalDraft: (d: PersonalOnboardingDraft) => void;
+  completePersonalOnboarding: () => void;
+
+  // treatment-level
+  setTreatmentDraft: (d: TreatmentOnboardingDraft) => void;
+  startTreatment: () => string;
+  setActiveTreatment: (id: string) => void;
+
+  // demo / reset
   resetToDemo: () => void;
   resetToInitial: () => void;
-  completeSession: (input: CompleteSessionInput) => CompleteSessionResult;
   logout: () => void;
+
+  // session
+  completeSession: (input: CompleteSessionInput) => CompleteSessionResult;
 }
 
 const INJURY_TO_PROTOCOL: Record<InjuryType, string> = {
@@ -65,13 +88,59 @@ const INJURY_TO_PROTOCOL: Record<InjuryType, string> = {
   patellofemoral: "proto_patellofemoral",
 };
 
+const INJURY_NICKNAME: Record<InjuryType, string> = {
+  lca: "LCA",
+  meniscus: "Menisco",
+  patellofemoral: "Patelofemoral",
+};
+
+const SIDE_LABEL: Record<AffectedSide, string> = {
+  left: "esquerdo",
+  right: "direito",
+  bilateral: "bilateral",
+};
+
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-function weekIndexFor(progress: Progress, sessionsPerWeek: number): number {
-  const sessionNumber = progress.total_sessions_completed + 1;
+function weekIndexFor(treatment: Treatment, sessionsPerWeek: number): number {
+  const sessionNumber = treatment.total_sessions_completed + 1;
   return Math.max(1, Math.ceil(sessionNumber / Math.max(1, sessionsPerWeek)));
+}
+
+function makeTreatment(userId: string, draft: TreatmentOnboardingDraft): Treatment {
+  const injury = (draft.injury_type ?? "lca") as InjuryType;
+  const affected = draft.affected_side ?? "right";
+  const protocol = getProtocol(INJURY_TO_PROTOCOL[injury]);
+  const total = totalSessionsForProtocol(protocol);
+  const nickname =
+    draft.nickname?.trim() ||
+    `Joelho ${SIDE_LABEL[affected]} (${INJURY_NICKNAME[injury]})`;
+  return {
+    id: `tr_${Date.now()}`,
+    user_id: userId,
+    nickname,
+    protocol_id: protocol.id,
+    injury_type: injury,
+    affected_side: affected,
+    surgery_date: draft.surgery_date || undefined,
+    started_at: todayISO(),
+    prescribed_by: draft.prescribed_by?.trim() || "Equipe médica",
+    reminder_time: draft.reminder_time,
+    status: "active",
+    current_phase: 1,
+    phases_completed: [],
+    badges_unlocked: [],
+    total_sessions_prescribed: total,
+    total_sessions_completed: 0,
+    adherence_rate: 0,
+    current_streak: 0,
+    longest_streak: 0,
+    pain_history: [],
+    weekly_frequency: emptyWeeklyFrequency(),
+    sessions: [],
+  };
 }
 
 export const usePatientStore = create<PatientState>()(
@@ -79,85 +148,78 @@ export const usePatientStore = create<PatientState>()(
     (set, get) => ({
       isOnboarded: true,
       user: MOCK_USER,
-      prescription: MOCK_PRESCRIPTION,
-      progress: MOCK_PROGRESS,
-      sessions: [],
+      treatments: [MOCK_TREATMENT_LCA_ACTIVE, MOCK_TREATMENT_PATELLO_DONE],
+      activeTreatmentId: MOCK_TREATMENT_LCA_ACTIVE.id,
       onboardingDraft: {},
 
-      setOnboardingDraft: (d) =>
-        set((s) => ({ onboardingDraft: { ...s.onboardingDraft, ...d } })),
+      setPersonalDraft: (d) =>
+        set((s) => ({
+          onboardingDraft: { ...s.onboardingDraft, user: { ...s.onboardingDraft.user, ...d } },
+        })),
 
-      completeOnboarding: () => {
-        const d = get().onboardingDraft;
-        const injury = (d.injury_type ?? "lca") as InjuryType;
-        const protocol = getProtocol(INJURY_TO_PROTOCOL[injury]);
-        const total = totalSessionsForProtocol(protocol);
+      setTreatmentDraft: (d) =>
+        set((s) => ({
+          onboardingDraft: {
+            ...s.onboardingDraft,
+            treatment: { ...s.onboardingDraft.treatment, ...d },
+          },
+        })),
 
+      completePersonalOnboarding: () => {
+        const draft = get().onboardingDraft.user ?? {};
         const user: User = {
           ...MOCK_USER,
           id: `user_${Date.now()}`,
-          name: d.name ?? MOCK_USER.name,
-          birth_date: d.birth_date ?? MOCK_USER.birth_date,
-          weight_kg: d.weight_kg ?? MOCK_USER.weight_kg,
-          height_cm: d.height_cm ?? MOCK_USER.height_cm,
-          recovery_goal: d.recovery_goal ?? "daily_life",
+          name: draft.name ?? MOCK_USER.name,
+          birth_date: draft.birth_date ?? MOCK_USER.birth_date,
+          weight_kg: draft.weight_kg ?? MOCK_USER.weight_kg,
+          height_cm: draft.height_cm ?? MOCK_USER.height_cm,
+          recovery_goal: draft.recovery_goal ?? "daily_life",
           created_at: new Date().toISOString(),
         };
-
-        const prescription: Prescription = {
-          ...MOCK_PRESCRIPTION,
-          id: `presc_${Date.now()}`,
-          user_id: user.id,
-          protocol_id: protocol.id,
-          injury_type: injury,
-          affected_side: d.affected_side ?? "right",
-          surgery_date: d.surgery_date,
-          start_date: todayISO(),
-          prescribed_by: d.prescribed_by ?? "Dr. Carlos Mendes",
-          status: "active",
-        };
-
-        const progress: Progress = {
-          ...INITIAL_PROGRESS,
-          user_id: user.id,
-          total_sessions_prescribed: total,
-        };
-
         set({
           isOnboarded: true,
           user,
-          prescription,
-          progress,
-          sessions: [],
+          treatments: [],
+          activeTreatmentId: null,
           onboardingDraft: {},
         });
+      },
+
+      startTreatment: () => {
+        const state = get();
+        const draft = state.onboardingDraft.treatment ?? {};
+        const treatment = makeTreatment(state.user.id, draft);
+        set({
+          treatments: [treatment, ...state.treatments],
+          activeTreatmentId: treatment.id,
+          onboardingDraft: { ...state.onboardingDraft, treatment: undefined },
+        });
+        return treatment.id;
+      },
+
+      setActiveTreatment: (id) => {
+        const t = get().treatments.find((x) => x.id === id);
+        if (t) set({ activeTreatmentId: id });
       },
 
       resetToDemo: () =>
         set({
           isOnboarded: true,
           user: MOCK_USER,
-          prescription: MOCK_PRESCRIPTION,
-          progress: { ...MOCK_PROGRESS },
-          sessions: [],
+          treatments: [MOCK_TREATMENT_LCA_ACTIVE, MOCK_TREATMENT_PATELLO_DONE],
+          activeTreatmentId: MOCK_TREATMENT_LCA_ACTIVE.id,
           onboardingDraft: {},
         }),
 
-      resetToInitial: () => {
-        const protocol = getProtocol(MOCK_PRESCRIPTION.protocol_id);
+      resetToInitial: () =>
         set({
           isOnboarded: true,
           user: MOCK_USER,
-          prescription: MOCK_PRESCRIPTION,
-          progress: {
-            ...INITIAL_PROGRESS,
-            user_id: MOCK_USER.id,
-            total_sessions_prescribed: totalSessionsForProtocol(protocol),
-          },
-          sessions: [],
+          treatments: [],
+          activeTreatmentId: null,
           onboardingDraft: {},
-        });
-      },
+        }),
 
       logout: () =>
         set({
@@ -167,17 +229,21 @@ export const usePatientStore = create<PatientState>()(
 
       completeSession: (input) => {
         const state = get();
-        const protocol = getProtocol(state.prescription.protocol_id);
-        const prev = state.progress;
+        const tid = state.activeTreatmentId;
+        const treatment = state.treatments.find((t) => t.id === tid);
+        if (!treatment) {
+          return { newBadges: [], protocolCompleted: false };
+        }
+        const protocol = getProtocol(treatment.protocol_id);
         const totalPhases = protocol.phases.length;
 
-        // figure out which phase the just-completed session belonged to
+        // Find phase of the just-completed session
         let cumulative = 0;
         let phaseOfThisSession: ProtocolPhase = protocol.phases[0]!;
         let sessionsBeforeThisPhase = 0;
         for (const ph of protocol.phases) {
           const ses = ph.duration_weeks * ph.sessions_per_week;
-          if (prev.total_sessions_completed < cumulative + ses) {
+          if (treatment.total_sessions_completed < cumulative + ses) {
             phaseOfThisSession = ph;
             sessionsBeforeThisPhase = cumulative;
             break;
@@ -185,23 +251,22 @@ export const usePatientStore = create<PatientState>()(
           cumulative += ses;
         }
 
-        const newCompletedCount = prev.total_sessions_completed + 1;
+        const newCompletedCount = treatment.total_sessions_completed + 1;
         const sessionsInThisPhaseDone = newCompletedCount - sessionsBeforeThisPhase;
         const sessionsInThisPhaseTotal =
           phaseOfThisSession.duration_weeks * phaseOfThisSession.sessions_per_week;
         const phaseJustCompleted =
           sessionsInThisPhaseDone >= sessionsInThisPhaseTotal &&
-          !prev.phases_completed.includes(phaseOfThisSession.phase_number);
+          !treatment.phases_completed.includes(phaseOfThisSession.phase_number);
 
-        const adherence_rate = prev.total_sessions_prescribed
-          ? Math.round((newCompletedCount / prev.total_sessions_prescribed) * 100)
+        const adherence_rate = treatment.total_sessions_prescribed
+          ? Math.round((newCompletedCount / treatment.total_sessions_prescribed) * 100)
           : 0;
-        const current_streak = prev.current_streak + 1;
-        const longest_streak = Math.max(prev.longest_streak, current_streak);
+        const current_streak = treatment.current_streak + 1;
+        const longest_streak = Math.max(treatment.longest_streak, current_streak);
 
-        // update pain_history (one entry per week)
-        const weekIdx = weekIndexFor(prev, phaseOfThisSession.sessions_per_week);
-        const painHistory = [...prev.pain_history];
+        const weekIdx = weekIndexFor(treatment, phaseOfThisSession.sessions_per_week);
+        const painHistory = treatment.pain_history.map((p) => ({ ...p }));
         const existing = painHistory.find((p) => p.week === weekIdx);
         if (existing) {
           const newCount = existing.session_count + 1;
@@ -212,25 +277,28 @@ export const usePatientStore = create<PatientState>()(
           painHistory.push({ week: weekIdx, average_pain: input.pain_level, session_count: 1 });
         }
 
-        // weekly frequency: increment today's weekday
         const weekdays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
         const todayLabel = weekdays[new Date().getDay()]!;
-        const weekly_frequency = prev.weekly_frequency.map((w) =>
+        const weekly_frequency = treatment.weekly_frequency.map((w) =>
           w.week_label === todayLabel
-            ? { ...w, sessions_done: w.sessions_done + 1, sessions_planned: Math.max(w.sessions_planned, w.sessions_done + 1) }
+            ? {
+                ...w,
+                sessions_done: w.sessions_done + 1,
+                sessions_planned: Math.max(w.sessions_planned, w.sessions_done + 1),
+              }
             : w,
         );
 
         const phases_completed = phaseJustCompleted
-          ? [...prev.phases_completed, phaseOfThisSession.phase_number]
-          : prev.phases_completed;
+          ? [...treatment.phases_completed, phaseOfThisSession.phase_number]
+          : treatment.phases_completed;
 
         const nextPhase = phaseJustCompleted
           ? Math.min(totalPhases, phaseOfThisSession.phase_number + 1)
           : phaseOfThisSession.phase_number;
 
-        const tentativeProgress: Progress = {
-          ...prev,
+        const tentative: Treatment = {
+          ...treatment,
           total_sessions_completed: newCompletedCount,
           adherence_rate,
           current_streak,
@@ -241,15 +309,11 @@ export const usePatientStore = create<PatientState>()(
           weekly_frequency,
         };
 
-        const newBadges = checkNewBadges(tentativeProgress, totalPhases);
-        const progress: Progress = {
-          ...tentativeProgress,
-          badges_unlocked: [...prev.badges_unlocked, ...newBadges],
-        };
+        const newBadges = checkNewBadges(tentative, totalPhases);
 
         const session: Session = {
           id: `sess_${Date.now()}`,
-          prescription_id: state.prescription.id,
+          treatment_id: treatment.id,
           phase_number: phaseOfThisSession.phase_number,
           session_number: sessionsInThisPhaseDone,
           scheduled_date: todayISO(),
@@ -262,14 +326,21 @@ export const usePatientStore = create<PatientState>()(
         };
 
         const protocolCompleted =
-          newCompletedCount >= prev.total_sessions_prescribed && prev.total_sessions_prescribed > 0;
+          newCompletedCount >= treatment.total_sessions_prescribed &&
+          treatment.total_sessions_prescribed > 0;
+
+        const finalTreatment: Treatment = {
+          ...tentative,
+          badges_unlocked: [...treatment.badges_unlocked, ...newBadges],
+          sessions: [session, ...treatment.sessions],
+          status: protocolCompleted ? "completed" : treatment.status,
+          completed_at: protocolCompleted
+            ? new Date().toISOString().slice(0, 10)
+            : treatment.completed_at,
+        };
 
         set({
-          progress: protocolCompleted ? { ...progress, /* keep */ } : progress,
-          sessions: [session, ...state.sessions],
-          prescription: protocolCompleted
-            ? { ...state.prescription, status: "completed" }
-            : state.prescription,
+          treatments: state.treatments.map((t) => (t.id === treatment.id ? finalTreatment : t)),
         });
 
         return {
@@ -280,7 +351,7 @@ export const usePatientStore = create<PatientState>()(
       },
     }),
     {
-      name: "fisiocare-patient-v1",
+      name: "fisiocare-patient-v2",
       storage: createJSONStorage(() => {
         if (typeof window === "undefined") {
           return {
@@ -291,7 +362,6 @@ export const usePatientStore = create<PatientState>()(
         }
         return window.localStorage;
       }),
-      // Skip hydration on server
       skipHydration: true,
     },
   ),
@@ -299,23 +369,34 @@ export const usePatientStore = create<PatientState>()(
 
 // Selectors / derived helpers ------------------------------------------------
 
-export function currentPhase(progress: Progress, protocolId: string) {
-  const protocol = getProtocol(protocolId);
+export function getActiveTreatment(state: PatientState): Treatment | null {
+  if (!state.activeTreatmentId) return null;
+  return state.treatments.find((t) => t.id === state.activeTreatmentId) ?? null;
+}
+
+export function useActiveTreatment(): Treatment | null {
+  return usePatientStore((s) =>
+    s.activeTreatmentId ? s.treatments.find((t) => t.id === s.activeTreatmentId) ?? null : null,
+  );
+}
+
+export function currentPhaseOf(treatment: Treatment) {
+  const protocol = getProtocol(treatment.protocol_id);
   return (
-    protocol.phases.find((p) => p.phase_number === progress.current_phase) ??
+    protocol.phases.find((p) => p.phase_number === treatment.current_phase) ??
     protocol.phases[0]!
   );
 }
 
-export function todaySessionInfo(progress: Progress, protocolId: string) {
-  const protocol = getProtocol(protocolId);
+export function todaySessionInfoOf(treatment: Treatment) {
+  const protocol = getProtocol(treatment.protocol_id);
   let cumulative = 0;
   for (const ph of protocol.phases) {
     const ses = ph.duration_weeks * ph.sessions_per_week;
-    if (progress.total_sessions_completed < cumulative + ses) {
+    if (treatment.total_sessions_completed < cumulative + ses) {
       return {
         phase: ph,
-        sessionNumber: progress.total_sessions_completed - cumulative + 1,
+        sessionNumber: treatment.total_sessions_completed - cumulative + 1,
         sessionsInPhase: ses,
         sessionsBeforePhase: cumulative,
         protocol,
@@ -323,7 +404,6 @@ export function todaySessionInfo(progress: Progress, protocolId: string) {
     }
     cumulative += ses;
   }
-  // protocol completed
   const last = protocol.phases[protocol.phases.length - 1]!;
   return {
     phase: last,
