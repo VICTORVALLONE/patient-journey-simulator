@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { usePatientStore, todaySessionInfo } from "@/store/patient";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/_app/exercises/session/$sid")({
+export const Route = createFileRoute("/_app/session/$sid")({
   head: () => ({ meta: [{ title: "Visão da sessão · FisioCare" }] }),
   component: SessionOverview,
 });
