@@ -13,6 +13,9 @@ import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppSupportRouteImport } from './routes/_app.support'
+import { Route as AppProgressRouteImport } from './routes/_app.progress'
+import { Route as AppProfileRouteImport } from './routes/_app.profile'
 import { Route as AppHomeRouteImport } from './routes/_app.home'
 import { Route as AppExercisesRouteImport } from './routes/_app.exercises'
 import { Route as AppExercisesSessionSidRouteImport } from './routes/_app.exercises.session.$sid'
@@ -36,6 +39,21 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppSupportRoute = AppSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProgressRoute = AppProgressRouteImport.update({
+  id: '/progress',
+  path: '/progress',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProfileRoute = AppProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AppRoute,
 } as any)
 const AppHomeRoute = AppHomeRouteImport.update({
   id: '/home',
@@ -65,6 +83,9 @@ export interface FileRoutesByFullPath {
   '/welcome': typeof WelcomeRoute
   '/exercises': typeof AppExercisesRouteWithChildren
   '/home': typeof AppHomeRoute
+  '/profile': typeof AppProfileRoute
+  '/progress': typeof AppProgressRoute
+  '/support': typeof AppSupportRoute
   '/exercises/session/$sid': typeof AppExercisesSessionSidRouteWithChildren
   '/exercises/session/$sid/exercise/$eid': typeof AppExercisesSessionSidExerciseEidRoute
 }
@@ -74,6 +95,9 @@ export interface FileRoutesByTo {
   '/welcome': typeof WelcomeRoute
   '/exercises': typeof AppExercisesRouteWithChildren
   '/home': typeof AppHomeRoute
+  '/profile': typeof AppProfileRoute
+  '/progress': typeof AppProgressRoute
+  '/support': typeof AppSupportRoute
   '/exercises/session/$sid': typeof AppExercisesSessionSidRouteWithChildren
   '/exercises/session/$sid/exercise/$eid': typeof AppExercisesSessionSidExerciseEidRoute
 }
@@ -85,6 +109,9 @@ export interface FileRoutesById {
   '/welcome': typeof WelcomeRoute
   '/_app/exercises': typeof AppExercisesRouteWithChildren
   '/_app/home': typeof AppHomeRoute
+  '/_app/profile': typeof AppProfileRoute
+  '/_app/progress': typeof AppProgressRoute
+  '/_app/support': typeof AppSupportRoute
   '/_app/exercises/session/$sid': typeof AppExercisesSessionSidRouteWithChildren
   '/_app/exercises/session/$sid/exercise/$eid': typeof AppExercisesSessionSidExerciseEidRoute
 }
@@ -96,6 +123,9 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/exercises'
     | '/home'
+    | '/profile'
+    | '/progress'
+    | '/support'
     | '/exercises/session/$sid'
     | '/exercises/session/$sid/exercise/$eid'
   fileRoutesByTo: FileRoutesByTo
@@ -105,6 +135,9 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/exercises'
     | '/home'
+    | '/profile'
+    | '/progress'
+    | '/support'
     | '/exercises/session/$sid'
     | '/exercises/session/$sid/exercise/$eid'
   id:
@@ -115,6 +148,9 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/_app/exercises'
     | '/_app/home'
+    | '/_app/profile'
+    | '/_app/progress'
+    | '/_app/support'
     | '/_app/exercises/session/$sid'
     | '/_app/exercises/session/$sid/exercise/$eid'
   fileRoutesById: FileRoutesById
@@ -155,6 +191,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/support': {
+      id: '/_app/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof AppSupportRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/progress': {
+      id: '/_app/progress'
+      path: '/progress'
+      fullPath: '/progress'
+      preLoaderRoute: typeof AppProgressRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/profile': {
+      id: '/_app/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AppProfileRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/home': {
       id: '/_app/home'
@@ -217,11 +274,17 @@ const AppExercisesRouteWithChildren = AppExercisesRoute._addFileChildren(
 interface AppRouteChildren {
   AppExercisesRoute: typeof AppExercisesRouteWithChildren
   AppHomeRoute: typeof AppHomeRoute
+  AppProfileRoute: typeof AppProfileRoute
+  AppProgressRoute: typeof AppProgressRoute
+  AppSupportRoute: typeof AppSupportRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppExercisesRoute: AppExercisesRouteWithChildren,
   AppHomeRoute: AppHomeRoute,
+  AppProfileRoute: AppProfileRoute,
+  AppProgressRoute: AppProgressRoute,
+  AppSupportRoute: AppSupportRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
