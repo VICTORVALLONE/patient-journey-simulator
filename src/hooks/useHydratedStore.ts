@@ -9,8 +9,13 @@ import { usePatientStore } from "@/store/patient";
 export function useHydratedStore(): boolean {
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
-    void usePatientStore.persist.rehydrate();
-    setHydrated(true);
+    let mounted = true;
+    void usePatientStore.persist.rehydrate().finally(() => {
+      if (mounted) setHydrated(true);
+    });
+    return () => {
+      mounted = false;
+    };
   }, []);
   return hydrated;
 }
