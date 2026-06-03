@@ -9,38 +9,182 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WelcomeRouteImport } from './routes/welcome'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppSupportRouteImport } from './routes/_app.support'
+import { Route as AppProgressRouteImport } from './routes/_app.progress'
+import { Route as AppProfileRouteImport } from './routes/_app.profile'
+import { Route as AppHomeRouteImport } from './routes/_app.home'
+import { Route as AppExercisesRouteImport } from './routes/_app.exercises'
+import { Route as AppSessionSidRouteImport } from './routes/_app.session.$sid'
+import { Route as AppSessionSidExerciseEidRouteImport } from './routes/_app.session.$sid.exercise.$eid'
 
+const WelcomeRoute = WelcomeRouteImport.update({
+  id: '/welcome',
+  path: '/welcome',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppSupportRoute = AppSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProgressRoute = AppProgressRouteImport.update({
+  id: '/progress',
+  path: '/progress',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppProfileRoute = AppProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHomeRoute = AppHomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppExercisesRoute = AppExercisesRouteImport.update({
+  id: '/exercises',
+  path: '/exercises',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSessionSidRoute = AppSessionSidRouteImport.update({
+  id: '/session/$sid',
+  path: '/session/$sid',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSessionSidExerciseEidRoute =
+  AppSessionSidExerciseEidRouteImport.update({
+    id: '/exercise/$eid',
+    path: '/exercise/$eid',
+    getParentRoute: () => AppSessionSidRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/onboarding': typeof OnboardingRoute
+  '/welcome': typeof WelcomeRoute
+  '/exercises': typeof AppExercisesRoute
+  '/home': typeof AppHomeRoute
+  '/profile': typeof AppProfileRoute
+  '/progress': typeof AppProgressRoute
+  '/support': typeof AppSupportRoute
+  '/session/$sid': typeof AppSessionSidRouteWithChildren
+  '/session/$sid/exercise/$eid': typeof AppSessionSidExerciseEidRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/onboarding': typeof OnboardingRoute
+  '/welcome': typeof WelcomeRoute
+  '/exercises': typeof AppExercisesRoute
+  '/home': typeof AppHomeRoute
+  '/profile': typeof AppProfileRoute
+  '/progress': typeof AppProgressRoute
+  '/support': typeof AppSupportRoute
+  '/session/$sid': typeof AppSessionSidRouteWithChildren
+  '/session/$sid/exercise/$eid': typeof AppSessionSidExerciseEidRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_app': typeof AppRouteWithChildren
+  '/onboarding': typeof OnboardingRoute
+  '/welcome': typeof WelcomeRoute
+  '/_app/exercises': typeof AppExercisesRoute
+  '/_app/home': typeof AppHomeRoute
+  '/_app/profile': typeof AppProfileRoute
+  '/_app/progress': typeof AppProgressRoute
+  '/_app/support': typeof AppSupportRoute
+  '/_app/session/$sid': typeof AppSessionSidRouteWithChildren
+  '/_app/session/$sid/exercise/$eid': typeof AppSessionSidExerciseEidRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/onboarding'
+    | '/welcome'
+    | '/exercises'
+    | '/home'
+    | '/profile'
+    | '/progress'
+    | '/support'
+    | '/session/$sid'
+    | '/session/$sid/exercise/$eid'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/onboarding'
+    | '/welcome'
+    | '/exercises'
+    | '/home'
+    | '/profile'
+    | '/progress'
+    | '/support'
+    | '/session/$sid'
+    | '/session/$sid/exercise/$eid'
+  id:
+    | '__root__'
+    | '/'
+    | '/_app'
+    | '/onboarding'
+    | '/welcome'
+    | '/_app/exercises'
+    | '/_app/home'
+    | '/_app/profile'
+    | '/_app/progress'
+    | '/_app/support'
+    | '/_app/session/$sid'
+    | '/_app/session/$sid/exercise/$eid'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
+  OnboardingRoute: typeof OnboardingRoute
+  WelcomeRoute: typeof WelcomeRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/welcome': {
+      id: '/welcome'
+      path: '/welcome'
+      fullPath: '/welcome'
+      preLoaderRoute: typeof WelcomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +192,96 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/support': {
+      id: '/_app/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof AppSupportRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/progress': {
+      id: '/_app/progress'
+      path: '/progress'
+      fullPath: '/progress'
+      preLoaderRoute: typeof AppProgressRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/profile': {
+      id: '/_app/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AppProfileRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/home': {
+      id: '/_app/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof AppHomeRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/exercises': {
+      id: '/_app/exercises'
+      path: '/exercises'
+      fullPath: '/exercises'
+      preLoaderRoute: typeof AppExercisesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/session/$sid': {
+      id: '/_app/session/$sid'
+      path: '/session/$sid'
+      fullPath: '/session/$sid'
+      preLoaderRoute: typeof AppSessionSidRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/session/$sid/exercise/$eid': {
+      id: '/_app/session/$sid/exercise/$eid'
+      path: '/exercise/$eid'
+      fullPath: '/session/$sid/exercise/$eid'
+      preLoaderRoute: typeof AppSessionSidExerciseEidRouteImport
+      parentRoute: typeof AppSessionSidRoute
+    }
   }
 }
 
+interface AppSessionSidRouteChildren {
+  AppSessionSidExerciseEidRoute: typeof AppSessionSidExerciseEidRoute
+}
+
+const AppSessionSidRouteChildren: AppSessionSidRouteChildren = {
+  AppSessionSidExerciseEidRoute: AppSessionSidExerciseEidRoute,
+}
+
+const AppSessionSidRouteWithChildren = AppSessionSidRoute._addFileChildren(
+  AppSessionSidRouteChildren,
+)
+
+interface AppRouteChildren {
+  AppExercisesRoute: typeof AppExercisesRoute
+  AppHomeRoute: typeof AppHomeRoute
+  AppProfileRoute: typeof AppProfileRoute
+  AppProgressRoute: typeof AppProgressRoute
+  AppSupportRoute: typeof AppSupportRoute
+  AppSessionSidRoute: typeof AppSessionSidRouteWithChildren
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppExercisesRoute: AppExercisesRoute,
+  AppHomeRoute: AppHomeRoute,
+  AppProfileRoute: AppProfileRoute,
+  AppProgressRoute: AppProgressRoute,
+  AppSupportRoute: AppSupportRoute,
+  AppSessionSidRoute: AppSessionSidRouteWithChildren,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
+  OnboardingRoute: OnboardingRoute,
+  WelcomeRoute: WelcomeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
