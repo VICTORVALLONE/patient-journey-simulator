@@ -408,7 +408,7 @@ export function todaySessionInfoOf(treatment: Treatment) {
     const ses = ph.duration_weeks * ph.sessions_per_week;
     if (treatment.total_sessions_completed < cumulative + ses) {
       return {
-        phase: ph,
+        phase: withOrderedExercises(ph),
         sessionNumber: treatment.total_sessions_completed - cumulative + 1,
         sessionsInPhase: ses,
         sessionsBeforePhase: cumulative,
@@ -419,10 +419,29 @@ export function todaySessionInfoOf(treatment: Treatment) {
   }
   const last = protocol.phases[protocol.phases.length - 1]!;
   return {
-    phase: last,
+    phase: withOrderedExercises(last),
     sessionNumber: last.duration_weeks * last.sessions_per_week,
     sessionsInPhase: last.duration_weeks * last.sessions_per_week,
     sessionsBeforePhase: cumulative - last.duration_weeks * last.sessions_per_week,
     protocol,
   };
+}
+
+const SESSION_PHASE_ORDER: Record<SessionPhase, number> = {
+  warmup: 0,
+  active: 1,
+  peak: 2,
+  rest: 3,
+};
+
+function withOrderedExercises(phase: ProtocolPhase): ProtocolPhase {
+  const sorted = [...phase.exercises]
+    .map((ex, idx) => ({ ex, idx }))
+    .sort((a, b) => {
+      const diff =
+        SESSION_PHASE_ORDER[a.ex.session_phase] - SESSION_PHASE_ORDER[b.ex.session_phase];
+      return diff !== 0 ? diff : a.idx - b.idx;
+    })
+    .map((entry) => entry.ex);
+  return { ...phase, exercises: sorted };
 }
