@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useChildMatches, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, Briefcase, Dumbbell, Footprints } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,14 @@ const GOAL_OPTIONS: { value: RecoveryGoal; label: string; desc: string; icon: Re
 ];
 
 function OnboardingPage() {
+  const childMatches = useChildMatches();
+
+  if (childMatches.length > 0) return <Outlet />;
+
+  return <PersonalOnboardingPage />;
+}
+
+function PersonalOnboardingPage() {
   const hydrated = useHydratedStore();
   const navigate = useNavigate();
   const draft = usePatientStore((s) => s.onboardingDraft.user ?? {});
