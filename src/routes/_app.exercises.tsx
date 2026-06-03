@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { ChevronRight, MessageCircle, ShieldCheck } from "lucide-react";
-import { usePatientStore, todaySessionInfo } from "@/store/patient";
+import { useActiveTreatment, todaySessionInfoOf } from "@/store/patient";
 import { getProtocol } from "@/data/protocols";
 import { ExerciseCard } from "@/components/session/ExerciseCard";
+import { TreatmentSwitcher } from "@/components/treatment/TreatmentSwitcher";
+import { EmptyTreatmentState } from "@/components/treatment/EmptyTreatmentState";
 import type { BodyRegion } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -21,26 +23,40 @@ const FILTERS: { value: BodyRegion | "all"; label: string }[] = [
 ];
 
 function ExercisesPage() {
-  const progress = usePatientStore((s) => s.progress);
-  const prescription = usePatientStore((s) => s.prescription);
-  const protocol = getProtocol(prescription.protocol_id);
-  const today = todaySessionInfo(progress, prescription.protocol_id);
+  const treatment = useActiveTreatment();
   const [filter, setFilter] = useState<BodyRegion | "all">("all");
+
+  if (!treatment) {
+    return (
+      <div className="px-5 pt-6">
+        <h1 className="text-2xl font-bold text-foreground">Rotina de Exercícios</h1>
+        <EmptyTreatmentState />
+      </div>
+    );
+  }
+
+  const protocol = getProtocol(treatment.protocol_id);
+  const today = todaySessionInfoOf(treatment);
 
   const exercises = protocol.phases.flatMap((p) =>
     p.exercises.map((ex) => ({ ex, phase: p.phase_number })),
   );
-  const filtered = filter === "all" ? exercises : exercises.filter(({ ex }) => ex.body_region === filter);
+  const filtered =
+    filter === "all" ? exercises : exercises.filter(({ ex }) => ex.body_region === filter);
 
   return (
     <div className="px-5 pt-6">
       <header>
         <h1 className="text-2xl font-bold text-foreground">Rotina de Exercícios</h1>
-        <p className="text-sm text-muted-foreground">Seu plano personalizado de recuperação</p>
+        <p className="text-sm text-muted-foreground">
+          {treatment.nickname} · {protocol.name}
+        </p>
         <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1 text-xs font-medium text-success">
           <ShieldCheck className="h-3 w-3" /> Vídeos validados por equipe médica
         </div>
       </header>
+
+      <TreatmentSwitcher />
 
       <div className="mt-5 -mx-5 flex gap-2 overflow-x-auto px-5 pb-1">
         {FILTERS.map((f) => (
@@ -59,7 +75,7 @@ function ExercisesPage() {
         ))}
       </div>
 
-      {prescription.status === "active" && (
+      {treatment.status === "active" && (
         <Link
           to="/session/$sid"
           params={{ sid: "today" }}
@@ -67,7 +83,9 @@ function ExercisesPage() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-primary-dark">Sessão de hoje</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-primary-dark">
+                Sessão de hoje
+              </p>
               <p className="mt-0.5 text-base font-bold text-foreground">{today.phase.name}</p>
               <p className="text-xs text-muted-foreground">{today.phase.exercises.length} exercícios</p>
             </div>
@@ -86,7 +104,13 @@ function ExercisesPage() {
             <ExerciseCard
               key={`${phase}-${ex.id}`}
               exercise={ex}
-              status={phase < progress.current_phase ? "done" : phase === progress.current_phase ? "current" : "next"}
+              status={
+                phase < treatment.current_phase
+                  ? "done"
+                  : phase === treatment.current_phase
+                    ? "current"
+                    : "next"
+              }
             />
           ))
         )}

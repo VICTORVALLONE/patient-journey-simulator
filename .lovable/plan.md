@@ -1,101 +1,111 @@
+## Visão geral
 
-# Plano — MVP FisioCare (frontend interativo, sem backend)
+Separar o modelo atual em dois níveis:
 
-Construir o MVP do FisioCare como app mobile-first com toda a jornada do paciente funcionando ponta a ponta, usando dados mockados e estado local persistido. Sem Supabase, sem FCM, sem Bunny.net por enquanto — mas com a arquitetura preparada para plugá-los depois.
+- **Paciente** — dados pessoais (nome, nascimento, peso, altura, meta de recuperação, contato). Vivem 1x por usuário.
+- **Tratamento** — uma prescrição + protocolo + progresso + sessões + badges, com início/fim próprios. Um paciente pode ter **N tratamentos**, vários **ativos ao mesmo tempo** (ex: joelho direito + ombro) e outros já **concluídos** (histórico).
 
-## Adaptações em relação ao SPEC
+Todos os indicadores (aderência, streak, dor, badges, fase atual, PDF) passam a ser **por tratamento**.
 
-O SPEC sugere React 18 + Vite + React Router v6 + Zustand + Tailwind v3. O projeto atual já vem com TanStack Start (React 19 + TanStack Router + Tailwind v4 + shadcn/ui), que é equivalente em capacidade e melhor para SSR/SEO. Mantenho **todo o design system, modelos de dados, mocks e telas** do SPEC. Trocas:
+## Onboarding em duas camadas
 
-- **Roteamento:** TanStack Router (file-based em `src/routes/`) no lugar de React Router v6 — mesmas rotas.
-- **Estado:** Zustand para estado global do paciente + persistência em `localStorage` (só para o MVP mock; SPEC pede Supabase, mas sem backend não há alternativa). Marcaremos com `TODO: migrar para Supabase`.
-- **Vídeos:** placeholder `<video>` com poster (sem URLs reais do Bunny.net ainda) + fallback visual + contador de tempo simulado.
-- **Push notifications, magic link, PDF export:** stubs de UI funcionais (botões/telas existem) mas sem integração real — claramente marcados.
-- **Tailwind v4:** tokens do SPEC mapeados para `src/styles.css` em `oklch`, expostos como utilitários semânticos (`bg-primary`, `text-pain-high`, etc.).
-- **Charts:** Recharts (já comum no stack shadcn).
-- **Confete:** `canvas-confetti` (leve, sem React deps).
+1. **Onboarding pessoal** (3 etapas) — nome, nascimento/peso/altura, meta. Termina criando o paciente.
+2. **Tela "Sem tratamento ativo"** na Home com CTA **"Iniciar tratamento"**.
+3. **Onboarding de tratamento** (3 etapas) — tipo de lesão, lado afetado + data de cirurgia, médico prescritor + horário de lembrete. Cria o tratamento e ativa.
 
-## Escopo das telas (todas do SPEC §8)
+O mesmo fluxo de "Iniciar tratamento" é reutilizado depois para adicionar um 2º, 3º tratamento a qualquer momento.
 
-1. `/welcome` — boas-vindas + "Entrar" mock (sem magic link, só simula).
-2. `/onboarding` — 5 steps (diagnóstico, dados pessoais, meta, preview, notificações) + celebração final.
-3. `/home` — saudação, SessionCard do dia, frase motivacional dinâmica, quick stats, atividade recente.
-4. `/exercises` — lista filtrável por região + banner da sessão de hoje.
-5. `/exercises/session/:sid` — visão geral da sessão.
-6. `/exercises/session/:sid/exercise/:eid` — player + instruções + stepper de fase da sessão + "Concluir exercício".
-7. Check-in pós-sessão — 3 etapas (dor com EmojiPainScale, dificuldade, observação) + tela de celebração com badges desbloqueados.
-8. `/progress` — hero dark, conquistas, gráficos (barras semanais, linha de dor), atividade recente, botão "Compartilhar com médico" (gera PDF mock via `jspdf`).
-9. `/profile` — dados, recovery journey, settings (stubs).
-10. `/support` — FAQ estático + botão WhatsApp (link `wa.me`).
-11. Telas de conclusão de fase e de protocolo (modais fullscreen com confete).
+## Mudanças de UX
 
-## Dados e lógica
+- **Home** — chip horizontal no topo "Meus tratamentos" listando os ativos (LCA · Joelho D, Manguito · Ombro E, +). Toque troca o tratamento em foco; o restante da Home (sessão de hoje, mensagem dinâmica, streak) reflete o selecionado. Botão **"+ Novo tratamento"** no fim do chip.
+- **Exercícios** — sempre do tratamento em foco; subtítulo mostra qual é.
+- **Sessão / Check-in** — não muda visualmente; grava no tratamento em foco.
+- **Progresso** — gráficos, badges e PDF do tratamento em foco; chip de troca igual ao da Home. PDF passa a citar nome do tratamento e período.
+- **Perfil** — seção **"Tratamentos"** lista ativos e concluídos com status, data início/fim, % aderência e link para detalhes (read-only para concluídos). Botão "Iniciar novo tratamento". Dados pessoais editáveis em bloco separado.
 
-- 3 protocolos completos (LCA, Menisco, Patelofemoral) e MOCK_USER/MOCK_PRESCRIPTION/MOCK_PROGRESS do SPEC §5–6, em `src/data/`.
-- Store Zustand (`src/store/patient.ts`) com seletores para: prescrição ativa, sessão de hoje, progresso derivado, badges, histórico de dor.
-- Concluir sessão → atualiza streak, adesão, badges; persiste em localStorage; dispara modais corretos (badge novo, fase concluída, protocolo concluído).
-- `checkNewBadges`, `getDynamicMessage`, `getEvolutionMessage` implementados conforme SPEC.
-- Para demonstrar o app de cara, o store carrega o MOCK_PROGRESS (paciente Alexandre na Fase 2) por padrão. Botão "Resetar progresso (demo)" no `/profile` para voltar ao estado inicial.
+## Mudanças técnicas
 
-## Arquitetura de arquivos
+**Tipos (`src/lib/types.ts`)**
+- `User` enxuto: só dados pessoais (remover `recovery_goal` daqui? não — manter, é pessoal).
+- Novo `Treatment` = junta `Prescription` + `Progress` + lista de `Session` + `badges_unlocked` + `current_phase` + `started_at` / `completed_at` + `nickname` ("Joelho direito").
+- `Session.treatment_id` substitui `prescription_id`.
 
+**Store (`src/store/patient.ts`)**
 ```
+{
+  isOnboarded: boolean,
+  user: User,
+  treatments: Treatment[],
+  activeTreatmentId: string | null,   // tratamento em foco na UI
+  onboardingDraft: { user?, treatment? }
+}
+```
+Ações novas/refatoradas:
+- `completePersonalOnboarding(draft)` — cria User, isOnboarded=true, treatments=[].
+- `startTreatment(draft)` — cria Treatment, adiciona em treatments, vira o activeTreatmentId.
+- `setActiveTreatment(id)` — troca foco.
+- `completeSession(input)` — opera sobre `activeTreatmentId` (mesma lógica de hoje, só escopada).
+- `pauseTreatment(id)` / `completeTreatment(id)` — muda status.
+- `resetToDemo` — passa a popular `user` + 1 Treatment LCA ativo + 1 Patelofemoral concluído (mostra histórico).
+- `resetToInitial` — só user, sem tratamentos (para testar a tela vazia).
+
+Helpers:
+- `getActiveTreatment(state)`, `currentPhaseOf(treatment)`, `todaySessionInfoOf(treatment)`.
+- `getDynamicMessage` / badges / PDF passam a receber `Treatment` em vez de `Progress` solto.
+
+**Rotas**
+- `/welcome` — inalterado.
+- `/onboarding` — passa a ter apenas as 3 etapas pessoais. Ao final, vai para `/home`.
+- **Nova** `/onboarding/treatment` — 3 etapas do tratamento; usada tanto no fluxo inicial (CTA da home vazia) quanto para adicionar novos.
+- `/_app/home` — adiciona `<TreatmentSwitcher />` no topo; se `treatments.length === 0`, mostra empty-state com CTA.
+- `/_app/exercises`, `/_app/progress`, `/_app/session/...` — leem do tratamento ativo.
+- **Nova** `/_app/treatments` (acessível pelo perfil) — lista todos com filtros Ativos / Concluídos; toque abre `/_app/treatments/$tid` com resumo + PDF + badges (read-only se concluído).
+
+**Componentes novos**
+- `components/treatment/TreatmentSwitcher.tsx` — chips horizontais + "+ Novo".
+- `components/treatment/EmptyTreatmentState.tsx` — usado na Home quando não há tratamento.
+- `components/treatment/TreatmentCard.tsx` — usado no Perfil e na lista de tratamentos.
+
+**Mocks (`src/data/mockUser.ts`)**
+- `MOCK_USER` perde campos de prescrição.
+- Novo `MOCK_TREATMENT_LCA_ACTIVE` (fase 2, 24/36 sessões — equivalente ao demo atual).
+- Novo `MOCK_TREATMENT_PATELLO_DONE` (concluído, 100% aderência, PDF disponível).
+- `resetToDemo` carrega ambos; activeTreatmentId = LCA.
+
+**Migrações de UI sutis**
+- BottomNav inalterada.
+- PDF (`pdfReport.ts`) recebe `Treatment` e inclui o nome/data do tratamento no cabeçalho.
+- LocalStorage: bump da chave para `fisiocare-patient-v2` (descarta estado antigo automaticamente; não há backend ainda).
+
+## Fora do escopo deste passo
+
+- Backend / Supabase / sync entre dispositivos.
+- Edição/arquivamento de tratamentos pelo paciente (médico que faz).
+- Notificações push reais.
+- Comparativo entre tratamentos do mesmo paciente (futuro).
+
+## Estrutura final de arquivos (deltas)
+
+```text
 src/
+  lib/types.ts                    (refatorado: + Treatment, User enxuto)
+  store/patient.ts                (refatorado: treatments[] + activeTreatmentId)
+  data/mockUser.ts                (refatorado: user + 2 treatments demo)
+  lib/pdfReport.ts                (recebe Treatment)
+  lib/dynamicMessages.ts          (recebe Treatment)
+  components/treatment/
+    TreatmentSwitcher.tsx         (novo)
+    EmptyTreatmentState.tsx       (novo)
+    TreatmentCard.tsx             (novo)
   routes/
-    __root.tsx                       (shell, providers, bottom nav condicional)
-    index.tsx                         (redirect → /welcome ou /home)
-    welcome.tsx
-    onboarding.tsx                    (gerencia 5 steps internamente)
-    _app.tsx                          (layout autenticado com bottom nav + <Outlet/>)
-    _app.home.tsx
-    _app.exercises.tsx
-    _app.exercises.session.$sid.tsx
-    _app.exercises.session.$sid.exercise.$eid.tsx
-    _app.progress.tsx
-    _app.profile.tsx
-    _app.support.tsx
-  components/
-    layout/BottomNav.tsx
-    session/SessionCard, ExerciseCard, EmojiPainScale, VideoPlayer, SessionStepper
-    progress/PainTrendChart, WeeklyFrequencyChart, BadgeGrid, EvolutionHero
-    celebration/Confetti, SessionComplete, PhaseComplete, ProtocolComplete
-    ui/ (shadcn já existente)
-  data/
-    protocols/lca.ts, meniscus.ts, patellofemoral.ts
-    mockUser.ts, badges.ts
-  store/
-    patient.ts (Zustand + persist)
-  lib/
-    badges.ts, dynamicMessages.ts, sessionScheduling.ts, pdfReport.ts
-  styles.css (tokens do SPEC em oklch)
+    onboarding.tsx                (encolhe para 3 etapas pessoais)
+    onboarding.treatment.tsx      (novo, 3 etapas do tratamento)
+    _app.home.tsx                 (switcher + empty state)
+    _app.exercises.tsx            (lê tratamento ativo)
+    _app.progress.tsx             (lê tratamento ativo + switcher)
+    _app.session.$sid.tsx         (lê tratamento ativo)
+    _app.session.$sid.exercise.$eid.tsx  (lê tratamento ativo)
+    _app.profile.tsx              (seção Tratamentos + link p/ lista)
+    _app.treatments.tsx           (novo, lista)
+    _app.treatments.$tid.tsx      (novo, detalhe read-only)
 ```
-
-## Design system
-
-Mapeio todas as cores do SPEC §3.1 para tokens semânticos em `src/styles.css` (oklch), incluindo `--pain-low/mid/high`, `--primary-navy` (hero dark), etc. Tipografia Inter via `<link>` do Google Fonts em `__root.tsx`. Componentes shadcn reutilizados (Button, Card, Tabs, Dialog, Sheet) com classes alinhadas ao SPEC.
-
-## Dependências a adicionar
-
-`zustand`, `recharts`, `canvas-confetti`, `jspdf`, `date-fns`. (Lucide, Tailwind, shadcn já presentes.)
-
-## Fora de escopo (deixados como stubs marcados)
-
-- Auth real (magic link)
-- Supabase / persistência server-side
-- Push notifications reais (FCM)
-- Vídeos reais do Bunny.net (uso placeholders)
-- PWA manifest + service worker (posso adicionar manifest básico se quiser, mas SW fica para depois)
-- Painel médico
-
-## Ordem de implementação
-
-1. Tokens de design + fontes + layout base com bottom nav.
-2. Mocks (3 protocolos, user, progress) + store Zustand com persist.
-3. Welcome + Onboarding (5 steps).
-4. Home + Exercises (lista + filtros) + Session overview.
-5. Execução de exercício + Check-in + Celebração + lógica de badges.
-6. Progresso (charts) + Profile + Support.
-7. Telas de conclusão de fase e de protocolo + PDF de compartilhamento.
-8. Polimento: animações, estados vazios, acessibilidade básica.
-
-Quer que eu siga com este plano, ou prefere ajustar algo (ex: incluir PWA/manifest, ou simular auth com tela de login)?

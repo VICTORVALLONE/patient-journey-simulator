@@ -1,10 +1,9 @@
-import type { Prescription, Progress, User } from "@/lib/types";
+import type { Treatment, User } from "@/lib/types";
 import { BADGES } from "@/data/badges";
 
 export async function generateDoctorReport(
   user: User,
-  prescription: Prescription,
-  progress: Progress,
+  treatment: Treatment,
   protocolName: string,
 ): Promise<void> {
   const { default: jsPDF } = await import("jspdf");
@@ -39,11 +38,19 @@ export async function generateDoctorReport(
   doc.text("Tratamento", 40, y);
   doc.setFont("helvetica", "normal");
   y += 18;
+  doc.text(`Apelido: ${treatment.nickname}`, 40, y);
+  y += 16;
   doc.text(`Protocolo: ${protocolName}`, 40, y);
   y += 16;
-  doc.text(`Prescrito por: ${prescription.prescribed_by}`, 40, y);
+  doc.text(`Status: ${treatment.status}`, 40, y);
   y += 16;
-  doc.text(`Início: ${prescription.start_date} · Lado: ${prescription.affected_side}`, 40, y);
+  doc.text(`Prescrito por: ${treatment.prescribed_by}`, 40, y);
+  y += 16;
+  doc.text(
+    `Início: ${treatment.started_at}${treatment.completed_at ? ` · Fim: ${treatment.completed_at}` : ""} · Lado: ${treatment.affected_side}`,
+    40,
+    y,
+  );
   y += 28;
 
   doc.setFont("helvetica", "bold");
@@ -51,21 +58,21 @@ export async function generateDoctorReport(
   doc.setFont("helvetica", "normal");
   y += 18;
   doc.text(
-    `Sessões: ${progress.total_sessions_completed} de ${progress.total_sessions_prescribed} (${progress.adherence_rate}%)`,
+    `Sessões: ${treatment.total_sessions_completed} de ${treatment.total_sessions_prescribed} (${treatment.adherence_rate}%)`,
     40,
     y,
   );
   y += 16;
-  doc.text(`Sequência atual: ${progress.current_streak} dias · Maior: ${progress.longest_streak} dias`, 40, y);
+  doc.text(`Sequência atual: ${treatment.current_streak} dias · Maior: ${treatment.longest_streak} dias`, 40, y);
   y += 16;
-  doc.text(`Fase atual: ${progress.current_phase} · Fases concluídas: ${progress.phases_completed.join(", ") || "—"}`, 40, y);
+  doc.text(`Fase atual: ${treatment.current_phase} · Fases concluídas: ${treatment.phases_completed.join(", ") || "—"}`, 40, y);
   y += 28;
 
   doc.setFont("helvetica", "bold");
   doc.text("Evolução da dor (média semanal, 0–10)", 40, y);
   doc.setFont("helvetica", "normal");
   y += 18;
-  for (const entry of progress.pain_history) {
+  for (const entry of treatment.pain_history) {
     doc.text(`Semana ${entry.week}: ${entry.average_pain.toFixed(1)} (${entry.session_count} sessões)`, 50, y);
     y += 14;
   }
@@ -75,7 +82,7 @@ export async function generateDoctorReport(
   doc.text("Conquistas desbloqueadas", 40, y);
   doc.setFont("helvetica", "normal");
   y += 18;
-  for (const id of progress.badges_unlocked) {
+  for (const id of treatment.badges_unlocked) {
     const b = BADGES[id];
     if (!b) continue;
     doc.text(`• ${b.name} — ${b.description}`, 50, y);
@@ -90,7 +97,8 @@ export async function generateDoctorReport(
     doc.internal.pageSize.getHeight() - 30,
   );
 
-  doc.save(`fisiocare-relatorio-${user.name.split(" ")[0]?.toLowerCase()}.pdf`);
+  const slug = treatment.nickname.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  doc.save(`fisiocare-relatorio-${slug || "tratamento"}.pdf`);
 }
 
 function calcAge(iso: string): number {

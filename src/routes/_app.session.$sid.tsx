@@ -1,7 +1,7 @@
-import { createFileRoute, Link, Outlet, useChildMatches, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useChildMatches, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Clock, Dumbbell, PlayCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { usePatientStore, todaySessionInfo } from "@/store/patient";
+import { useActiveTreatment, todaySessionInfoOf } from "@/store/patient";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/session/$sid")({
@@ -19,10 +19,19 @@ const phaseLabel: Record<string, string> = {
 function SessionOverview() {
   const navigate = useNavigate();
   const childMatches = useChildMatches();
+  const treatment = useActiveTreatment();
   if (childMatches.length > 0) return <Outlet />;
-  const progress = usePatientStore((s) => s.progress);
-  const prescription = usePatientStore((s) => s.prescription);
-  const today = todaySessionInfo(progress, prescription.protocol_id);
+  if (!treatment) {
+    return (
+      <div className="p-6 text-sm text-muted-foreground">
+        Nenhum tratamento ativo.{" "}
+        <Link to="/home" className="text-primary underline">
+          Voltar
+        </Link>
+      </div>
+    );
+  }
+  const today = todaySessionInfoOf(treatment);
 
   const grouped = (["warmup", "active", "peak", "rest"] as const).map((p) => ({
     phase: p,
@@ -30,7 +39,7 @@ function SessionOverview() {
   }));
 
   const totalMinutes = today.phase.exercises.reduce(
-    (sum, ex) =>
+    (sum: number, ex) =>
       sum +
       (ex.duration_seconds
         ? Math.round(ex.duration_seconds / 60)
