@@ -19,8 +19,8 @@ const phaseLabel: Record<string, string> = {
 function SessionOverview() {
   const navigate = useNavigate();
   const childMatches = useChildMatches();
-  if (childMatches.length > 0) return <Outlet />;
   const treatment = useActiveTreatment();
+  if (childMatches.length > 0) return <Outlet />;
   if (!treatment) {
     return (
       <div className="p-6 text-sm text-muted-foreground">
