@@ -1,111 +1,71 @@
-## Visão geral
+# Plano de melhorias do MVP
 
-Separar o modelo atual em dois níveis:
+## 1. Foto de perfil de teste
+- Adicionar `avatar_url?: string` em `User` (`src/lib/types.ts`).
+- Gerar uma foto retrato realista (Alexandre, ~35a, ambiente claro) via imagegen e referenciar em `MOCK_USER.avatar_url` (`src/data/mockUser.ts`).
+- Em `_app.profile.tsx`: trocar o círculo com inicial por `<img>` quando houver `avatar_url`, com fallback para a inicial.
+- Mostrar a mesma foto também no header do Home (avatar pequeno) para consistência.
 
-- **Paciente** — dados pessoais (nome, nascimento, peso, altura, meta de recuperação, contato). Vivem 1x por usuário.
-- **Tratamento** — uma prescrição + protocolo + progresso + sessões + badges, com início/fim próprios. Um paciente pode ter **N tratamentos**, vários **ativos ao mesmo tempo** (ex: joelho direito + ombro) e outros já **concluídos** (histórico).
+## 2. Histórico do tratamento concluído (Patelofemoral)
+Hoje `MOCK_TREATMENT_PATELLO_DONE.sessions = []`. Vamos popular dados realistas para que o detalhe do tratamento mostre histórico real:
+- Gerar 36 `Session`s (12 semanas × 3/semana) com `completed_at` distribuído entre `2023-06-01` e `2023-09-30`, `pain_level` decrescente (6 → 0), `difficulty_rating` variável, `duration_minutes` ~22–35, `exercises_completed` preenchido com os ids do protocolo de cada fase, e algumas `notes` curtas.
+- Expandir a tela `_app.treatments.$tid.tsx` para o caso `completed`:
+  - Mostrar gráfico de evolução da dor (reutilizar `PainTrendChart`).
+  - Mostrar frequência semanal (`WeeklyFrequencyChart`).
+  - Lista enxuta das últimas 8 sessões com data, duração, dor e dificuldade.
+  - Tempo total de tratamento (semanas) e redução de dor (de X → Y).
 
-Todos os indicadores (aderência, streak, dor, badges, fase atual, PDF) passam a ser **por tratamento**.
+## 3. Imagens de referência nos vídeos
+- Substituir os SVG `T1/T2/T3` por thumbnails reais por região corporal: joelho, quadril, tornozelo, core (4 imagens geradas com imagegen — fotos de fisioterapia, mesmo estilo visual).
+- Atualizar `src/data/protocols.ts` para mapear `thumbnail_url` por `body_region` (helper `thumbFor(region)`), em vez de cores arbitrárias.
+- `VideoPlayer.tsx`: aceitar e exibir a mesma imagem como poster do "vídeo" (já usa thumbnail; manter), mas melhorar o overlay (gradient + chip "Demo") para deixar claro que ainda não há vídeo real.
 
-## Onboarding em duas camadas
+## 4. Navegação na página de exercícios
+Hoje os cards em `_app.exercises.tsx` não são clicáveis. Mudanças:
+- Em `ExerciseCard`, passar a aceitar `to` + `params` do TanStack Router em vez de `href` string genérica, e tornar o card sempre clicável quando informado.
+- Em `_app.exercises.tsx`, envolver cada card com link para `/session/$sid/exercise/$eid` usando `sid: "today"` e `eid: ex.id`, permitindo abrir o detalhe do exercício direto da listagem (não só a partir da sessão).
+- Garantir que `_app.session.$sid.exercise.$eid.tsx` lide com `sid="today"` (já lida) e adicionar um botão "Voltar para exercícios" quando a origem for a lista.
 
-1. **Onboarding pessoal** (3 etapas) — nome, nascimento/peso/altura, meta. Termina criando o paciente.
-2. **Tela "Sem tratamento ativo"** na Home com CTA **"Iniciar tratamento"**.
-3. **Onboarding de tratamento** (3 etapas) — tipo de lesão, lado afetado + data de cirurgia, médico prescritor + horário de lembrete. Cria o tratamento e ativa.
+## 5. AI Doctor no Suporte (chat conversacional)
+Resposta do usuário: **uma única conversa contínua**, **localStorage**.
 
-O mesmo fluxo de "Iniciar tratamento" é reutilizado depois para adicionar um 2º, 3º tratamento a qualquer momento.
+### Backend (Lovable Cloud + Lovable AI Gateway)
+- Habilitar Lovable Cloud (se ainda não estiver) — necessário para `LOVABLE_API_KEY` server-side.
+- Criar `src/lib/ai-gateway.server.ts` com o helper canônico do `ai-sdk-lovable-gateway`.
+- Criar rota de stream em `src/routes/api/chat.ts`:
+  - `POST` recebe `{ messages: UIMessage[] }`.
+  - Usa `streamText` com modelo `google/gemini-3-flash-preview`.
+  - System prompt: "Você é o AI Doctor do FisioCare, um assistente conversacional para pacientes em reabilitação ortopédica de joelho. Responde em português, com tom acolhedor e claro. Sempre lembra que não substitui consulta médica, e em sinais de alerta (dor aguda, febre, instabilidade súbita) orienta procurar o médico responsável. Não diagnostica nem prescreve."
+  - Injetar contexto resumido do tratamento ativo no system (nickname, fase, % adesão, dor média recente) — passado pelo cliente em cada request.
 
-## Mudanças de UX
+### Dependências
+- `bun add ai @ai-sdk/openai-compatible @ai-sdk/react react-markdown`
+- Instalar AI Elements: `bun x ai-elements@latest add conversation message prompt-input shimmer`.
 
-- **Home** — chip horizontal no topo "Meus tratamentos" listando os ativos (LCA · Joelho D, Manguito · Ombro E, +). Toque troca o tratamento em foco; o restante da Home (sessão de hoje, mensagem dinâmica, streak) reflete o selecionado. Botão **"+ Novo tratamento"** no fim do chip.
-- **Exercícios** — sempre do tratamento em foco; subtítulo mostra qual é.
-- **Sessão / Check-in** — não muda visualmente; grava no tratamento em foco.
-- **Progresso** — gráficos, badges e PDF do tratamento em foco; chip de troca igual ao da Home. PDF passa a citar nome do tratamento e período.
-- **Perfil** — seção **"Tratamentos"** lista ativos e concluídos com status, data início/fim, % aderência e link para detalhes (read-only para concluídos). Botão "Iniciar novo tratamento". Dados pessoais editáveis em bloco separado.
+### Frontend
+- Substituir o conteúdo do `_app.support.tsx` por uma tela "AI Doctor":
+  - Header: avatar do "doutor IA" (imagem gerada), nome "AI Doctor", subtítulo "Tire dúvidas sobre seu tratamento".
+  - Aviso compacto: "Apoio educacional, não substitui consulta médica."
+  - Componente `AiDoctorChat` em `src/components/support/AiDoctorChat.tsx` usando `useChat` (`DefaultChatTransport({ api: "/api/chat" })`).
+  - Render com AI Elements: `Conversation`, `Message`/`MessageResponse` (assistant sem bubble; user bubble `primary`/`primary-foreground`), `PromptInput` + `PromptInputTextarea` + `PromptInputFooter` com `PromptInputSubmit`, `Shimmer "Pensando..."` no estado submitted.
+  - Persistência em `localStorage` chave `fisiocare-aidoctor-v1` (UIMessage[]), com botão "Nova conversa" no header que limpa.
+  - Sugestões iniciais (chips) quando vazio: "Posso voltar a correr?", "Estou sentindo estalos, é normal?", "Como aumento a intensidade?".
+  - Antes do canal estar pronto: enviar `treatmentContext` (nickname/fase/adesão) no `body` do transport.
+- Manter FAQ e WhatsApp/telefone numa aba/seção secundária ("Outras formas de ajuda") abaixo do chat, para não perder o conteúdo existente.
 
-## Mudanças técnicas
+### Wiring TanStack
+- Confirmar `src/start.ts` (sem mudanças necessárias se cloud não exigir auth para o chat — o endpoint é app-internal sem RLS).
+- Sem persistência em banco; sem rota de thread.
 
-**Tipos (`src/lib/types.ts`)**
-- `User` enxuto: só dados pessoais (remover `recovery_goal` daqui? não — manter, é pessoal).
-- Novo `Treatment` = junta `Prescription` + `Progress` + lista de `Session` + `badges_unlocked` + `current_phase` + `started_at` / `completed_at` + `nickname` ("Joelho direito").
-- `Session.treatment_id` substitui `prescription_id`.
+## Detalhes técnicos
+- Imagens geradas serão salvas em `src/assets/...` e importadas via ES6.
+- Não vamos editar `src/routeTree.gen.ts` (regenera com o novo arquivo `src/routes/api/chat.ts`).
+- Bump da chave de persistência **não** é necessário (somente novos campos opcionais em mock; store já carrega via `resetToDemo`).
+- `MOCK_USER.avatar_url` opcional — render fallback preservado.
 
-**Store (`src/store/patient.ts`)**
-```
-{
-  isOnboarded: boolean,
-  user: User,
-  treatments: Treatment[],
-  activeTreatmentId: string | null,   // tratamento em foco na UI
-  onboardingDraft: { user?, treatment? }
-}
-```
-Ações novas/refatoradas:
-- `completePersonalOnboarding(draft)` — cria User, isOnboarded=true, treatments=[].
-- `startTreatment(draft)` — cria Treatment, adiciona em treatments, vira o activeTreatmentId.
-- `setActiveTreatment(id)` — troca foco.
-- `completeSession(input)` — opera sobre `activeTreatmentId` (mesma lógica de hoje, só escopada).
-- `pauseTreatment(id)` / `completeTreatment(id)` — muda status.
-- `resetToDemo` — passa a popular `user` + 1 Treatment LCA ativo + 1 Patelofemoral concluído (mostra histórico).
-- `resetToInitial` — só user, sem tratamentos (para testar a tela vazia).
-
-Helpers:
-- `getActiveTreatment(state)`, `currentPhaseOf(treatment)`, `todaySessionInfoOf(treatment)`.
-- `getDynamicMessage` / badges / PDF passam a receber `Treatment` em vez de `Progress` solto.
-
-**Rotas**
-- `/welcome` — inalterado.
-- `/onboarding` — passa a ter apenas as 3 etapas pessoais. Ao final, vai para `/home`.
-- **Nova** `/onboarding/treatment` — 3 etapas do tratamento; usada tanto no fluxo inicial (CTA da home vazia) quanto para adicionar novos.
-- `/_app/home` — adiciona `<TreatmentSwitcher />` no topo; se `treatments.length === 0`, mostra empty-state com CTA.
-- `/_app/exercises`, `/_app/progress`, `/_app/session/...` — leem do tratamento ativo.
-- **Nova** `/_app/treatments` (acessível pelo perfil) — lista todos com filtros Ativos / Concluídos; toque abre `/_app/treatments/$tid` com resumo + PDF + badges (read-only se concluído).
-
-**Componentes novos**
-- `components/treatment/TreatmentSwitcher.tsx` — chips horizontais + "+ Novo".
-- `components/treatment/EmptyTreatmentState.tsx` — usado na Home quando não há tratamento.
-- `components/treatment/TreatmentCard.tsx` — usado no Perfil e na lista de tratamentos.
-
-**Mocks (`src/data/mockUser.ts`)**
-- `MOCK_USER` perde campos de prescrição.
-- Novo `MOCK_TREATMENT_LCA_ACTIVE` (fase 2, 24/36 sessões — equivalente ao demo atual).
-- Novo `MOCK_TREATMENT_PATELLO_DONE` (concluído, 100% aderência, PDF disponível).
-- `resetToDemo` carrega ambos; activeTreatmentId = LCA.
-
-**Migrações de UI sutis**
-- BottomNav inalterada.
-- PDF (`pdfReport.ts`) recebe `Treatment` e inclui o nome/data do tratamento no cabeçalho.
-- LocalStorage: bump da chave para `fisiocare-patient-v2` (descarta estado antigo automaticamente; não há backend ainda).
-
-## Fora do escopo deste passo
-
-- Backend / Supabase / sync entre dispositivos.
-- Edição/arquivamento de tratamentos pelo paciente (médico que faz).
-- Notificações push reais.
-- Comparativo entre tratamentos do mesmo paciente (futuro).
-
-## Estrutura final de arquivos (deltas)
-
-```text
-src/
-  lib/types.ts                    (refatorado: + Treatment, User enxuto)
-  store/patient.ts                (refatorado: treatments[] + activeTreatmentId)
-  data/mockUser.ts                (refatorado: user + 2 treatments demo)
-  lib/pdfReport.ts                (recebe Treatment)
-  lib/dynamicMessages.ts          (recebe Treatment)
-  components/treatment/
-    TreatmentSwitcher.tsx         (novo)
-    EmptyTreatmentState.tsx       (novo)
-    TreatmentCard.tsx             (novo)
-  routes/
-    onboarding.tsx                (encolhe para 3 etapas pessoais)
-    onboarding.treatment.tsx      (novo, 3 etapas do tratamento)
-    _app.home.tsx                 (switcher + empty state)
-    _app.exercises.tsx            (lê tratamento ativo)
-    _app.progress.tsx             (lê tratamento ativo + switcher)
-    _app.session.$sid.tsx         (lê tratamento ativo)
-    _app.session.$sid.exercise.$eid.tsx  (lê tratamento ativo)
-    _app.profile.tsx              (seção Tratamentos + link p/ lista)
-    _app.treatments.tsx           (novo, lista)
-    _app.treatments.$tid.tsx      (novo, detalhe read-only)
-```
+## Critérios de aceite
+- Perfil mostra foto do Alexandre; iniciais ainda aparecem se `avatar_url` ausente.
+- `/treatments/tr_patello_done` mostra gráfico de dor, frequência semanal e lista de sessões reais.
+- Thumbnails dos exercícios são fotos (não SVG abstrato).
+- Tap em um exercício na aba Exercícios abre a tela de detalhe do exercício.
+- Em `/support`, conversar com o AI Doctor funciona (stream), com sugestões iniciais, persistência local e botão de nova conversa.
