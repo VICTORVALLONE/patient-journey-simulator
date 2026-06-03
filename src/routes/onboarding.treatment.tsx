@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, Bell, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,12 @@ function TreatmentOnboardingPage() {
   const [step, setStep] = useState(1);
   const totalSteps = 3;
 
+  useEffect(() => {
+    if (hydrated && !isOnboarded) {
+      navigate({ to: "/welcome" });
+    }
+  }, [hydrated, isOnboarded, navigate]);
+
   const injury = (draft.injury_type ?? "lca") as InjuryType;
   const protocolMeta = INJURY_OPTIONS.find((i) => i.value === injury)!;
   const protocol = useMemo(() => getProtocol(protocolMeta.protocolId), [protocolMeta.protocolId]);
@@ -48,10 +54,7 @@ function TreatmentOnboardingPage() {
       </MobileFrame>
     );
 
-  if (!isOnboarded) {
-    navigate({ to: "/welcome" });
-    return null;
-  }
+  if (!isOnboarded) return null;
 
   return (
     <MobileFrame withNav={false}>
