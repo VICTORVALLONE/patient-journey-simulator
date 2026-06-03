@@ -35,7 +35,7 @@ function extractText(m: UIMessage): string {
     .join("");
 }
 
-export function AiDoctorChat() {
+export function AiDoctorChat({ className }: { className?: string } = {}) {
   const treatment = useActiveTreatment();
 
   const treatmentContext = useMemo(() => {
@@ -118,7 +118,12 @@ export function AiDoctorChat() {
   }
 
   return (
-    <div className="flex h-[70vh] min-h-[460px] flex-col overflow-hidden rounded-2xl border border-border bg-card">
+    <div
+      className={cn(
+        "flex h-[70vh] min-h-[460px] flex-col overflow-hidden rounded-2xl border border-border bg-card",
+        className,
+      )}
+    >
       <div className="flex items-center justify-between border-b border-border px-4 py-2">
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Conversa
