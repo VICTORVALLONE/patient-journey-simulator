@@ -13,6 +13,7 @@ import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as OnboardingTreatmentRouteImport } from './routes/onboarding.treatment'
 import { Route as AppSupportRouteImport } from './routes/_app.support'
 import { Route as AppProgressRouteImport } from './routes/_app.progress'
 import { Route as AppProfileRouteImport } from './routes/_app.profile'
@@ -39,6 +40,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingTreatmentRoute = OnboardingTreatmentRouteImport.update({
+  id: '/treatment',
+  path: '/treatment',
+  getParentRoute: () => OnboardingRoute,
 } as any)
 const AppSupportRoute = AppSupportRouteImport.update({
   id: '/support',
@@ -79,25 +85,27 @@ const AppSessionSidExerciseEidRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/onboarding': typeof OnboardingRoute
+  '/onboarding': typeof OnboardingRouteWithChildren
   '/welcome': typeof WelcomeRoute
   '/exercises': typeof AppExercisesRoute
   '/home': typeof AppHomeRoute
   '/profile': typeof AppProfileRoute
   '/progress': typeof AppProgressRoute
   '/support': typeof AppSupportRoute
+  '/onboarding/treatment': typeof OnboardingTreatmentRoute
   '/session/$sid': typeof AppSessionSidRouteWithChildren
   '/session/$sid/exercise/$eid': typeof AppSessionSidExerciseEidRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/onboarding': typeof OnboardingRoute
+  '/onboarding': typeof OnboardingRouteWithChildren
   '/welcome': typeof WelcomeRoute
   '/exercises': typeof AppExercisesRoute
   '/home': typeof AppHomeRoute
   '/profile': typeof AppProfileRoute
   '/progress': typeof AppProgressRoute
   '/support': typeof AppSupportRoute
+  '/onboarding/treatment': typeof OnboardingTreatmentRoute
   '/session/$sid': typeof AppSessionSidRouteWithChildren
   '/session/$sid/exercise/$eid': typeof AppSessionSidExerciseEidRoute
 }
@@ -105,13 +113,14 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
-  '/onboarding': typeof OnboardingRoute
+  '/onboarding': typeof OnboardingRouteWithChildren
   '/welcome': typeof WelcomeRoute
   '/_app/exercises': typeof AppExercisesRoute
   '/_app/home': typeof AppHomeRoute
   '/_app/profile': typeof AppProfileRoute
   '/_app/progress': typeof AppProgressRoute
   '/_app/support': typeof AppSupportRoute
+  '/onboarding/treatment': typeof OnboardingTreatmentRoute
   '/_app/session/$sid': typeof AppSessionSidRouteWithChildren
   '/_app/session/$sid/exercise/$eid': typeof AppSessionSidExerciseEidRoute
 }
@@ -126,6 +135,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/progress'
     | '/support'
+    | '/onboarding/treatment'
     | '/session/$sid'
     | '/session/$sid/exercise/$eid'
   fileRoutesByTo: FileRoutesByTo
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/progress'
     | '/support'
+    | '/onboarding/treatment'
     | '/session/$sid'
     | '/session/$sid/exercise/$eid'
   id:
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/_app/profile'
     | '/_app/progress'
     | '/_app/support'
+    | '/onboarding/treatment'
     | '/_app/session/$sid'
     | '/_app/session/$sid/exercise/$eid'
   fileRoutesById: FileRoutesById
@@ -158,7 +170,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
-  OnboardingRoute: typeof OnboardingRoute
+  OnboardingRoute: typeof OnboardingRouteWithChildren
   WelcomeRoute: typeof WelcomeRoute
 }
 
@@ -191,6 +203,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/onboarding/treatment': {
+      id: '/onboarding/treatment'
+      path: '/treatment'
+      fullPath: '/onboarding/treatment'
+      preLoaderRoute: typeof OnboardingTreatmentRouteImport
+      parentRoute: typeof OnboardingRoute
     }
     '/_app/support': {
       id: '/_app/support'
@@ -276,12 +295,34 @@ const AppRouteChildren: AppRouteChildren = {
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
+interface OnboardingRouteChildren {
+  OnboardingTreatmentRoute: typeof OnboardingTreatmentRoute
+}
+
+const OnboardingRouteChildren: OnboardingRouteChildren = {
+  OnboardingTreatmentRoute: OnboardingTreatmentRoute,
+}
+
+const OnboardingRouteWithChildren = OnboardingRoute._addFileChildren(
+  OnboardingRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
-  OnboardingRoute: OnboardingRoute,
+  OnboardingRoute: OnboardingRouteWithChildren,
   WelcomeRoute: WelcomeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
