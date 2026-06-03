@@ -16,6 +16,7 @@ import type {
   ProtocolPhase,
   RecoveryGoal,
   Session,
+  SessionPhase,
   Treatment,
   User,
 } from "@/lib/types";
@@ -352,6 +353,18 @@ export const usePatientStore = create<PatientState>()(
     }),
     {
       name: "fisiocare-patient-v2",
+      version: 3,
+      migrate: (persisted: unknown, version) => {
+        if (!persisted || typeof persisted !== "object") return persisted as PatientState;
+        const state = persisted as Partial<PatientState>;
+        if (version < 3) {
+          // v3: inject avatar_url for the demo mock user if missing.
+          if (state.user && state.user.id === MOCK_USER.id && !state.user.avatar_url) {
+            state.user = { ...state.user, avatar_url: MOCK_USER.avatar_url };
+          }
+        }
+        return state as PatientState;
+      },
       storage: createJSONStorage(() => {
         if (typeof window === "undefined") {
           return {
@@ -395,7 +408,7 @@ export function todaySessionInfoOf(treatment: Treatment) {
     const ses = ph.duration_weeks * ph.sessions_per_week;
     if (treatment.total_sessions_completed < cumulative + ses) {
       return {
-        phase: ph,
+        phase: withOrderedExercises(ph),
         sessionNumber: treatment.total_sessions_completed - cumulative + 1,
         sessionsInPhase: ses,
         sessionsBeforePhase: cumulative,
@@ -406,10 +419,29 @@ export function todaySessionInfoOf(treatment: Treatment) {
   }
   const last = protocol.phases[protocol.phases.length - 1]!;
   return {
-    phase: last,
+    phase: withOrderedExercises(last),
     sessionNumber: last.duration_weeks * last.sessions_per_week,
     sessionsInPhase: last.duration_weeks * last.sessions_per_week,
     sessionsBeforePhase: cumulative - last.duration_weeks * last.sessions_per_week,
     protocol,
   };
+}
+
+const SESSION_PHASE_ORDER: Record<SessionPhase, number> = {
+  warmup: 0,
+  active: 1,
+  peak: 2,
+  rest: 3,
+};
+
+function withOrderedExercises(phase: ProtocolPhase): ProtocolPhase {
+  const sorted = [...phase.exercises]
+    .map((ex, idx) => ({ ex, idx }))
+    .sort((a, b) => {
+      const diff =
+        SESSION_PHASE_ORDER[a.ex.session_phase] - SESSION_PHASE_ORDER[b.ex.session_phase];
+      return diff !== 0 ? diff : a.idx - b.idx;
+    })
+    .map((entry) => entry.ex);
+  return { ...phase, exercises: sorted };
 }

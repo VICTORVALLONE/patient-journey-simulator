@@ -7,6 +7,7 @@ import { VideoPlayer } from "@/components/session/VideoPlayer";
 import { SessionStepper } from "@/components/session/SessionStepper";
 import { EmojiPainScale } from "@/components/session/EmojiPainScale";
 import { ConfettiBurst } from "@/components/celebration/Confetti";
+import { AiDoctorFab } from "@/components/support/AiDoctorSheet";
 import { BADGES } from "@/data/badges";
 import { usePatientStore, useActiveTreatment, todaySessionInfoOf } from "@/store/patient";
 import { getProtocol } from "@/data/protocols";
@@ -202,6 +203,8 @@ function ExecutionPage() {
           </Button>
         </div>
       </div>
+
+      <AiDoctorFab />
     </div>
   );
 }

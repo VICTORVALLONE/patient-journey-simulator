@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Bell, ChevronRight, Globe, HelpCircle, LogOut, Plus, RotateCcw, Shield } from "lucide-react";
+import { Bell, ChevronRight, Globe, HelpCircle, LogOut, Plus, RotateCcw, Shield, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePatientStore } from "@/store/patient";
 import { TreatmentCard } from "@/components/treatment/TreatmentCard";
@@ -120,6 +120,16 @@ function ProfilePage() {
         </Button>
         <Button variant="outline" className="w-full rounded-xl" onClick={resetToDemo}>
           Carregar demo (LCA + Patelofemoral)
+        </Button>
+        <Button
+          variant="outline"
+          className="w-full rounded-xl"
+          onClick={() => {
+            logout();
+            navigate({ to: "/onboarding" });
+          }}
+        >
+          <UserPlus className="mr-2 h-4 w-4" /> Testar criação de perfil
         </Button>
         <Button
           variant="ghost"
