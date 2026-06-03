@@ -8,7 +8,7 @@ import { SessionStepper } from "@/components/session/SessionStepper";
 import { EmojiPainScale } from "@/components/session/EmojiPainScale";
 import { ConfettiBurst } from "@/components/celebration/Confetti";
 import { BADGES } from "@/data/badges";
-import { usePatientStore, todaySessionInfo } from "@/store/patient";
+import { usePatientStore, useActiveTreatment, todaySessionInfoOf } from "@/store/patient";
 import { getProtocol } from "@/data/protocols";
 import { cn } from "@/lib/utils";
 import type { BadgeId } from "@/lib/types";
@@ -33,13 +33,19 @@ type Stage =
 function ExecutionPage() {
   const navigate = useNavigate();
   const { eid } = useParams({ from: "/_app/session/$sid/exercise/$eid" });
-  const progress = usePatientStore((s) => s.progress);
-  const prescription = usePatientStore((s) => s.prescription);
+  const treatment = useActiveTreatment();
   const completeSession = usePatientStore((s) => s.completeSession);
-  const today = todaySessionInfo(progress, prescription.protocol_id);
+  if (!treatment) {
+    return (
+      <div className="p-6 text-sm text-muted-foreground">
+        Nenhum tratamento ativo.
+      </div>
+    );
+  }
+  const today = todaySessionInfoOf(treatment);
 
   const exercises = today.phase.exercises;
-  const initialIndex = Math.max(0, exercises.findIndex((e) => e.id === eid));
+  const initialIndex = Math.max(0, exercises.findIndex((e: { id: string }) => e.id === eid));
   const [index, setIndex] = useState(initialIndex);
   const [completed, setCompleted] = useState<string[]>([]);
   const [stage, setStage] = useState<Stage>({ kind: "exercise" });
@@ -146,7 +152,7 @@ function ExecutionPage() {
       <section className="mt-5 rounded-2xl border border-border bg-card p-4">
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Instruções principais</p>
         <ol className="mt-2 space-y-2">
-          {ex.instructions.map((line, i) => (
+          {ex.instructions.map((line: string, i: number) => (
             <li key={i} className="flex gap-3 text-sm text-foreground">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
                 {i + 1}
@@ -310,12 +316,11 @@ function CelebrationScreen({
   protocolCompleted: boolean;
   onContinue: () => void;
 }) {
-  const progress = usePatientStore((s) => s.progress);
-  const prescription = usePatientStore((s) => s.prescription);
-  const protocol = getProtocol(prescription.protocol_id);
+  const treatment = useActiveTreatment();
+  const protocol = getProtocol(treatment?.protocol_id ?? "proto_lca");
   const nextPhase = useMemo(
-    () => protocol.phases.find((p) => p.phase_number === progress.current_phase),
-    [protocol, progress.current_phase],
+    () => protocol.phases.find((p) => p.phase_number === (treatment?.current_phase ?? 1)),
+    [protocol, treatment?.current_phase],
   );
   const completedPhase = useMemo(
     () => protocol.phases.find((p) => p.phase_number === phaseCompleted),
