@@ -4,8 +4,14 @@ import { Button } from "@/components/ui/button";
 import { WeeklyFrequencyChart } from "@/components/progress/WeeklyFrequencyChart";
 import { PainTrendChart } from "@/components/progress/PainTrendChart";
 import { BadgeStrip } from "@/components/progress/BadgeStrip";
+import { TreatmentTimeline } from "@/components/progress/TreatmentTimeline";
 import { usePatientStore, useActiveTreatment } from "@/store/patient";
-import { getEvolutionMessage } from "@/lib/dynamicMessages";
+import {
+  getEvolutionMessage,
+  painReductionPct,
+  realAdherencePct,
+  weeksProgress,
+} from "@/lib/dynamicMessages";
 import { generateDoctorReport } from "@/lib/pdfReport";
 import { getProtocol } from "@/data/protocols";
 import { TreatmentSwitcher } from "@/components/treatment/TreatmentSwitcher";
@@ -35,6 +41,9 @@ function ProgressPage() {
     painHistory.length >= 2 &&
     (painHistory[painHistory.length - 1]?.average_pain ?? 0) <
       (painHistory[0]?.average_pain ?? 0);
+  const reduction = painReductionPct(treatment);
+  const adherence = realAdherencePct(treatment);
+  const weeks = weeksProgress(treatment);
 
   return (
     <div className="px-5 pt-6">
@@ -50,19 +59,32 @@ function ProgressPage() {
         <h2 className="mt-2 text-2xl font-bold leading-tight">
           {getEvolutionMessage(treatment)}
         </h2>
-        <div className="mt-4 flex gap-4 text-sm text-white/85">
+        <div className="mt-4 grid grid-cols-3 gap-3 text-sm text-white/85">
           <div>
-            <p className="text-xl font-bold text-white">{treatment.total_sessions_completed}</p>
+            <p className="text-xl font-bold text-white">
+              {reduction !== null ? `${reduction}%` : "—"}
+            </p>
+            <p className="text-[11px] uppercase tracking-wide text-white/60">↓ dor</p>
+          </div>
+          <div>
+            <p className="text-xl font-bold text-white">
+              {weeks.done}/{weeks.total}
+            </p>
+            <p className="text-[11px] uppercase tracking-wide text-white/60">semanas</p>
+          </div>
+          <div>
+            <p className="text-xl font-bold text-white">
+              {treatment.total_sessions_completed}/{treatment.total_sessions_prescribed}
+            </p>
             <p className="text-[11px] uppercase tracking-wide text-white/60">sessões</p>
           </div>
-          <div>
-            <p className="text-xl font-bold text-white">{treatment.current_streak}</p>
-            <p className="text-[11px] uppercase tracking-wide text-white/60">dias seguidos</p>
-          </div>
-          <div>
-            <p className="text-xl font-bold text-white">{treatment.adherence_rate}%</p>
-            <p className="text-[11px] uppercase tracking-wide text-white/60">adesão</p>
-          </div>
+        </div>
+        <div className="mt-3 flex items-center justify-between text-[11px] text-white/70">
+          <span>Adesão real (vs. esperado)</span>
+          <span className="font-semibold text-white">{adherence}%</span>
+        </div>
+        <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/15">
+          <div className="h-full bg-white" style={{ width: `${adherence}%` }} />
         </div>
         <Button
           variant="outline"
@@ -71,6 +93,10 @@ function ProgressPage() {
         >
           <Share2 className="mr-2 h-4 w-4" /> Compartilhar com médico (PDF)
         </Button>
+      </section>
+
+      <section className="mt-6">
+        <TreatmentTimeline treatment={treatment} protocol={protocol} />
       </section>
 
       <section className="mt-6">

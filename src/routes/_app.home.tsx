@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Bell, Flame, TrendingUp, CheckCircle2, ChevronRight, User as UserIcon } from "lucide-react";
+import { Bell, TrendingDown, Layers, CheckCircle2, ChevronRight, User as UserIcon, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePatientStore, useActiveTreatment, todaySessionInfoOf } from "@/store/patient";
-import { getDynamicMessage, greeting } from "@/lib/dynamicMessages";
+import { getDynamicMessage, greeting, painReductionPct } from "@/lib/dynamicMessages";
 import { TreatmentSwitcher } from "@/components/treatment/TreatmentSwitcher";
 import { EmptyTreatmentState } from "@/components/treatment/EmptyTreatmentState";
+import { getProtocol } from "@/data/protocols";
 
 export const Route = createFileRoute("/_app/home")({
   head: () => ({ meta: [{ title: "Início · FisioCare" }] }),
@@ -44,6 +45,10 @@ function HomePage() {
     );
   }, 0);
   const protocolComplete = treatment.status === "completed";
+  const protocol = getProtocol(treatment.protocol_id);
+  const reduction = painReductionPct(treatment);
+  const totalPhases = protocol.phases.length;
+  const phasePct = Math.round((treatment.current_phase / totalPhases) * 100);
 
   return (
     <div className="px-5 pt-6 pb-8">
@@ -92,21 +97,27 @@ function HomePage() {
 
       <section className="mt-5 grid grid-cols-3 gap-3">
         <StatCard
-          icon={<Flame className="h-4 w-4 text-warning" />}
-          value={`${treatment.current_streak}`}
-          label="dias seguidos"
+          icon={<TrendingDown className="h-4 w-4 text-success" />}
+          value={reduction !== null ? `${reduction}%` : "—"}
+          label="redução de dor"
         />
         <StatCard
-          icon={<TrendingUp className="h-4 w-4 text-success" />}
-          value={`${treatment.adherence_rate}%`}
-          label="completo"
+          icon={<Layers className="h-4 w-4 text-primary" />}
+          value={`${treatment.current_phase}/${totalPhases}`}
+          label="fase atual"
+          progress={phasePct}
         />
         <StatCard
           icon={<CheckCircle2 className="h-4 w-4 text-primary" />}
-          value={`${treatment.total_sessions_completed}`}
+          value={`${treatment.total_sessions_completed}/${treatment.total_sessions_prescribed}`}
           label="sessões"
         />
       </section>
+
+      <p className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground">
+        <Flame className="h-3 w-3 text-warning" />
+        {treatment.current_streak} dias seguidos · maior sequência {treatment.longest_streak}
+      </p>
 
       <section className="mt-6">
         <div className="flex items-center justify-between">
@@ -149,12 +160,27 @@ function HomePage() {
   );
 }
 
-function StatCard({ icon, value, label }: { icon: React.ReactNode; value: string; label: string }) {
+function StatCard({
+  icon,
+  value,
+  label,
+  progress,
+}: {
+  icon: React.ReactNode;
+  value: string;
+  label: string;
+  progress?: number;
+}) {
   return (
     <div className="rounded-2xl border border-border bg-card p-3">
       <div className="flex items-center gap-1">{icon}</div>
       <p className="mt-1 text-xl font-bold text-foreground">{value}</p>
       <p className="text-[11px] text-muted-foreground">{label}</p>
+      {typeof progress === "number" && (
+        <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-muted">
+          <div className="h-full bg-primary" style={{ width: `${Math.min(100, progress)}%` }} />
+        </div>
+      )}
     </div>
   );
 }
