@@ -744,6 +744,16 @@ export const PROTOCOLS: Record<string, Protocol> = {
   proto_patellofemoral: PROTOCOL_PATELLOFEMORAL,
 };
 
+// Override every exercise thumbnail with the region-appropriate photo,
+// so any new exercise added just needs a valid `body_region`.
+for (const protocol of Object.values(PROTOCOLS)) {
+  for (const phase of protocol.phases) {
+    for (const ex of phase.exercises) {
+      ex.thumbnail_url = THUMB_BY_REGION[ex.body_region] ?? thumbJoelho;
+    }
+  }
+}
+
 export function getProtocol(id: string): Protocol {
   return PROTOCOLS[id] ?? PROTOCOL_LCA;
 }
