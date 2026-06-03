@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ChevronDown, MessageCircle, Phone } from "lucide-react";
+import { ChevronDown, MessageCircle, Phone, Sparkles } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { AiDoctorChat } from "@/components/support/AiDoctorChat";
+import aiDoctorAvatar from "@/assets/ai-doctor.jpg";
 
 export const Route = createFileRoute("/_app/support")({
   head: () => ({ meta: [{ title: "Suporte · FisioCare" }] }),
@@ -35,11 +36,38 @@ const FAQ = [
 function SupportPage() {
   const [open, setOpen] = useState<number | null>(0);
   return (
-    <div className="px-5 pt-6">
-      <h1 className="text-2xl font-bold text-foreground">Suporte</h1>
-      <p className="text-sm text-muted-foreground">Estamos aqui para te ajudar.</p>
+    <div className="px-5 pt-6 pb-4">
+      <header className="flex items-center gap-3">
+        <img
+          src={aiDoctorAvatar}
+          alt="AI Doctor"
+          loading="lazy"
+          width={56}
+          height={56}
+          className="h-14 w-14 rounded-full object-cover ring-2 ring-primary/20"
+        />
+        <div className="flex-1">
+          <div className="flex items-center gap-1.5">
+            <h1 className="text-xl font-bold text-foreground">AI Doctor</h1>
+            <span className="rounded-full bg-primary-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase text-primary-dark">
+              <Sparkles className="mr-0.5 inline h-2.5 w-2.5" /> Beta
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Tire dúvidas sobre seu tratamento, 24/7.
+          </p>
+        </div>
+      </header>
 
-      <section className="mt-6 space-y-3">
+      <section className="mt-5">
+        <AiDoctorChat />
+      </section>
+
+      <section className="mt-6">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Outras formas de ajuda
+        </p>
+        <div className="mt-2 space-y-2">
         <a
           href="https://wa.me/5511999990000?text=Ol%C3%A1%2C%20preciso%20de%20ajuda%20no%20FisioCare"
           target="_blank"
@@ -51,7 +79,7 @@ function SupportPage() {
           </div>
           <div className="flex-1">
             <p className="text-sm font-semibold">WhatsApp</p>
-            <p className="text-xs text-muted-foreground">Resposta em até 1h em horário comercial</p>
+            <p className="text-xs text-muted-foreground">Atendimento humano em horário comercial</p>
           </div>
         </a>
 
@@ -67,6 +95,7 @@ function SupportPage() {
             <p className="text-xs text-muted-foreground">Seg a Sex · 9h–18h</p>
           </div>
         </a>
+        </div>
       </section>
 
       <section className="mt-8">
