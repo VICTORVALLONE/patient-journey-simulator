@@ -123,14 +123,13 @@ export function AiDoctorChat() {
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Conversa
         </p>
-        {messages.length > 0 && (
-          <button
-            onClick={reset}
-            className="flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground"
-          >
-            <RotateCcw className="h-3 w-3" /> Nova conversa
-          </button>
-        )}
+        <button
+          onClick={reset}
+          className="flex items-center gap-1 rounded-full border border-border bg-bg-subtle px-2.5 py-1 text-[11px] font-medium text-muted-foreground hover:border-primary hover:text-primary"
+          aria-label="Reiniciar conversa com AI Doctor"
+        >
+          <RotateCcw className="h-3 w-3" /> Reiniciar conversa
+        </button>
       </div>
 
       <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
