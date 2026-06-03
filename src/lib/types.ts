@@ -66,7 +66,7 @@ export interface Prescription {
 
 export interface Session {
   id: string;
-  prescription_id: string;
+  treatment_id: string;
   phase_number: number;
   session_number: number;
   scheduled_date: string;
@@ -124,4 +124,35 @@ export interface Progress {
   badges_unlocked: BadgeId[];
   pain_history: PainEntry[];
   weekly_frequency: WeekFrequency[];
+}
+
+// A patient can have multiple treatments over time (active or completed).
+// Each treatment owns its own prescription, protocol progress and sessions.
+export interface Treatment {
+  id: string;
+  user_id: string;
+  nickname: string; // ex: "Joelho direito (LCA)"
+  protocol_id: string;
+  injury_type: InjuryType;
+  affected_side: AffectedSide;
+  surgery_date?: string;
+  started_at: string;
+  completed_at?: string;
+  prescribed_by: string;
+  reminder_time?: string;
+  status: "active" | "completed" | "paused";
+
+  // Progress indicators (per-treatment)
+  current_phase: number;
+  phases_completed: number[];
+  badges_unlocked: BadgeId[];
+  total_sessions_prescribed: number;
+  total_sessions_completed: number;
+  adherence_rate: number;
+  current_streak: number;
+  longest_streak: number;
+  pain_history: PainEntry[];
+  weekly_frequency: WeekFrequency[];
+
+  sessions: Session[];
 }
