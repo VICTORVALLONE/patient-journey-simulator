@@ -16,7 +16,7 @@ export function PainTrendChart({ data }: { data: PainEntry[] }) {
               border: "1px solid oklch(0.92 0.012 256)",
               fontSize: 12,
             }}
-            formatter={(v: number) => [`${v.toFixed(1)}`, "Dor média"]}
+            formatter={(v) => [`${Number(v ?? 0).toFixed(1)}`, "Dor média"]}
           />
           <Line
             type="monotone"
