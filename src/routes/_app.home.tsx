@@ -55,7 +55,7 @@ function HomePage() {
             <CheckCircle2 className="h-4 w-4" /> Sessão de hoje concluída
           </div>
         ) : (
-          <Link to="/exercises/session/$sid" params={{ sid: "today" }}>
+          <Link to="/session/$sid" params={{ sid: "today" }}>
             <Button size="lg" className="mt-4 w-full rounded-xl bg-white text-primary hover:bg-white/90">
               Iniciar sessão de hoje
             </Button>

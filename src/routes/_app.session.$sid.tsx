@@ -112,7 +112,7 @@ function SessionOverview() {
 
       {firstExercise && (
         <Link
-          to="/exercises/session/$sid/exercise/$eid"
+          to="/session/$sid/exercise/$eid"
           params={{ sid: "today", eid: firstExercise.id }}
         >
           <Button size="lg" className="mt-6 w-full rounded-xl">

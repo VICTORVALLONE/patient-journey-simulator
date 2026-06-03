@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import type { BadgeId } from "@/lib/types";
 
 export const Route = createFileRoute(
-  "/_app/exercises/session/$sid/exercise/$eid",
+  "/_app/session/$sid/exercise/$eid",
 )({
   head: () => ({ meta: [{ title: "Exercício · FisioCare" }] }),
   component: ExecutionPage,
@@ -32,7 +32,7 @@ type Stage =
 
 function ExecutionPage() {
   const navigate = useNavigate();
-  const { eid } = useParams({ from: "/_app/exercises/session/$sid/exercise/$eid" });
+  const { eid } = useParams({ from: "/_app/session/$sid/exercise/$eid" });
   const progress = usePatientStore((s) => s.progress);
   const prescription = usePatientStore((s) => s.prescription);
   const completeSession = usePatientStore((s) => s.completeSession);
@@ -121,7 +121,7 @@ function ExecutionPage() {
   return (
     <div className="px-5 pt-6 pb-32">
       <header className="flex items-center justify-between">
-        <button onClick={() => navigate({ to: "/exercises/session/$sid", params: { sid: "today" } })} className="rounded-full p-2 hover:bg-muted">
+        <button onClick={() => navigate({ to: "/session/$sid", params: { sid: "today" } })} className="rounded-full p-2 hover:bg-muted">
           <ArrowLeft className="h-5 w-5" />
         </button>
         <span className="rounded-full bg-primary-muted px-3 py-1 text-xs font-semibold text-primary-dark">

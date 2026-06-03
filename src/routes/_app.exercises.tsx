@@ -61,7 +61,7 @@ function ExercisesPage() {
 
       {prescription.status === "active" && (
         <Link
-          to="/exercises/session/$sid"
+          to="/session/$sid"
           params={{ sid: "today" }}
           className="mt-5 block rounded-2xl border-2 border-primary bg-primary-muted p-4"
         >
