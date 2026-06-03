@@ -57,10 +57,8 @@ export function AiDoctorFab() {
             <X className="h-4 w-4" />
           </button>
         </SheetHeader>
-        <div className="h-[calc(88vh-64px)] overflow-hidden px-3 pb-3 pt-3">
-          <div className="h-full [&>div]:h-full [&>div]:min-h-0">
-            <AiDoctorChat />
-          </div>
+        <div className="h-[calc(88vh-72px)] overflow-hidden px-3 pb-3 pt-3">
+          <AiDoctorChat className="h-full min-h-0 rounded-xl" />
         </div>
       </SheetContent>
     </Sheet>
