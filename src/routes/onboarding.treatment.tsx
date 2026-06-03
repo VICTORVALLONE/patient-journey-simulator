@@ -23,11 +23,13 @@ const INJURY_OPTIONS: { value: InjuryType; label: string; protocolId: string }[]
   { value: "patellofemoral", label: "Síndrome patelofemoral", protocolId: "proto_patellofemoral" },
 ];
 
+const EMPTY_TREATMENT_DRAFT: TreatmentOnboardingDraft = {};
+
 function TreatmentOnboardingPage() {
   const hydrated = useHydratedStore();
   const navigate = useNavigate();
   const isOnboarded = usePatientStore((s) => s.isOnboarded);
-  const draft = usePatientStore((s) => s.onboardingDraft.treatment ?? {});
+  const draft = usePatientStore((s) => s.onboardingDraft.treatment ?? EMPTY_TREATMENT_DRAFT);
   const setDraft = usePatientStore((s) => s.setTreatmentDraft);
   const startTreatment = usePatientStore((s) => s.startTreatment);
 
