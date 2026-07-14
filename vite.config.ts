@@ -5,7 +5,7 @@
 //     error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
-import { copyFileSync, existsSync } from "node:fs";
+import { copyFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { PluginOption } from "vite";
 
@@ -24,6 +24,19 @@ function aliasNitroServerEntry(): PluginOption {
       const dest = resolve(dir, "server.js");
       if (existsSync(src) && !existsSync(dest)) {
         copyFileSync(src, dest);
+        // Nitro's Cloudflare preset wraps our entry with `env.ASSETS` checks
+        // that crash when the preview/prerender step calls fetch(request)
+        // without an env argument. Make the access null-safe so SPA prerender
+        // succeeds locally without changing the Cloudflare runtime behavior.
+        try {
+          const contents = readFileSync(dest, "utf8").replace(
+            /if\s*\(\s*env\.ASSETS\s*&&/g,
+            "if (env && env.ASSETS &&",
+          );
+          writeFileSync(dest, contents);
+        } catch {
+          /* best-effort */
+        }
       }
     },
   };
