@@ -37,7 +37,9 @@ export function VideoPlayer({
 
   const pct = Math.min(100, (elapsed / durationSeconds) * 100);
   const fmt = (n: number) =>
-    `${Math.floor(n / 60).toString().padStart(1, "0")}:${(n % 60).toString().padStart(2, "0")}`;
+    `${Math.floor(n / 60)
+      .toString()
+      .padStart(1, "0")}:${(n % 60).toString().padStart(2, "0")}`;
 
   return (
     <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-primary-navy">

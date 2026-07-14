@@ -72,10 +72,7 @@ export function TreatmentTimeline({ treatment, protocol }: Props) {
                   style={{ width: `${widthPct}%` }}
                   title={`${phase.name} — ${phaseDone}/${phaseSessions}`}
                 >
-                  <div
-                    className="h-full bg-primary"
-                    style={{ width: `${fillPct}%` }}
-                  />
+                  <div className="h-full bg-primary" style={{ width: `${fillPct}%` }} />
                 </div>
               );
             })}
@@ -103,11 +100,7 @@ export function TreatmentTimeline({ treatment, protocol }: Props) {
             const widthPct = (phaseSessions / totalSessions) * 100;
             const isCurrent = treatment.current_phase === phase.phase_number;
             return (
-              <div
-                key={phase.id}
-                className="px-1"
-                style={{ width: `${widthPct}%` }}
-              >
+              <div key={phase.id} className="px-1" style={{ width: `${widthPct}%` }}>
                 <p
                   className={`truncate font-semibold ${isCurrent ? "text-primary" : "text-foreground/70"}`}
                   title={phase.name}
@@ -136,9 +129,7 @@ export function TreatmentTimeline({ treatment, protocol }: Props) {
           <MapPin className="mt-0.5 h-3 w-3 text-primary" />
           <div>
             <p className="text-muted-foreground">Hoje</p>
-            <p className="font-semibold text-foreground">
-              {Math.round(calendarPct)}% do tempo
-            </p>
+            <p className="font-semibold text-foreground">{Math.round(calendarPct)}% do tempo</p>
           </div>
         </div>
         <div className="flex items-start gap-1.5">

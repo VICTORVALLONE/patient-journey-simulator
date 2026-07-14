@@ -14,6 +14,14 @@ interface ChatRequestBody {
     sessionsCompleted?: number;
     sessionsPrescribed?: number;
     lastPain?: number;
+    currentWeek?: number;
+    weekRomTarget?: string;
+    weekMilestones?: string[];
+    weekCaution?: string;
+    clinicalSource?: string;
+    safetyAlert?: string;
+    lagSignNote?: string;
+    returnToSportNote?: string;
   } | null;
 }
 
@@ -28,7 +36,9 @@ Limites importantes:
 - Você é apoio educacional e de adesão — não substitui consulta médica, diagnóstico ou prescrição.
 - Não receite medicamentos, doses ou novos exercícios fora do protocolo. Em vez disso, oriente o paciente a falar com o médico responsável.
 - Diante de sinais de alerta (dor aguda forte, inchaço súbito, febre, sensação de instabilidade, perda de movimento, vermelhidão localizada com calor), oriente imediatamente a contactar o médico ou serviço de emergência.
-- Não invente dados clínicos do paciente. Use apenas o contexto recebido.`;
+- Não invente dados clínicos do paciente. Use apenas o contexto recebido.
+- O protocolo segue um manual clínico oficial com metas semanais. NUNCA incentive o paciente a ir além da meta da semana atual (amplitude de flexão, carga ou atividade) — mesmo que ele peça. Progressões só com o médico/fisioterapeuta.
+- Se o paciente relatar dor, inchaço ou instabilidade durante exercícios, oriente a pausar e avisar o fisioterapeuta (tríade de alerta do manual).`;
 
 function contextBlock(ctx: ChatRequestBody["treatmentContext"]) {
   if (!ctx) return "\n\nContexto do paciente: nenhum tratamento ativo no momento.";
@@ -41,13 +51,18 @@ function contextBlock(ctx: ChatRequestBody["treatmentContext"]) {
     );
   }
   if (typeof ctx.adherenceRate === "number") parts.push(`Adesão: ${ctx.adherenceRate}%`);
-  if (
-    typeof ctx.sessionsCompleted === "number" &&
-    typeof ctx.sessionsPrescribed === "number"
-  ) {
+  if (typeof ctx.sessionsCompleted === "number" && typeof ctx.sessionsPrescribed === "number") {
     parts.push(`Sessões: ${ctx.sessionsCompleted}/${ctx.sessionsPrescribed}`);
   }
   if (typeof ctx.lastPain === "number") parts.push(`Última dor reportada: ${ctx.lastPain}/10`);
+  if (ctx.currentWeek) parts.push(`Semana pós-operatória atual: ${ctx.currentWeek}`);
+  if (ctx.weekRomTarget) parts.push(`Meta da semana (manual clínico): ${ctx.weekRomTarget}`);
+  if (ctx.weekMilestones?.length) parts.push(`Marcos da semana: ${ctx.weekMilestones.join("; ")}`);
+  if (ctx.weekCaution) parts.push(`Cuidado específico da semana: ${ctx.weekCaution}`);
+  if (ctx.safetyAlert) parts.push(`Alerta de segurança do manual: ${ctx.safetyAlert}`);
+  if (ctx.lagSignNote) parts.push(`Sinal de Lag: ${ctx.lagSignNote}`);
+  if (ctx.returnToSportNote) parts.push(`Retorno ao esporte: ${ctx.returnToSportNote}`);
+  if (ctx.clinicalSource) parts.push(`Fonte clínica do protocolo: ${ctx.clinicalSource}`);
   return `\n\nContexto do paciente (use somente se relevante):\n- ${parts.join("\n- ")}`;
 }
 

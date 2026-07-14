@@ -33,7 +33,12 @@ export function EmojiPainScale({
               )}
             >
               <span className="text-3xl">{s.emoji}</span>
-              <span className={cn("text-xs", active ? "font-semibold text-primary" : "text-muted-foreground")}>
+              <span
+                className={cn(
+                  "text-xs",
+                  active ? "font-semibold text-primary" : "text-muted-foreground",
+                )}
+              >
                 {s.label}
               </span>
             </button>

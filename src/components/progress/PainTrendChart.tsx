@@ -1,4 +1,12 @@
-import { CartesianGrid, Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  Tooltip,
+} from "recharts";
 import type { PainEntry } from "@/lib/types";
 
 export function PainTrendChart({ data }: { data: PainEntry[] }) {
@@ -8,8 +16,18 @@ export function PainTrendChart({ data }: { data: PainEntry[] }) {
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={formatted} margin={{ left: -20, right: 8, top: 8, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.92 0.012 256)" vertical={false} />
-          <XAxis dataKey="week_label" tick={{ fontSize: 11, fill: "oklch(0.55 0.04 257)" }} axisLine={false} tickLine={false} />
-          <YAxis domain={[0, 10]} tick={{ fontSize: 11, fill: "oklch(0.55 0.04 257)" }} axisLine={false} tickLine={false} />
+          <XAxis
+            dataKey="week_label"
+            tick={{ fontSize: 11, fill: "oklch(0.55 0.04 257)" }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis
+            domain={[0, 10]}
+            tick={{ fontSize: 11, fill: "oklch(0.55 0.04 257)" }}
+            axisLine={false}
+            tickLine={false}
+          />
           <Tooltip
             contentStyle={{
               borderRadius: 12,

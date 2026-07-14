@@ -11,12 +11,11 @@ import { AiDoctorFab } from "@/components/support/AiDoctorSheet";
 import { BADGES } from "@/data/badges";
 import { usePatientStore, useActiveTreatment, todaySessionInfoOf } from "@/store/patient";
 import { getProtocol } from "@/data/protocols";
+import { realAdherencePct } from "@/lib/dynamicMessages";
 import { cn } from "@/lib/utils";
 import type { BadgeId } from "@/lib/types";
 
-export const Route = createFileRoute(
-  "/_app/session/$sid/exercise/$eid",
-)({
+export const Route = createFileRoute("/_app/session/$sid/exercise/$eid")({
   head: () => ({ meta: [{ title: "Exercício · FisioCare" }] }),
   component: ExecutionPage,
 });
@@ -36,17 +35,13 @@ function ExecutionPage() {
   const { eid } = useParams({ from: "/_app/session/$sid/exercise/$eid" });
   const treatment = useActiveTreatment();
   const completeSession = usePatientStore((s) => s.completeSession);
-  if (!treatment) {
-    return (
-      <div className="p-6 text-sm text-muted-foreground">
-        Nenhum tratamento ativo.
-      </div>
-    );
-  }
-  const today = todaySessionInfoOf(treatment);
-
-  const exercises = today.phase.exercises;
-  const initialIndex = Math.max(0, exercises.findIndex((e: { id: string }) => e.id === eid));
+  // Hooks precisam ser incondicionais — o early return de "sem tratamento" vem depois.
+  const today = treatment ? todaySessionInfoOf(treatment) : null;
+  const exercises = today?.phase.exercises ?? [];
+  const initialIndex = Math.max(
+    0,
+    exercises.findIndex((e: { id: string }) => e.id === eid),
+  );
   const [index, setIndex] = useState(initialIndex);
   const [completed, setCompleted] = useState<string[]>([]);
   const [stage, setStage] = useState<Stage>({ kind: "exercise" });
@@ -55,6 +50,10 @@ function ExecutionPage() {
   const [notes, setNotes] = useState("");
   const [hardFlag, setHardFlag] = useState(false);
   const [startedAt] = useState(() => Date.now());
+
+  if (!treatment || !today) {
+    return <div className="p-6 text-sm text-muted-foreground">Nenhum tratamento ativo.</div>;
+  }
 
   const ex = exercises[index]!;
   const isLast = index >= exercises.length - 1;
@@ -96,9 +95,7 @@ function ExecutionPage() {
         newBadges={stage.newBadges}
         phaseCompleted={stage.phaseCompleted}
         protocolCompleted={stage.protocolCompleted}
-        onContinue={() =>
-          navigate({ to: stage.protocolCompleted ? "/progress" : "/home" })
-        }
+        onContinue={() => navigate({ to: stage.protocolCompleted ? "/progress" : "/home" })}
       />
     );
   }
@@ -128,7 +125,10 @@ function ExecutionPage() {
   return (
     <div className="px-5 pt-6 pb-32">
       <header className="flex items-center justify-between">
-        <button onClick={() => navigate({ to: "/session/$sid", params: { sid: "today" } })} className="rounded-full p-2 hover:bg-muted">
+        <button
+          onClick={() => navigate({ to: "/session/$sid", params: { sid: "today" } })}
+          className="rounded-full p-2 hover:bg-muted"
+        >
           <ArrowLeft className="h-5 w-5" />
         </button>
         <span className="rounded-full bg-primary-muted px-3 py-1 text-xs font-semibold text-primary-dark">
@@ -151,7 +151,9 @@ function ExecutionPage() {
       <p className="mt-1 text-sm text-muted-foreground">{ex.description}</p>
 
       <section className="mt-5 rounded-2xl border border-border bg-card p-4">
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Instruções principais</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Instruções principais
+        </p>
         <ol className="mt-2 space-y-2">
           {ex.instructions.map((line: string, i: number) => (
             <li key={i} className="flex gap-3 text-sm text-foreground">
@@ -173,7 +175,13 @@ function ExecutionPage() {
         <span className="flex items-center gap-1 text-muted-foreground">
           Dificuldade
           {[1, 2, 3].map((d) => (
-            <span key={d} className={cn("h-2 w-2 rounded-full", d <= ex.difficulty ? "bg-primary" : "bg-border")} />
+            <span
+              key={d}
+              className={cn(
+                "h-2 w-2 rounded-full",
+                d <= ex.difficulty ? "bg-primary" : "bg-border",
+              )}
+            />
           ))}
         </span>
       </div>
@@ -182,10 +190,13 @@ function ExecutionPage() {
         onClick={() => setHardFlag((v) => !v)}
         className={cn(
           "mt-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 px-4 py-2.5 text-sm font-medium transition-colors",
-          hardFlag ? "border-warning bg-warning/10 text-warning" : "border-border text-muted-foreground",
+          hardFlag
+            ? "border-warning bg-warning/10 text-warning"
+            : "border-border text-muted-foreground",
         )}
       >
-        <ThumbsDown className="h-4 w-4" /> {hardFlag ? "Marcado: tive dificuldade" : "Tive dificuldade"}
+        <ThumbsDown className="h-4 w-4" />{" "}
+        {hardFlag ? "Marcado: tive dificuldade" : "Tive dificuldade"}
       </button>
 
       <p className="mt-6 text-center text-xs text-muted-foreground">
@@ -238,21 +249,35 @@ function CheckInFlow({
         </button>
         <div className="flex flex-1 gap-1">
           {[1, 2, 3].map((i) => (
-            <div key={i} className={cn("h-1 flex-1 rounded-full", i <= step ? "bg-primary" : "bg-muted")} />
+            <div
+              key={i}
+              className={cn("h-1 flex-1 rounded-full", i <= step ? "bg-primary" : "bg-muted")}
+            />
           ))}
         </div>
       </header>
 
-      <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-primary">Check-in da sessão</p>
+      <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-primary">
+        Check-in da sessão
+      </p>
 
       {step === 1 && (
         <>
-          <h2 className="mt-2 text-2xl font-bold leading-tight">Como está sua articulação agora?</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Sua resposta nos ajuda a entender sua recuperação.</p>
+          <h2 className="mt-2 text-2xl font-bold leading-tight">
+            Como está sua articulação agora?
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Sua resposta nos ajuda a entender sua recuperação.
+          </p>
           <div className="mt-8">
             <EmojiPainScale value={pain} onChange={setPain} />
           </div>
-          <Button size="lg" disabled={pain === null} className="mt-10 w-full rounded-xl" onClick={() => onNext(2)}>
+          <Button
+            size="lg"
+            disabled={pain === null}
+            className="mt-10 w-full rounded-xl"
+            onClick={() => onNext(2)}
+          >
             Próximo
           </Button>
         </>
@@ -262,11 +287,13 @@ function CheckInFlow({
         <>
           <h2 className="mt-2 text-2xl font-bold leading-tight">Como foram os exercícios?</h2>
           <div className="mt-8 space-y-3">
-            {([
-              { v: 1, label: "Muito fácil", desc: "Mal senti esforço" },
-              { v: 2, label: "Na medida", desc: "Desafiador, mas no limite" },
-              { v: 3, label: "Muito difícil", desc: "Senti que era demais" },
-            ] as const).map((opt) => {
+            {(
+              [
+                { v: 1, label: "Muito fácil", desc: "Mal senti esforço" },
+                { v: 2, label: "Na medida", desc: "Desafiador, mas no limite" },
+                { v: 3, label: "Muito difícil", desc: "Senti que era demais" },
+              ] as const
+            ).map((opt) => {
               const active = diff === opt.v;
               return (
                 <button
@@ -283,7 +310,12 @@ function CheckInFlow({
               );
             })}
           </div>
-          <Button size="lg" disabled={diff === null} className="mt-10 w-full rounded-xl" onClick={() => onNext(3)}>
+          <Button
+            size="lg"
+            disabled={diff === null}
+            className="mt-10 w-full rounded-xl"
+            onClick={() => onNext(3)}
+          >
             Próximo
           </Button>
         </>
@@ -344,9 +376,20 @@ function CelebrationScreen({
             Recuperação completa em {protocol.total_weeks} semanas.
           </p>
           <div className="mt-6 w-full rounded-2xl border border-border bg-card p-4 text-left text-sm">
-            <div className="flex justify-between"><span className="text-muted-foreground">Sessões</span><span className="font-semibold">{treatment?.total_sessions_completed} / {treatment?.total_sessions_prescribed}</span></div>
-            <div className="mt-2 flex justify-between"><span className="text-muted-foreground">Taxa de adesão</span><span className="font-semibold">{treatment?.adherence_rate}%</span></div>
-            <div className="mt-2 flex justify-between"><span className="text-muted-foreground">Maior sequência</span><span className="font-semibold">{treatment?.longest_streak} dias</span></div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Sessões</span>
+              <span className="font-semibold">
+                {treatment?.total_sessions_completed} / {treatment?.total_sessions_prescribed}
+              </span>
+            </div>
+            <div className="mt-2 flex justify-between">
+              <span className="text-muted-foreground">Taxa de adesão</span>
+              <span className="font-semibold">{treatment ? realAdherencePct(treatment) : 0}%</span>
+            </div>
+            <div className="mt-2 flex justify-between">
+              <span className="text-muted-foreground">Maior sequência</span>
+              <span className="font-semibold">{treatment?.longest_streak} semanas na meta</span>
+            </div>
           </div>
         </>
       ) : completedPhase ? (
@@ -354,17 +397,23 @@ function CelebrationScreen({
           <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-primary-muted text-5xl">
             ✓
           </div>
-          <h1 className="text-3xl font-bold text-foreground">Fase {completedPhase.phase_number} concluída</h1>
+          <h1 className="text-3xl font-bold text-foreground">
+            Fase {completedPhase.phase_number} concluída
+          </h1>
           <p className="mt-1 text-base font-medium text-primary">{completedPhase.name}</p>
           {completedPhase.doctor_message && (
             <div className="mt-5 rounded-2xl bg-bg-subtle p-4 text-left text-sm text-foreground">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Mensagem do médico</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Mensagem do médico
+              </p>
               <p className="mt-1">{completedPhase.doctor_message}</p>
             </div>
           )}
           {nextPhase && nextPhase.phase_number !== completedPhase.phase_number && (
             <div className="mt-4 w-full rounded-2xl border border-border bg-card p-4 text-left">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Próxima fase</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Próxima fase
+              </p>
               <p className="mt-1 font-semibold">{nextPhase.name}</p>
               <p className="text-xs text-muted-foreground">{nextPhase.focus}</p>
             </div>
@@ -377,7 +426,9 @@ function CelebrationScreen({
           </div>
           <h1 className="text-3xl font-bold text-foreground">Sessão concluída! 🎉</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            🔥 {treatment?.current_streak ?? 0} dias seguidos
+            🔥 {treatment?.current_streak ?? 0}{" "}
+            {(treatment?.current_streak ?? 0) === 1 ? "semana seguida" : "semanas seguidas"} batendo
+            a meta
           </p>
         </>
       )}
@@ -389,7 +440,10 @@ function CelebrationScreen({
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             {newBadges.map((id) => (
-              <div key={id} className="flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-sm">
+              <div
+                key={id}
+                className="flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-sm"
+              >
                 <span className="text-lg">{BADGES[id].icon}</span>
                 <span className="font-semibold text-foreground">{BADGES[id].name}</span>
               </div>

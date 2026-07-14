@@ -39,11 +39,22 @@ function ProgressPage() {
   const painHistory = treatment.pain_history;
   const painTrendDown =
     painHistory.length >= 2 &&
-    (painHistory[painHistory.length - 1]?.average_pain ?? 0) <
-      (painHistory[0]?.average_pain ?? 0);
+    (painHistory[painHistory.length - 1]?.average_pain ?? 0) < (painHistory[0]?.average_pain ?? 0);
   const reduction = painReductionPct(treatment);
   const adherence = realAdherencePct(treatment);
   const weeks = weeksProgress(treatment);
+
+  // Variação real de frequência: sessões nos últimos 7 dias vs. 7 dias anteriores.
+  const now = Date.now();
+  const countIn = (fromDaysAgo: number, toDaysAgo: number) =>
+    treatment.sessions.filter((s) => {
+      const t = new Date(`${s.scheduled_date}T00:00:00`).getTime();
+      return t > now - fromDaysAgo * 86400000 && t <= now - toDaysAgo * 86400000;
+    }).length;
+  const thisWeekCount = countIn(7, 0);
+  const prevWeekCount = countIn(14, 7);
+  const weekDelta =
+    prevWeekCount > 0 ? Math.round(((thisWeekCount - prevWeekCount) / prevWeekCount) * 100) : null;
 
   return (
     <div className="px-5 pt-6">
@@ -56,9 +67,7 @@ function ProgressPage() {
         <p className="text-xs font-semibold uppercase tracking-wider text-white/60">
           Visão geral da evolução
         </p>
-        <h2 className="mt-2 text-2xl font-bold leading-tight">
-          {getEvolutionMessage(treatment)}
-        </h2>
+        <h2 className="mt-2 text-2xl font-bold leading-tight">{getEvolutionMessage(treatment)}</h2>
         <div className="mt-4 grid grid-cols-3 gap-3 text-sm text-white/85">
           <div>
             <p className="text-xl font-bold text-white">
@@ -117,9 +126,15 @@ function ProgressPage() {
       <section className="mt-6 rounded-2xl border border-border bg-card p-4">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold">Frequência semanal</h3>
-          <span className="flex items-center gap-1 text-xs font-medium text-success">
-            <TrendingUp className="h-3 w-3" /> +12% vs semana anterior
-          </span>
+          {weekDelta !== null && (
+            <span
+              className={`flex items-center gap-1 text-xs font-medium ${weekDelta >= 0 ? "text-success" : "text-muted-foreground"}`}
+            >
+              <TrendingUp className="h-3 w-3" />
+              {weekDelta >= 0 ? "+" : ""}
+              {weekDelta}% vs semana anterior
+            </span>
+          )}
         </div>
         <div className="mt-2">
           <ClientOnly fallback={<div className="h-48 w-full" />}>
@@ -155,7 +170,10 @@ function ProgressPage() {
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-foreground">Atividade recente</h3>
           {treatment.sessions.length > 4 && (
-            <Link to="/exercises" className="flex items-center gap-1 text-xs font-medium text-primary">
+            <Link
+              to="/exercises"
+              className="flex items-center gap-1 text-xs font-medium text-primary"
+            >
               Ver histórico <ArrowUpRight className="h-3 w-3" />
             </Link>
           )}
@@ -167,7 +185,10 @@ function ProgressPage() {
             </p>
           ) : (
             treatment.sessions.slice(0, 4).map((s) => (
-              <div key={s.id} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
+              <div
+                key={s.id}
+                className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3"
+              >
                 <div className="rounded-xl bg-primary-muted p-2 text-primary">
                   <Download className="h-4 w-4 -rotate-90" />
                 </div>
@@ -184,7 +205,9 @@ function ProgressPage() {
                     })}
                   </p>
                 </div>
-                <span className="text-xs text-muted-foreground">Dor {s.pain_level?.toFixed(1)}</span>
+                <span className="text-xs text-muted-foreground">
+                  Dor {s.pain_level?.toFixed(1)}
+                </span>
               </div>
             ))
           )}

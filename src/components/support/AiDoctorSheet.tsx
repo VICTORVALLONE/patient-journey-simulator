@@ -1,12 +1,6 @@
 import { useState } from "react";
 import { Stethoscope, X } from "lucide-react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { AiDoctorChat } from "./AiDoctorChat";
 import aiDoctor from "@/assets/ai-doctor.jpg";
 
@@ -31,10 +25,7 @@ export function AiDoctorFab() {
           </span>
         </button>
       </SheetTrigger>
-      <SheetContent
-        side="bottom"
-        className="h-[88vh] rounded-t-3xl border-0 p-0"
-      >
+      <SheetContent side="bottom" className="h-[88vh] rounded-t-3xl border-0 p-0">
         <SheetHeader className="flex flex-row items-center justify-between border-b border-border px-5 py-3 text-left">
           <div className="flex items-center gap-3">
             <img

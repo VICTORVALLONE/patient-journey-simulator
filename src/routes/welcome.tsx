@@ -36,9 +36,21 @@ function WelcomePage() {
           </div>
 
           <div className="space-y-3 py-8">
-            <Feature icon={<Activity className="h-5 w-5" />} title="Protocolo personalizado" desc="Exercícios definidos pela sua lesão." />
-            <Feature icon={<ShieldCheck className="h-5 w-5" />} title="Baseado em evidência" desc="Conteúdo validado por equipe médica." />
-            <Feature icon={<Sparkles className="h-5 w-5" />} title="Acompanhamento real" desc="Veja sua dor reduzir semana a semana." />
+            <Feature
+              icon={<Activity className="h-5 w-5" />}
+              title="Protocolo personalizado"
+              desc="Exercícios definidos pela sua lesão."
+            />
+            <Feature
+              icon={<ShieldCheck className="h-5 w-5" />}
+              title="Baseado em evidência"
+              desc="Conteúdo validado por equipe médica."
+            />
+            <Feature
+              icon={<Sparkles className="h-5 w-5" />}
+              title="Acompanhamento real"
+              desc="Veja sua dor reduzir semana a semana."
+            />
           </div>
 
           <div className="space-y-3 pb-8">

@@ -16,11 +16,27 @@ export const Route = createFileRoute("/onboarding")({
   component: OnboardingPage,
 });
 
-const GOAL_OPTIONS: { value: RecoveryGoal; label: string; desc: string; icon: React.ReactNode }[] = [
-  { value: "sports", label: "Voltar aos esportes", desc: "Performance e retorno ao treino", icon: <Dumbbell className="h-6 w-6" /> },
-  { value: "daily_life", label: "Vida cotidiana sem dor", desc: "Andar, subir escadas, sem incômodo", icon: <Footprints className="h-6 w-6" /> },
-  { value: "work", label: "Retornar ao trabalho", desc: "Recuperar capacidade profissional", icon: <Briefcase className="h-6 w-6" /> },
-];
+const GOAL_OPTIONS: { value: RecoveryGoal; label: string; desc: string; icon: React.ReactNode }[] =
+  [
+    {
+      value: "sports",
+      label: "Voltar aos esportes",
+      desc: "Performance e retorno ao treino",
+      icon: <Dumbbell className="h-6 w-6" />,
+    },
+    {
+      value: "daily_life",
+      label: "Vida cotidiana sem dor",
+      desc: "Andar, subir escadas, sem incômodo",
+      icon: <Footprints className="h-6 w-6" />,
+    },
+    {
+      value: "work",
+      label: "Retornar ao trabalho",
+      desc: "Recuperar capacidade profissional",
+      icon: <Briefcase className="h-6 w-6" />,
+    },
+  ];
 
 const EMPTY_PERSONAL_DRAFT: PersonalOnboardingDraft = {};
 
@@ -72,18 +88,10 @@ function PersonalOnboardingPage() {
 
         <div className="flex-1 px-5 pb-8">
           {step === 1 && (
-            <StepName
-              draft={draft}
-              onChange={setPersonalDraft}
-              onNext={() => setStep(2)}
-            />
+            <StepName draft={draft} onChange={setPersonalDraft} onNext={() => setStep(2)} />
           )}
           {step === 2 && (
-            <StepBody
-              draft={draft}
-              onChange={setPersonalDraft}
-              onNext={() => setStep(3)}
-            />
+            <StepBody draft={draft} onChange={setPersonalDraft} onNext={() => setStep(3)} />
           )}
           {step === 3 && (
             <StepGoal
@@ -160,7 +168,9 @@ function StepBody({
   return (
     <div>
       <h1 className="text-3xl font-bold leading-tight">Sobre você</h1>
-      <p className="mt-2 text-sm text-muted-foreground">Esses dados ajudam a personalizar seu plano.</p>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Esses dados ajudam a personalizar seu plano.
+      </p>
       <div className="mt-6 space-y-4">
         <Field label="Data de nascimento">
           <Input
@@ -210,7 +220,9 @@ function StepGoal({
   return (
     <div>
       <h1 className="text-3xl font-bold leading-tight">Seu objetivo principal</h1>
-      <p className="mt-2 text-sm text-muted-foreground">Usamos isso para personalizar mensagens e metas.</p>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Usamos isso para personalizar mensagens e metas.
+      </p>
       <div className="mt-6 space-y-3">
         {GOAL_OPTIONS.map((g) => {
           const active = value === g.value;

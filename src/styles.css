@@ -75,11 +75,11 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.18 0.04 265);
   /* Primary scale — SPEC blues */
-  --primary: oklch(0.54 0.21 263);          /* #2563EB */
+  --primary: oklch(0.54 0.21 263); /* #2563EB */
   --primary-foreground: oklch(0.99 0 0);
-  --primary-dark: oklch(0.32 0.18 265);     /* #1E3A8A */
-  --primary-navy: oklch(0.22 0.12 268);     /* #0F1C47 */
-  --primary-muted: oklch(0.96 0.03 256);    /* #EFF6FF */
+  --primary-dark: oklch(0.32 0.18 265); /* #1E3A8A */
+  --primary-navy: oklch(0.22 0.12 268); /* #0F1C47 */
+  --primary-muted: oklch(0.96 0.03 256); /* #EFF6FF */
   /* Neutrals */
   --secondary: oklch(0.97 0.01 256);
   --secondary-foreground: oklch(0.22 0.04 265);
@@ -89,9 +89,9 @@
   --accent: oklch(0.96 0.03 256);
   --accent-foreground: oklch(0.22 0.04 265);
   /* Semantic */
-  --success: oklch(0.7 0.16 162);           /* #10B981 */
-  --warning: oklch(0.78 0.16 75);           /* #F59E0B */
-  --danger: oklch(0.65 0.22 27);            /* #EF4444 */
+  --success: oklch(0.7 0.16 162); /* #10B981 */
+  --warning: oklch(0.78 0.16 75); /* #F59E0B */
+  --danger: oklch(0.65 0.22 27); /* #EF4444 */
   --destructive: oklch(0.65 0.22 27);
   --destructive-foreground: oklch(0.99 0 0);
   --pain-low: oklch(0.7 0.16 162);

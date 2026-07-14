@@ -17,10 +17,22 @@ export const Route = createFileRoute("/onboarding/treatment")({
   component: TreatmentOnboardingPage,
 });
 
-const INJURY_OPTIONS: { value: InjuryType; label: string; protocolId: string }[] = [
-  { value: "lca", label: "Reconstrução de LCA", protocolId: "proto_lca" },
-  { value: "meniscus", label: "Lesão de menisco", protocolId: "proto_meniscus" },
-  { value: "patellofemoral", label: "Síndrome patelofemoral", protocolId: "proto_patellofemoral" },
+// Foco atual do piloto: LCA (protocolo baseado no manual clínico oficial).
+// Os demais protocolos permanecem no código, mas ficam como "em breve" na seleção.
+const INJURY_OPTIONS: {
+  value: InjuryType;
+  label: string;
+  protocolId: string;
+  available: boolean;
+}[] = [
+  { value: "lca", label: "Reconstrução de LCA", protocolId: "proto_lca", available: true },
+  { value: "meniscus", label: "Lesão de menisco", protocolId: "proto_meniscus", available: false },
+  {
+    value: "patellofemoral",
+    label: "Síndrome patelofemoral",
+    protocolId: "proto_patellofemoral",
+    available: false,
+  },
 ];
 
 const EMPTY_TREATMENT_DRAFT: TreatmentOnboardingDraft = {};
@@ -88,13 +100,7 @@ function TreatmentOnboardingPage() {
               onNext={() => setStep(2)}
             />
           )}
-          {step === 2 && (
-            <StepSide
-              draft={draft}
-              onChange={setDraft}
-              onNext={() => setStep(3)}
-            />
-          )}
+          {step === 2 && <StepSide draft={draft} onChange={setDraft} onNext={() => setStep(3)} />}
           {step === 3 && (
             <StepDoctor
               draft={draft}
@@ -147,13 +153,22 @@ function StepInjury({
           return (
             <button
               key={opt.value}
-              onClick={() => onChange({ injury_type: opt.value })}
+              disabled={!opt.available}
+              onClick={() => opt.available && onChange({ injury_type: opt.value })}
               className={cn(
                 "rounded-2xl border-2 p-4 text-left transition-all",
                 active ? "border-primary bg-primary-muted" : "border-border bg-card",
+                !opt.available && "cursor-not-allowed opacity-55",
               )}
             >
-              <p className="font-semibold text-foreground">{opt.label}</p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="font-semibold text-foreground">{opt.label}</p>
+                {!opt.available && (
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Em breve
+                  </span>
+                )}
+              </div>
               {active && (
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   {protocolName} · {totalSessions} sessões em {totalWeeks} semanas
@@ -183,7 +198,9 @@ function StepSide({
   return (
     <div>
       <h1 className="text-3xl font-bold leading-tight">Detalhes da lesão</h1>
-      <p className="mt-2 text-sm text-muted-foreground">Ajuda a separar tratamentos de membros diferentes.</p>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Ajuda a separar tratamentos de membros diferentes.
+      </p>
       <div className="mt-6 space-y-4">
         <Field label="Lado afetado">
           <div className="grid grid-cols-3 gap-2">

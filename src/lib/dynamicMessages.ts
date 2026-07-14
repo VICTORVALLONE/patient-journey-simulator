@@ -31,10 +31,7 @@ export function realAdherencePct(treatment: Treatment): number {
 export function weeksProgress(treatment: Treatment): { done: number; total: number } {
   const protocol = getProtocol(treatment.protocol_id);
   const spw = protocol.sessions_per_week || 3;
-  const done = Math.min(
-    protocol.total_weeks,
-    Math.round(treatment.total_sessions_completed / spw),
-  );
+  const done = Math.min(protocol.total_weeks, Math.round(treatment.total_sessions_completed / spw));
   return { done, total: protocol.total_weeks };
 }
 
@@ -47,8 +44,8 @@ export function getDynamicMessage(treatment: Treatment): string {
   if (reduction !== null && reduction >= 20) {
     return `📉 Sua dor reduziu ${reduction}% desde o início. Está funcionando.`;
   }
-  if (treatment.current_streak >= 7) {
-    return `🔥 ${treatment.current_streak} dias seguidos. Hábito em formação.`;
+  if (treatment.current_streak >= 3) {
+    return `🔥 ${treatment.current_streak} semanas seguidas batendo sua meta. Hábito em formação.`;
   }
   if (sessionsLeft > 0 && treatment.total_sessions_completed > 0) {
     return `Faltam ${sessionsLeft} sessões para concluir o protocolo.`;

@@ -44,6 +44,26 @@ export interface ProtocolPhase {
   doctor_message?: string;
 }
 
+// Clinical guide layered on top of a protocol (source: medical booklet / cartilha).
+// Additive: nothing in the persisted store shape depends on it.
+export interface WeekGuideEntry {
+  week_start: number; // semana pós-op inicial do bloco (inclusive)
+  week_end: number; // semana final do bloco (inclusive)
+  rom_target_degrees?: number; // meta de flexão do joelho (ADM) do bloco, ex.: 90
+  rom_target_label: string; // ex.: "Dobrar o joelho até 90°" | "Amplitude máxima"
+  milestones: string[]; // marcos funcionais do bloco, ex.: "Andar sem muletas"
+  caution?: string; // alerta de segurança específico do bloco
+}
+
+export interface ClinicalGuide {
+  source_title: string;
+  source_authors: string;
+  safety_alert: string; // tríade de alerta (dor, inchaço, instabilidade)
+  lag_sign_note: string; // sinal de Lag (inibição do quadríceps)
+  return_to_sport_note: string;
+  weeks: WeekGuideEntry[];
+}
+
 export interface Protocol {
   id: string;
   injury_type: InjuryType;
@@ -51,6 +71,7 @@ export interface Protocol {
   total_weeks: number;
   sessions_per_week: number;
   phases: ProtocolPhase[];
+  clinical_guide?: ClinicalGuide;
 }
 
 export interface Prescription {

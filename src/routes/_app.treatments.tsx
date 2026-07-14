@@ -23,7 +23,10 @@ function TreatmentsPage() {
   return (
     <div className="px-5 pt-6 pb-8">
       <header className="flex items-center gap-2">
-        <button onClick={() => navigate({ to: "/profile" })} className="rounded-full p-2 hover:bg-muted">
+        <button
+          onClick={() => navigate({ to: "/profile" })}
+          className="rounded-full p-2 hover:bg-muted"
+        >
           <ArrowLeft className="h-5 w-5" />
         </button>
         <h1 className="text-xl font-bold text-foreground">Meus tratamentos</h1>

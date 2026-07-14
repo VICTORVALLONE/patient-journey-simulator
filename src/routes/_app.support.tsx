@@ -53,14 +53,16 @@ function SupportPage() {
               <Sparkles className="mr-0.5 inline h-2.5 w-2.5" /> Beta
             </span>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Tire dúvidas sobre seu tratamento, 24/7.
-          </p>
+          <p className="text-xs text-muted-foreground">Tire dúvidas sobre seu tratamento, 24/7.</p>
         </div>
       </header>
 
       <section className="mt-5">
-        <ClientOnly fallback={<div className="h-[70vh] min-h-[460px] rounded-2xl border border-border bg-card" />}>
+        <ClientOnly
+          fallback={
+            <div className="h-[70vh] min-h-[460px] rounded-2xl border border-border bg-card" />
+          }
+        >
           <AiDoctorChat />
         </ClientOnly>
       </section>
@@ -70,33 +72,35 @@ function SupportPage() {
           Outras formas de ajuda
         </p>
         <div className="mt-2 space-y-2">
-        <a
-          href="https://wa.me/5511999990000?text=Ol%C3%A1%2C%20preciso%20de%20ajuda%20no%20FisioCare"
-          target="_blank"
-          rel="noreferrer"
-          className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4"
-        >
-          <div className="rounded-xl bg-success/15 p-2 text-success">
-            <MessageCircle className="h-5 w-5" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-semibold">WhatsApp</p>
-            <p className="text-xs text-muted-foreground">Atendimento humano em horário comercial</p>
-          </div>
-        </a>
+          <a
+            href="https://wa.me/5511999990000?text=Ol%C3%A1%2C%20preciso%20de%20ajuda%20no%20FisioCare"
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4"
+          >
+            <div className="rounded-xl bg-success/15 p-2 text-success">
+              <MessageCircle className="h-5 w-5" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold">WhatsApp</p>
+              <p className="text-xs text-muted-foreground">
+                Atendimento humano em horário comercial
+              </p>
+            </div>
+          </a>
 
-        <a
-          href="tel:+551130000000"
-          className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4"
-        >
-          <div className="rounded-xl bg-primary-muted p-2 text-primary">
-            <Phone className="h-5 w-5" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-semibold">Ligar para o suporte</p>
-            <p className="text-xs text-muted-foreground">Seg a Sex · 9h–18h</p>
-          </div>
-        </a>
+          <a
+            href="tel:+551130000000"
+            className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4"
+          >
+            <div className="rounded-xl bg-primary-muted p-2 text-primary">
+              <Phone className="h-5 w-5" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold">Ligar para o suporte</p>
+              <p className="text-xs text-muted-foreground">Seg a Sex · 9h–18h</p>
+            </div>
+          </a>
         </div>
       </section>
 
@@ -112,11 +116,14 @@ function SupportPage() {
                   className="flex w-full items-center justify-between gap-3 p-4 text-left"
                 >
                   <span className="text-sm font-semibold text-foreground">{item.q}</span>
-                  <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", isOpen && "rotate-180")} />
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 text-muted-foreground transition-transform",
+                      isOpen && "rotate-180",
+                    )}
+                  />
                 </button>
-                {isOpen && (
-                  <p className="px-4 pb-4 text-sm text-muted-foreground">{item.a}</p>
-                )}
+                {isOpen && <p className="px-4 pb-4 text-sm text-muted-foreground">{item.a}</p>}
               </div>
             );
           })}

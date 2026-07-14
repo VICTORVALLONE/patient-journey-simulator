@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 import type { Treatment } from "@/lib/types";
+import { realAdherencePct } from "@/lib/dynamicMessages";
 import { cn } from "@/lib/utils";
 
 const STATUS_LABEL: Record<Treatment["status"], string> = {
@@ -27,13 +28,13 @@ export function TreatmentCard({ treatment }: { treatment: Treatment }) {
               : "bg-primary-muted text-primary-dark",
         )}
       >
-        {treatment.adherence_rate}%
+        {realAdherencePct(treatment)}%
       </div>
       <div className="flex-1">
         <p className="text-sm font-semibold text-foreground">{treatment.nickname}</p>
         <p className="text-xs text-muted-foreground">
-          {STATUS_LABEL[treatment.status]} ·{" "}
-          {treatment.total_sessions_completed}/{treatment.total_sessions_prescribed} sessões
+          {STATUS_LABEL[treatment.status]} · {treatment.total_sessions_completed}/
+          {treatment.total_sessions_prescribed} sessões
         </p>
       </div>
       <ChevronRight className="h-4 w-4 text-muted-foreground" />

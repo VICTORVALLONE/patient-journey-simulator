@@ -7,6 +7,7 @@ import { BadgeGrid } from "@/components/progress/BadgeGrid";
 import { PainTrendChart } from "@/components/progress/PainTrendChart";
 import { WeeklyFrequencyChart } from "@/components/progress/WeeklyFrequencyChart";
 import { generateDoctorReport } from "@/lib/pdfReport";
+import { realAdherencePct } from "@/lib/dynamicMessages";
 
 export const Route = createFileRoute("/_app/treatments/$tid")({
   head: () => ({ meta: [{ title: "Tratamento · FisioCare" }] }),
@@ -45,8 +46,7 @@ function TreatmentDetailPage() {
   let durationWeeks: number | null = null;
   if (treatment.completed_at) {
     const ms =
-      new Date(treatment.completed_at).getTime() -
-      new Date(treatment.started_at).getTime();
+      new Date(treatment.completed_at).getTime() - new Date(treatment.started_at).getTime();
     durationWeeks = Math.max(1, Math.round(ms / (7 * 86400 * 1000)));
   }
   const firstPain = treatment.pain_history[0]?.average_pain;
@@ -55,7 +55,10 @@ function TreatmentDetailPage() {
   return (
     <div className="px-5 pt-6 pb-8">
       <header className="flex items-center gap-2">
-        <button onClick={() => navigate({ to: "/treatments" })} className="rounded-full p-2 hover:bg-muted">
+        <button
+          onClick={() => navigate({ to: "/treatments" })}
+          className="rounded-full p-2 hover:bg-muted"
+        >
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div>
@@ -68,27 +71,30 @@ function TreatmentDetailPage() {
 
       <section className="mt-5 rounded-3xl bg-primary-navy p-5 text-white">
         <p className="text-xs font-semibold uppercase tracking-wider text-white/60">Adesão</p>
-        <p className="mt-2 text-4xl font-bold">{treatment.adherence_rate}%</p>
+        <p className="mt-2 text-4xl font-bold">{realAdherencePct(treatment)}%</p>
         <p className="mt-1 text-sm text-white/80">
           {treatment.total_sessions_completed} de {treatment.total_sessions_prescribed} sessões
         </p>
         <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/20">
           <div
             className="h-full rounded-full bg-white"
-            style={{ width: `${treatment.adherence_rate}%` }}
+            style={{ width: `${realAdherencePct(treatment)}%` }}
           />
         </div>
       </section>
 
       <section className="mt-5 grid grid-cols-2 gap-3">
         <Stat label="Protocolo" value={protocol.name} />
-        <Stat label="Lado" value={
-          treatment.affected_side === "right"
-            ? "Direito"
-            : treatment.affected_side === "left"
-              ? "Esquerdo"
-              : "Bilateral"
-        } />
+        <Stat
+          label="Lado"
+          value={
+            treatment.affected_side === "right"
+              ? "Direito"
+              : treatment.affected_side === "left"
+                ? "Esquerdo"
+                : "Bilateral"
+          }
+        />
         <Stat label="Médico" value={treatment.prescribed_by} />
         <Stat
           label="Período"
@@ -171,7 +177,9 @@ function TreatmentDetailPage() {
                       </p>
                     </div>
                     <div className="text-right text-[11px]">
-                      <p className="font-semibold text-foreground">Dor {s.pain_level?.toFixed(1)}</p>
+                      <p className="font-semibold text-foreground">
+                        Dor {s.pain_level?.toFixed(1)}
+                      </p>
                       <p className="text-muted-foreground">
                         {s.difficulty_rating === 1
                           ? "Fácil"

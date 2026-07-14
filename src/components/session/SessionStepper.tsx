@@ -16,12 +16,7 @@ export function SessionStepper({ current }: { current: SessionPhase }) {
         const passed = i <= currentIdx;
         return (
           <div key={s.id} className="flex flex-1 flex-col items-center gap-1.5">
-            <div
-              className={cn(
-                "h-1.5 w-full rounded-full",
-                passed ? "bg-primary" : "bg-muted",
-              )}
-            />
+            <div className={cn("h-1.5 w-full rounded-full", passed ? "bg-primary" : "bg-muted")} />
             <span
               className={cn(
                 "text-[10px] font-medium",

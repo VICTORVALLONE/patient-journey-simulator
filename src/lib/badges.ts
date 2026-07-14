@@ -11,8 +11,9 @@ export function checkNewBadges(treatment: Treatment, totalPhases: number): Badge
   if (completed >= 1) add("first_session");
   if (completed >= 7) add("week_1");
   if (completed >= 10) add("sessions_10");
-  if (treatment.current_streak >= 7) add("streak_7");
-  if (treatment.current_streak >= 21) add("streak_21");
+  // Streak em semanas consecutivas batendo a meta semanal
+  if (treatment.current_streak >= 3) add("streak_7");
+  if (treatment.current_streak >= 8) add("streak_21");
 
   for (const phase of treatment.phases_completed) {
     const id = `phase_${phase}_complete` as BadgeId;
@@ -23,10 +24,7 @@ export function checkNewBadges(treatment: Treatment, totalPhases: number): Badge
     ? completed / treatment.total_sessions_prescribed
     : 0;
   if (pct >= 0.5) add("halfway");
-  if (
-    treatment.total_sessions_prescribed > 0 &&
-    completed >= treatment.total_sessions_prescribed
-  ) {
+  if (treatment.total_sessions_prescribed > 0 && completed >= treatment.total_sessions_prescribed) {
     add("protocol_complete");
   }
   return out.filter((id) => {

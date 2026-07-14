@@ -1,11 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Bell, TrendingDown, Layers, CheckCircle2, ChevronRight, User as UserIcon, Flame } from "lucide-react";
+import {
+  Bell,
+  TrendingDown,
+  Layers,
+  CheckCircle2,
+  ChevronRight,
+  User as UserIcon,
+  Flame,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePatientStore, useActiveTreatment, todaySessionInfoOf } from "@/store/patient";
 import { getDynamicMessage, greeting, painReductionPct } from "@/lib/dynamicMessages";
 import { TreatmentSwitcher } from "@/components/treatment/TreatmentSwitcher";
 import { EmptyTreatmentState } from "@/components/treatment/EmptyTreatmentState";
-import { getProtocol } from "@/data/protocols";
+import { getProtocol, getWeekGuide, weekForCompletedSessions } from "@/data/protocols";
 
 export const Route = createFileRoute("/_app/home")({
   head: () => ({ meta: [{ title: "Início · FisioCare" }] }),
@@ -49,6 +57,8 @@ function HomePage() {
   const reduction = painReductionPct(treatment);
   const totalPhases = protocol.phases.length;
   const phasePct = Math.round((treatment.current_phase / totalPhases) * 100);
+  const currentWeek = weekForCompletedSessions(protocol, treatment.total_sessions_completed);
+  const weekGuide = getWeekGuide(protocol, currentWeek);
 
   return (
     <div className="px-5 pt-6 pb-8">
@@ -73,18 +83,28 @@ function HomePage() {
         <p className="text-xs font-medium uppercase tracking-wider text-white/70">Sessão de hoje</p>
         <h2 className="mt-1 text-2xl font-bold leading-tight">{today.phase.name}</h2>
         <p className="mt-1 text-sm text-white/80">
-          Sessão {today.sessionNumber} de {today.sessionsInPhase} ·{" "}
-          {today.phase.exercises.length} exercícios · ~{totalMinutes} min
+          Sessão {today.sessionNumber} de {today.sessionsInPhase} · {today.phase.exercises.length}{" "}
+          exercícios · ~{totalMinutes} min
         </p>
+        {weekGuide && (
+          <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white/95">
+            🎯 Semana {currentWeek}: {weekGuide.rom_target_label}
+          </p>
+        )}
         {protocolComplete ? (
-          <div className="mt-4 rounded-xl bg-white/15 p-3 text-sm">🏆 Tratamento concluído. Parabéns!</div>
+          <div className="mt-4 rounded-xl bg-white/15 p-3 text-sm">
+            🏆 Tratamento concluído. Parabéns!
+          </div>
         ) : isCompletedToday ? (
           <div className="mt-4 flex items-center gap-2 rounded-xl bg-white/15 p-3 text-sm font-medium">
             <CheckCircle2 className="h-4 w-4" /> Sessão de hoje concluída
           </div>
         ) : (
           <Link to="/session/$sid" params={{ sid: "today" }}>
-            <Button size="lg" className="mt-4 w-full rounded-xl bg-white text-primary hover:bg-white/90">
+            <Button
+              size="lg"
+              className="mt-4 w-full rounded-xl bg-white text-primary hover:bg-white/90"
+            >
               Iniciar sessão de hoje
             </Button>
           </Link>
@@ -116,7 +136,8 @@ function HomePage() {
 
       <p className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground">
         <Flame className="h-3 w-3 text-warning" />
-        {treatment.current_streak} dias seguidos · maior sequência {treatment.longest_streak}
+        {treatment.current_streak} {treatment.current_streak === 1 ? "semana" : "semanas"} seguidas
+        na meta · melhor: {treatment.longest_streak}
       </p>
 
       <section className="mt-6">
@@ -133,7 +154,10 @@ function HomePage() {
             </div>
           ) : (
             treatment.sessions.slice(0, 3).map((s) => (
-              <div key={s.id} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
+              <div
+                key={s.id}
+                className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3"
+              >
                 <div className="rounded-xl bg-success/15 p-2 text-success">
                   <CheckCircle2 className="h-4 w-4" />
                 </div>
@@ -150,7 +174,9 @@ function HomePage() {
                     })}
                   </p>
                 </div>
-                <span className="text-xs text-muted-foreground">Dor {s.pain_level?.toFixed(1)}</span>
+                <span className="text-xs text-muted-foreground">
+                  Dor {s.pain_level?.toFixed(1)}
+                </span>
               </div>
             ))
           )}
@@ -188,7 +214,10 @@ function StatCard({
 function ProfileAvatarLink({ avatarUrl, name }: { avatarUrl?: string; name: string }) {
   if (avatarUrl) {
     return (
-      <Link to="/profile" className="block h-10 w-10 overflow-hidden rounded-full ring-2 ring-primary/20">
+      <Link
+        to="/profile"
+        className="block h-10 w-10 overflow-hidden rounded-full ring-2 ring-primary/20"
+      >
         <img
           src={avatarUrl}
           alt={name}

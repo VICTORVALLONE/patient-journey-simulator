@@ -87,7 +87,9 @@ function ExercisesPage() {
                 Sessão de hoje
               </p>
               <p className="mt-0.5 text-base font-bold text-foreground">{today.phase.name}</p>
-              <p className="text-xs text-muted-foreground">{today.phase.exercises.length} exercícios</p>
+              <p className="text-xs text-muted-foreground">
+                {today.phase.exercises.length} exercícios
+              </p>
             </div>
             <ChevronRight className="h-5 w-5 text-primary" />
           </div>

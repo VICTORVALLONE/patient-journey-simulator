@@ -1,5 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Bell, ChevronRight, Globe, HelpCircle, LogOut, Plus, RotateCcw, Shield, UserPlus } from "lucide-react";
+import {
+  Bell,
+  ChevronRight,
+  Globe,
+  HelpCircle,
+  LogOut,
+  Plus,
+  RotateCcw,
+  Shield,
+  UserPlus,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePatientStore } from "@/store/patient";
 import { TreatmentCard } from "@/components/treatment/TreatmentCard";

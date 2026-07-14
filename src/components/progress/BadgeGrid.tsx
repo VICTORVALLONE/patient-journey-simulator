@@ -20,8 +20,12 @@ export function BadgeGrid({ unlocked }: { unlocked: BadgeId[] }) {
                 : "border-border bg-card opacity-60",
             )}
           >
-            <span className="text-2xl">{isUnlocked ? b.icon : <Lock className="h-5 w-5 text-muted-foreground" />}</span>
-            <span className="text-[11px] font-semibold leading-tight text-foreground">{b.name}</span>
+            <span className="text-2xl">
+              {isUnlocked ? b.icon : <Lock className="h-5 w-5 text-muted-foreground" />}
+            </span>
+            <span className="text-[11px] font-semibold leading-tight text-foreground">
+              {b.name}
+            </span>
           </div>
         );
       })}

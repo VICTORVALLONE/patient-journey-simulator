@@ -6,7 +6,8 @@ import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useActiveTreatment } from "@/store/patient";
-import { getProtocol } from "@/data/protocols";
+import { getProtocol, getWeekGuide, weekForCompletedSessions } from "@/data/protocols";
+import { realAdherencePct } from "@/lib/dynamicMessages";
 import { cn } from "@/lib/utils";
 import { apiUrl } from "@/lib/api-base";
 
@@ -31,9 +32,7 @@ function loadStoredMessages(): UIMessage[] {
 }
 
 function extractText(m: UIMessage): string {
-  return m.parts
-    .map((p) => (p.type === "text" ? p.text : ""))
-    .join("");
+  return m.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
 }
 
 export function AiDoctorChat({ className }: { className?: string } = {}) {
@@ -44,16 +43,28 @@ export function AiDoctorChat({ className }: { className?: string } = {}) {
     const protocol = getProtocol(treatment.protocol_id);
     const phase = protocol.phases.find((p) => p.phase_number === treatment.current_phase);
     const lastPainEntry = treatment.pain_history[treatment.pain_history.length - 1];
+    const currentWeek = weekForCompletedSessions(protocol, treatment.total_sessions_completed);
+    const weekGuide = getWeekGuide(protocol, currentWeek);
+    const guide = protocol.clinical_guide;
     return {
       nickname: treatment.nickname,
       protocolName: protocol.name,
       phaseName: phase?.name,
       currentPhase: treatment.current_phase,
       totalPhases: protocol.phases.length,
-      adherenceRate: treatment.adherence_rate,
+      adherenceRate: realAdherencePct(treatment),
       sessionsCompleted: treatment.total_sessions_completed,
       sessionsPrescribed: treatment.total_sessions_prescribed,
       lastPain: lastPainEntry?.average_pain,
+      // Guia clínico da cartilha — o coach NÃO deve sugerir nada além destes limites.
+      currentWeek,
+      weekRomTarget: weekGuide?.rom_target_label,
+      weekMilestones: weekGuide?.milestones,
+      weekCaution: weekGuide?.caution,
+      clinicalSource: guide?.source_title,
+      safetyAlert: guide?.safety_alert,
+      lagSignNote: guide?.lag_sign_note,
+      returnToSportNote: guide?.return_to_sport_note,
     };
   }, [treatment]);
 
@@ -142,8 +153,8 @@ export function AiDoctorChat({ className }: { className?: string } = {}) {
         {messages.length === 0 && (
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              Olá! Sou o <span className="font-semibold text-foreground">AI Doctor</span>. Como posso te
-              ajudar com seu tratamento hoje?
+              Olá! Sou o <span className="font-semibold text-foreground">AI Doctor</span>. Como
+              posso te ajudar com seu tratamento hoje?
             </p>
             <div className="flex flex-wrap gap-2">
               {SUGGESTIONS.map((s) => (
@@ -171,7 +182,10 @@ export function AiDoctorChat({ className }: { className?: string } = {}) {
             );
           }
           return (
-            <div key={m.id} className="prose prose-sm max-w-none text-sm leading-relaxed text-foreground">
+            <div
+              key={m.id}
+              className="prose prose-sm max-w-none text-sm leading-relaxed text-foreground"
+            >
               {text ? (
                 <ReactMarkdown
                   components={{
@@ -235,7 +249,12 @@ export function AiDoctorChat({ className }: { className?: string } = {}) {
           <p className="text-[11px] text-muted-foreground">
             Apoio educacional · não substitui consulta médica
           </p>
-          <Button type="submit" size="sm" className="rounded-full" disabled={isBusy || !input.trim()}>
+          <Button
+            type="submit"
+            size="sm"
+            className="rounded-full"
+            disabled={isBusy || !input.trim()}
+          >
             {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </Button>
         </div>

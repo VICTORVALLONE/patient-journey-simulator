@@ -1,5 +1,6 @@
 import type { Treatment, User } from "@/lib/types";
 import { BADGES } from "@/data/badges";
+import { realAdherencePct } from "@/lib/dynamicMessages";
 
 export async function generateDoctorReport(
   user: User,
@@ -58,14 +59,22 @@ export async function generateDoctorReport(
   doc.setFont("helvetica", "normal");
   y += 18;
   doc.text(
-    `Sessões: ${treatment.total_sessions_completed} de ${treatment.total_sessions_prescribed} (${treatment.adherence_rate}%)`,
+    `Sessões: ${treatment.total_sessions_completed} de ${treatment.total_sessions_prescribed} (adesão: ${realAdherencePct(treatment)}%)`,
     40,
     y,
   );
   y += 16;
-  doc.text(`Sequência atual: ${treatment.current_streak} dias · Maior: ${treatment.longest_streak} dias`, 40, y);
+  doc.text(
+    `Semanas seguidas na meta: ${treatment.current_streak} · Melhor sequência: ${treatment.longest_streak} semanas`,
+    40,
+    y,
+  );
   y += 16;
-  doc.text(`Fase atual: ${treatment.current_phase} · Fases concluídas: ${treatment.phases_completed.join(", ") || "—"}`, 40, y);
+  doc.text(
+    `Fase atual: ${treatment.current_phase} · Fases concluídas: ${treatment.phases_completed.join(", ") || "—"}`,
+    40,
+    y,
+  );
   y += 28;
 
   doc.setFont("helvetica", "bold");
@@ -73,7 +82,11 @@ export async function generateDoctorReport(
   doc.setFont("helvetica", "normal");
   y += 18;
   for (const entry of treatment.pain_history) {
-    doc.text(`Semana ${entry.week}: ${entry.average_pain.toFixed(1)} (${entry.session_count} sessões)`, 50, y);
+    doc.text(
+      `Semana ${entry.week}: ${entry.average_pain.toFixed(1)} (${entry.session_count} sessões)`,
+      50,
+      y,
+    );
     y += 14;
   }
   y += 14;
@@ -97,7 +110,10 @@ export async function generateDoctorReport(
     doc.internal.pageSize.getHeight() - 30,
   );
 
-  const slug = treatment.nickname.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const slug = treatment.nickname
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
   doc.save(`fisiocare-relatorio-${slug || "tratamento"}.pdf`);
 }
 

@@ -9,6 +9,7 @@ import {
 } from "@/data/mockUser";
 import { getProtocol, totalSessionsForProtocol } from "@/data/protocols";
 import { checkNewBadges } from "@/lib/badges";
+import { computeWeeklyStreak } from "@/lib/streak";
 import type {
   AffectedSide,
   BadgeId,
@@ -116,8 +117,7 @@ function makeTreatment(userId: string, draft: TreatmentOnboardingDraft): Treatme
   const protocol = getProtocol(INJURY_TO_PROTOCOL[injury]);
   const total = totalSessionsForProtocol(protocol);
   const nickname =
-    draft.nickname?.trim() ||
-    `Joelho ${SIDE_LABEL[affected]} (${INJURY_NICKNAME[injury]})`;
+    draft.nickname?.trim() || `Joelho ${SIDE_LABEL[affected]} (${INJURY_NICKNAME[injury]})`;
   return {
     id: `tr_${Date.now()}`,
     user_id: userId,
@@ -268,8 +268,31 @@ export const usePatientStore = create<PatientState>()(
         const adherence_rate = treatment.total_sessions_prescribed
           ? Math.round((newCompletedCount / treatment.total_sessions_prescribed) * 100)
           : 0;
-        const current_streak = treatment.current_streak + 1;
-        const longest_streak = Math.max(treatment.longest_streak, current_streak);
+
+        const session: Session = {
+          id: `sess_${Date.now()}`,
+          treatment_id: treatment.id,
+          phase_number: phaseOfThisSession.phase_number,
+          session_number: sessionsInThisPhaseDone,
+          scheduled_date: todayISO(),
+          completed_at: new Date().toISOString(),
+          exercises_completed: input.exercises_completed,
+          pain_level: input.pain_level,
+          difficulty_rating: input.difficulty_rating,
+          notes: input.notes,
+          duration_minutes: input.duration_minutes,
+        };
+        const allSessions = [session, ...treatment.sessions];
+
+        // Streak honesto: semanas consecutivas batendo a meta de frequência do
+        // protocolo (não +1 por sessão) — recalculado do histórico real.
+        const streak = computeWeeklyStreak(
+          allSessions,
+          treatment.protocol_id,
+          treatment.started_at,
+        );
+        const current_streak = streak.current;
+        const longest_streak = Math.max(treatment.longest_streak, streak.longest);
 
         const weekIdx = weekIndexFor(treatment, phaseOfThisSession.sessions_per_week);
         const painHistory = treatment.pain_history.map((p) => ({ ...p }));
@@ -316,20 +339,6 @@ export const usePatientStore = create<PatientState>()(
         };
 
         const newBadges = checkNewBadges(tentative, totalPhases);
-
-        const session: Session = {
-          id: `sess_${Date.now()}`,
-          treatment_id: treatment.id,
-          phase_number: phaseOfThisSession.phase_number,
-          session_number: sessionsInThisPhaseDone,
-          scheduled_date: todayISO(),
-          completed_at: new Date().toISOString(),
-          exercises_completed: input.exercises_completed,
-          pain_level: input.pain_level,
-          difficulty_rating: input.difficulty_rating,
-          notes: input.notes,
-          duration_minutes: input.duration_minutes,
-        };
 
         const protocolCompleted =
           newCompletedCount >= treatment.total_sessions_prescribed &&
@@ -394,15 +403,14 @@ export function getActiveTreatment(state: PatientState): Treatment | null {
 
 export function useActiveTreatment(): Treatment | null {
   return usePatientStore((s) =>
-    s.activeTreatmentId ? s.treatments.find((t) => t.id === s.activeTreatmentId) ?? null : null,
+    s.activeTreatmentId ? (s.treatments.find((t) => t.id === s.activeTreatmentId) ?? null) : null,
   );
 }
 
 export function currentPhaseOf(treatment: Treatment) {
   const protocol = getProtocol(treatment.protocol_id);
   return (
-    protocol.phases.find((p) => p.phase_number === treatment.current_phase) ??
-    protocol.phases[0]!
+    protocol.phases.find((p) => p.phase_number === treatment.current_phase) ?? protocol.phases[0]!
   );
 }
 

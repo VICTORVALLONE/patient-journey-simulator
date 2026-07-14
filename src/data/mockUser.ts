@@ -1,6 +1,7 @@
 import type { BadgeId, PainEntry, Treatment, User, WeekFrequency } from "@/lib/types";
 import type { Session } from "@/lib/types";
 import { getProtocol, totalSessionsForProtocol } from "@/data/protocols";
+import { computeWeeklyStreak } from "@/lib/streak";
 import avatarAlexandre from "@/assets/avatar-alexandre.jpg";
 
 // --- Helpers (1 sessão por dia, respeitando spw) ---------------------------
@@ -13,13 +14,20 @@ function isoDayMon1(d: Date): number {
 
 function patternWeekdays(spw: number): number[] {
   switch (spw) {
-    case 1: return [3];
-    case 2: return [2, 4];
-    case 3: return [1, 3, 5];
-    case 4: return [1, 2, 4, 5];
-    case 5: return [1, 2, 3, 4, 5];
-    case 6: return [1, 2, 3, 4, 5, 6];
-    default: return [1, 2, 3, 4, 5, 6, 7].slice(0, spw);
+    case 1:
+      return [3];
+    case 2:
+      return [2, 4];
+    case 3:
+      return [1, 3, 5];
+    case 4:
+      return [1, 2, 4, 5];
+    case 5:
+      return [1, 2, 3, 4, 5];
+    case 6:
+      return [1, 2, 3, 4, 5, 6];
+    default:
+      return [1, 2, 3, 4, 5, 6, 7].slice(0, spw);
   }
 }
 
@@ -160,6 +168,10 @@ export const MOCK_TREATMENT_LCA_ACTIVE: Treatment = (() => {
   });
   sessions.reverse();
 
+  // Streak = semanas consecutivas batendo a meta semanal — computado do
+  // histórico real para manter o seed coerente com a lógica do app.
+  const streak = computeWeeklyStreak(sessions, "proto_lca", dateOnly(startedAt));
+
   return {
     id: "tr_lca_active",
     user_id: MOCK_USER.id,
@@ -178,8 +190,8 @@ export const MOCK_TREATMENT_LCA_ACTIVE: Treatment = (() => {
     total_sessions_prescribed: 36,
     total_sessions_completed: 24,
     adherence_rate: 67,
-    current_streak: 12,
-    longest_streak: 12,
+    current_streak: streak.current,
+    longest_streak: streak.longest,
     pain_history: DEMO_PAIN_HISTORY,
     weekly_frequency: weeklyFrequencyForCurrentWeek(sessions, 3),
     sessions,
@@ -257,7 +269,7 @@ export const MOCK_TREATMENT_PATELLO_DONE: Treatment = (() => {
     total_sessions_completed: total,
     adherence_rate: 100,
     current_streak: 0,
-    longest_streak: 28,
+    longest_streak: 12,
     pain_history: [
       { week: 1, average_pain: 6.4, session_count: 3 },
       { week: 2, average_pain: 5.9, session_count: 3 },
