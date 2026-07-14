@@ -85,12 +85,28 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "App de fisioterapia guiada para recuperação de lesões ortopédicas. Vídeos, acompanhamento de sessões e evolução de dor.",
       },
       { property: "og:title", content: "FisioApp — Fisioterapia guiada no seu bolso" },
-      { property: "og:description", content: "App de fisioterapia guiada para recuperação de lesões ortopédicas. Vídeos, acompanhamento de sessões e evolução de dor." },
+      {
+        property: "og:description",
+        content:
+          "App de fisioterapia guiada para recuperação de lesões ortopédicas. Vídeos, acompanhamento de sessões e evolução de dor.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:title", content: "FisioApp — Fisioterapia guiada no seu bolso" },
-      { name: "twitter:description", content: "App de fisioterapia guiada para recuperação de lesões ortopédicas. Vídeos, acompanhamento de sessões e evolução de dor." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a003d7eb-e283-4891-aa20-ca964884c92f/id-preview-d1f769c8--3a1db25b-ffd5-44f7-b383-ffba8c54cf5a.lovable.app-1784045683059.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a003d7eb-e283-4891-aa20-ca964884c92f/id-preview-d1f769c8--3a1db25b-ffd5-44f7-b383-ffba8c54cf5a.lovable.app-1784045683059.png" },
+      {
+        name: "twitter:description",
+        content:
+          "App de fisioterapia guiada para recuperação de lesões ortopédicas. Vídeos, acompanhamento de sessões e evolução de dor.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a003d7eb-e283-4891-aa20-ca964884c92f/id-preview-d1f769c8--3a1db25b-ffd5-44f7-b383-ffba8c54cf5a.lovable.app-1784045683059.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a003d7eb-e283-4891-aa20-ca964884c92f/id-preview-d1f769c8--3a1db25b-ffd5-44f7-b383-ffba8c54cf5a.lovable.app-1784045683059.png",
+      },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [

@@ -1,4 +1,4 @@
-import type { BadgeId, PainEntry, Treatment, User, WeekFrequency } from "@/lib/types";
+import type { BadgeId, PainEntry, Protocol, Treatment, User, WeekFrequency } from "@/lib/types";
 import type { Session } from "@/lib/types";
 import { getProtocol, totalSessionsForProtocol } from "@/data/protocols";
 import { computeWeeklyStreak } from "@/lib/streak";
@@ -33,6 +33,41 @@ function patternWeekdays(spw: number): number[] {
 
 function dateOnly(d: Date): string {
   return d.toISOString().slice(0, 10);
+}
+
+// Fase e número da sessão (dentro da fase) para o índice global 0-based,
+// derivados das contagens reais do protocolo (evita hardcodar fase no mock).
+function phaseInfoForIndex(
+  protocol: Protocol,
+  globalIdx: number,
+): { phase_number: number; session_number: number } {
+  let remaining = globalIdx;
+  for (const ph of protocol.phases) {
+    const count = ph.duration_weeks * ph.sessions_per_week;
+    if (remaining < count) return { phase_number: ph.phase_number, session_number: remaining + 1 };
+    remaining -= count;
+  }
+  const last = protocol.phases[protocol.phases.length - 1]!;
+  return {
+    phase_number: last.phase_number,
+    session_number: last.duration_weeks * last.sessions_per_week,
+  };
+}
+
+// Estado de fase derivado de N sessões concluídas: fase atual (a da próxima
+// sessão) e as fases já totalmente concluídas.
+function derivePhaseState(
+  protocol: Protocol,
+  completed: number,
+): { currentPhase: number; phasesCompleted: number[] } {
+  const phasesCompleted: number[] = [];
+  let cum = 0;
+  for (const ph of protocol.phases) {
+    cum += ph.duration_weeks * ph.sessions_per_week;
+    if (completed >= cum) phasesCompleted.push(ph.phase_number);
+  }
+  const currentPhase = phaseInfoForIndex(protocol, completed).phase_number;
+  return { currentPhase, phasesCompleted };
 }
 
 function datesBackward(endDate: Date, count: number, spw: number): Date[] {
@@ -114,7 +149,9 @@ const DEMO_BADGES_LCA: BadgeId[] = [
   "week_1",
   "sessions_10",
   "streak_7",
+  "streak_21",
   "phase_1_complete",
+  "phase_2_complete",
 ];
 
 const DEMO_BADGES_PATELLO: BadgeId[] = [
@@ -130,12 +167,14 @@ const DEMO_BADGES_PATELLO: BadgeId[] = [
   "protocol_complete",
 ];
 
-/** Demo: tratamento de LCA atualmente ativo na fase 2, ~67% concluído. */
+/** Demo: LCA ativo, 24 sessões concluídas (fase/semana derivadas do protocolo). */
 export const MOCK_TREATMENT_LCA_ACTIVE: Treatment = (() => {
+  const lcaProtocol = getProtocol("proto_lca");
+  const COMPLETED = 24;
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
   yesterday.setHours(9, 0, 0, 0);
-  const dates = datesBackward(yesterday, 24, 3);
+  const dates = datesBackward(yesterday, COMPLETED, 3);
   const startedAt = dates[0] ?? yesterday;
   const NOTES = [
     "Inchaço menor hoje.",
@@ -145,9 +184,8 @@ export const MOCK_TREATMENT_LCA_ACTIVE: Treatment = (() => {
     "Sem dor durante os exercícios.",
   ];
   const sessions: Session[] = dates.map((d, i) => {
-    const phase = i < 6 ? 1 : 2;
-    const sessionNumber = i < 6 ? i + 1 : i - 5;
-    const t = i / 23;
+    const { phase_number, session_number } = phaseInfoForIndex(lcaProtocol, i);
+    const t = i / (COMPLETED - 1);
     const pain = Math.max(0, Math.round((7.5 - 5 * t + ((i * 7) % 5) / 10) * 10) / 10);
     const diff: 1 | 2 | 3 = t < 0.33 ? 3 : t < 0.7 ? 2 : 1;
     const dt = new Date(d);
@@ -155,8 +193,8 @@ export const MOCK_TREATMENT_LCA_ACTIVE: Treatment = (() => {
     return {
       id: `sess_lca_${i}`,
       treatment_id: "tr_lca_active",
-      phase_number: phase,
-      session_number: sessionNumber,
+      phase_number,
+      session_number,
       scheduled_date: dateOnly(dt),
       completed_at: dt.toISOString(),
       exercises_completed: [],
@@ -168,9 +206,9 @@ export const MOCK_TREATMENT_LCA_ACTIVE: Treatment = (() => {
   });
   sessions.reverse();
 
-  // Streak = semanas consecutivas batendo a meta semanal — computado do
-  // histórico real para manter o seed coerente com a lógica do app.
+  // Streak, fase e total derivados dos dados reais — sem hardcode incoerente.
   const streak = computeWeeklyStreak(sessions, "proto_lca", dateOnly(startedAt));
+  const { currentPhase, phasesCompleted } = derivePhaseState(lcaProtocol, COMPLETED);
 
   return {
     id: "tr_lca_active",
@@ -184,11 +222,11 @@ export const MOCK_TREATMENT_LCA_ACTIVE: Treatment = (() => {
     prescribed_by: "Dr. Carlos Mendes",
     reminder_time: "09:00",
     status: "active",
-    current_phase: 2,
-    phases_completed: [1],
+    current_phase: currentPhase,
+    phases_completed: phasesCompleted,
     badges_unlocked: DEMO_BADGES_LCA,
-    total_sessions_prescribed: 36,
-    total_sessions_completed: 24,
+    total_sessions_prescribed: totalSessionsForProtocol(lcaProtocol),
+    total_sessions_completed: COMPLETED,
     adherence_rate: 67,
     current_streak: streak.current,
     longest_streak: streak.longest,

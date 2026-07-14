@@ -32,10 +32,7 @@ function aliasNitroServerEntry(): PluginOption {
           let contents = readFileSync(dest, "utf8");
           // 1) Guard against missing `env` (SPA prerender/preview calls fetch
           //    without CF bindings).
-          contents = contents.replace(
-            /if\s*\(\s*env\.ASSETS\s*&&/g,
-            "if (env && env.ASSETS &&",
-          );
+          contents = contents.replace(/if\s*\(\s*env\.ASSETS\s*&&/g, "if (env && env.ASSETS &&");
           // 2) The srvx NodeRequest used by the preview server exposes `ip`
           //    as a getter-only property; nitro's Cloudflare adapter tries to
           //    assign it and crashes. Skip the assignment when it's not writable.
