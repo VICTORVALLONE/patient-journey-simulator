@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useActiveTreatment } from "@/store/patient";
 import { getProtocol } from "@/data/protocols";
 import { cn } from "@/lib/utils";
+import { apiUrl } from "@/lib/api-base";
 
 const STORAGE_KEY = "fisiocare-aidoctor-v1";
 const SUGGESTIONS = [
@@ -64,7 +65,7 @@ export function AiDoctorChat({ className }: { className?: string } = {}) {
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
-        api: "/api/chat",
+        api: apiUrl("/api/chat"),
         body: () => ({ treatmentContext }),
       }),
     [treatmentContext],

@@ -11,5 +11,13 @@ export default defineConfig({
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
     server: { entry: "server" },
+    // SPA mode: emit a static client shell into dist/client so Capacitor can
+    // bundle the app into a native WebView (no SSR at runtime on device).
+    // "/" throws a redirect, so we mask prerendering on a neutral route that
+    // renders cleanly; the client router takes over after boot.
+    spa: {
+      enabled: true,
+      maskPath: "/welcome",
+    },
   },
 });
