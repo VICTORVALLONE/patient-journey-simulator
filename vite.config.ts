@@ -29,9 +29,19 @@ function aliasNitroServerEntry(): PluginOption {
         // without an env argument. Make the access null-safe so SPA prerender
         // succeeds locally without changing the Cloudflare runtime behavior.
         try {
-          const contents = readFileSync(dest, "utf8").replace(
+          let contents = readFileSync(dest, "utf8");
+          // 1) Guard against missing `env` (SPA prerender/preview calls fetch
+          //    without CF bindings).
+          contents = contents.replace(
             /if\s*\(\s*env\.ASSETS\s*&&/g,
             "if (env && env.ASSETS &&",
+          );
+          // 2) The srvx NodeRequest used by the preview server exposes `ip`
+          //    as a getter-only property; nitro's Cloudflare adapter tries to
+          //    assign it and crashes. Skip the assignment when it's not writable.
+          contents = contents.replace(
+            /req\.ip\s*=\s*cfReq\.headers\.get\("cf-connecting-ip"\)\s*\|\|\s*void 0;/,
+            'try { req.ip = cfReq.headers.get("cf-connecting-ip") || void 0; } catch { /* preview: ip is read-only */ }',
           );
           writeFileSync(dest, contents);
         } catch {
