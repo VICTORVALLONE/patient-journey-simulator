@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-14T23:30:00-03:00",
+  "title": "Design System: FisioApp",
+  "extensions": {
+    "colorMeta": {
+      "azul-prescricao": { "role": "primary", "displayName": "Azul Prescrição", "canonical": "oklch(0.54 0.21 263)", "tonalRamp": ["oklch(0.18 0.21 263)", "oklch(0.28 0.21 263)", "oklch(0.38 0.21 263)", "oklch(0.48 0.21 263)", "oklch(0.58 0.21 263)", "oklch(0.70 0.15 263)", "oklch(0.84 0.08 263)", "oklch(0.95 0.03 263)"] },
+      "azul-profundo": { "role": "primary", "displayName": "Azul Profundo", "canonical": "oklch(0.32 0.18 265)", "tonalRamp": ["oklch(0.15 0.18 265)", "oklch(0.25 0.18 265)", "oklch(0.35 0.18 265)", "oklch(0.45 0.16 265)", "oklch(0.55 0.14 265)", "oklch(0.68 0.10 265)", "oklch(0.82 0.06 265)", "oklch(0.95 0.02 265)"] },
+      "marinho-clinico": { "role": "primary", "displayName": "Marinho Clínico", "canonical": "oklch(0.22 0.12 268)", "tonalRamp": ["oklch(0.15 0.12 268)", "oklch(0.22 0.12 268)", "oklch(0.32 0.11 268)", "oklch(0.44 0.10 268)", "oklch(0.56 0.08 268)", "oklch(0.70 0.06 268)", "oklch(0.84 0.04 268)", "oklch(0.95 0.02 268)"] },
+      "nevoa-azul": { "role": "primary", "displayName": "Névoa Azul", "canonical": "oklch(0.96 0.03 256)" },
+      "tinta-marinho": { "role": "neutral", "displayName": "Tinta Marinho", "canonical": "oklch(0.18 0.04 265)" },
+      "branco-consultorio": { "role": "neutral", "displayName": "Branco Consultório", "canonical": "oklch(1 0 0)" },
+      "repouso": { "role": "neutral", "displayName": "Repouso", "canonical": "oklch(0.985 0.012 256)" },
+      "cinza-apoio": { "role": "neutral", "displayName": "Cinza Apoio", "canonical": "oklch(0.55 0.04 257)" },
+      "borda-suave": { "role": "neutral", "displayName": "Borda Suave", "canonical": "oklch(0.92 0.012 256)" },
+      "verde-recuperacao": { "role": "semantic", "displayName": "Verde Recuperação", "canonical": "oklch(0.7 0.16 162)" },
+      "ambar-atencao": { "role": "semantic", "displayName": "Âmbar Atenção", "canonical": "oklch(0.78 0.16 75)" },
+      "vermelho-alerta": { "role": "semantic", "displayName": "Vermelho Alerta", "canonical": "oklch(0.65 0.22 27)" }
+    },
+    "typographyMeta": {
+      "headline": { "displayName": "Headline", "purpose": "Título da tela; um por tela." },
+      "title": { "displayName": "Title", "purpose": "Título de card e seção." },
+      "body": { "displayName": "Body", "purpose": "Texto corrente e instruções de exercício — sempre legível sem vídeo." },
+      "label": { "displayName": "Label", "purpose": "Metadados, chips, navegação inferior." }
+    },
+    "shadows": [
+      { "name": "separacao", "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)", "purpose": "Sussurro de separação de card (shadcn shadow-sm); nunca dramatização." }
+    ],
+    "motion": [
+      { "name": "transition-colors", "value": "color, background-color, border-color 150ms cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Transição padrão de estado em botões e inputs." }
+    ],
+    "breakpoints": [
+      { "name": "md", "value": "768px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botão Primário",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ação primária da tela — Azul Prescrição, presença de corrimão.",
+      "html": "<button class=\"ds-btn-primary\">Concluir sessão</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: var(--primary, #2563EB); color: #fff; height: 40px; padding: 8px 24px; border: none; border-radius: 12px; font-family: Inter, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: background-color 150ms cubic-bezier(0.4,0,0.2,1); } .ds-btn-primary:hover { background: #1E50D4; } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 1px #2563EB; }"
+    },
+    {
+      "name": "Botão Outline",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Ação secundária — borda suave sobre fundo claro.",
+      "html": "<button class=\"ds-btn-outline\">Ver protocolo</button>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #fff; color: #1B2340; height: 36px; padding: 8px 16px; border: 1px solid #E4E9F2; border-radius: 12px; font-family: Inter, system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; cursor: pointer; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); transition: background-color 150ms cubic-bezier(0.4,0,0.2,1); } .ds-btn-outline:hover { background: #EFF6FF; } .ds-btn-outline:focus-visible { outline: none; box-shadow: 0 0 0 1px #2563EB; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Container padrão — Branco Consultório sobre fundo Repouso, borda suave, canto 18px.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-title\">Sessão de hoje</div><p class=\"ds-card-body\">Fase 2 · Recuperação de Mobilidade · Meta da semana: 100°</p></div>",
+      "css": ".ds-card { background: #fff; color: #1B2340; border: 1px solid #E4E9F2; border-radius: 18px; padding: 24px; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); font-family: Inter, system-ui, sans-serif; } .ds-card-title { font-size: 1.125rem; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 8px; } .ds-card-body { font-size: 0.875rem; color: #64748B; line-height: 1.5; margin: 0; }"
+    },
+    {
+      "name": "Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo de texto — borda suave, foco em anel azul de 1px.",
+      "html": "<input class=\"ds-input\" placeholder=\"Alguma observação sobre a sessão?\" />",
+      "css": ".ds-input { display: flex; width: 100%; height: 36px; background: transparent; color: #1B2340; border: 1px solid #E4E9F2; border-radius: 12px; padding: 4px 12px; font-family: Inter, system-ui, sans-serif; font-size: 0.875rem; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); transition: border-color 150ms; } .ds-input::placeholder { color: #64748B; } .ds-input:focus-visible { outline: none; box-shadow: 0 0 0 1px #2563EB; }"
+    },
+    {
+      "name": "Navegação Inferior",
+      "kind": "nav",
+      "refersTo": "card",
+      "description": "Bottom nav fixa do MobileFrame — item ativo em Azul Prescrição.",
+      "html": "<nav class=\"ds-bottomnav\"><span class=\"ds-nav-item ds-nav-active\">Início</span><span class=\"ds-nav-item\">Sessão</span><span class=\"ds-nav-item\">Evolução</span><span class=\"ds-nav-item\">Suporte</span></nav>",
+      "css": ".ds-bottomnav { display: flex; justify-content: space-around; align-items: center; background: #fff; border-top: 1px solid #E4E9F2; padding: 12px 8px; font-family: Inter, system-ui, sans-serif; } .ds-nav-item { font-size: 0.75rem; font-weight: 500; color: #64748B; } .ds-nav-active { color: #2563EB; }"
+    },
+    {
+      "name": "Escala de Dor",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "Seletor 0–10 signature — único lugar do gradiente clínico completo.",
+      "html": "<div class=\"ds-pain\"><span class=\"ds-pain-step ds-pain-low\">0</span><span class=\"ds-pain-step ds-pain-low\">2</span><span class=\"ds-pain-step ds-pain-mid\">4</span><span class=\"ds-pain-step ds-pain-mid ds-pain-selected\">6</span><span class=\"ds-pain-step ds-pain-high\">8</span><span class=\"ds-pain-step ds-pain-high\">10</span></div>",
+      "css": ".ds-pain { display: flex; gap: 8px; font-family: Inter, system-ui, sans-serif; } .ds-pain-step { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 12px; font-size: 0.875rem; font-weight: 600; color: #fff; cursor: pointer; opacity: 0.85; transition: transform 150ms, opacity 150ms; } .ds-pain-step:hover { opacity: 1; transform: scale(1.05); } .ds-pain-low { background: #10B981; } .ds-pain-mid { background: #F59E0B; } .ds-pain-high { background: #EF4444; } .ds-pain-selected { opacity: 1; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #2563EB; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "O Fisioterapeuta de Bolso",
+    "overview": "Cada tela é uma presença profissional calorosa orientando um exercício, um dado, uma decisão de cada vez. O sistema visual traduz um consultório acolhedor — azuis de confiança clínica sobre superfícies claras e calmas — e rejeita a estética de academia, a gamificação infantilizada, a frieza de prontuário e o SaaS genérico de IA. O paciente está se recuperando de uma cirurgia: a interface apoia como um corrimão, nunca cobra.",
+    "keyCharacteristics": [
+      "Azul clínico como única família de acento; semânticos reservados a significado clínico",
+      "Superfícies planas com bordas suaves; profundidade por camadas tonais, não por sombra",
+      "Componentes firmes e acolhedores: cantos generosos (12–22px), presença sólida",
+      "Motivação por evidência: gráficos e marcos são protagonistas, não confete"
+    ],
+    "rules": [
+      { "name": "A Regra da Escala de Dor", "body": "O gradiente verde→âmbar→vermelho pertence exclusivamente à semântica clínica de dor e alertas. Proibido usá-lo como decoração, categoria de gráfico ou cor de marca.", "section": "colors" },
+      { "name": "A Regra do Acento Único", "body": "O azul é a única família de acento da interface. Se uma tela pede uma segunda cor 'de marca', a resposta é hierarquia tipográfica ou espaço — não uma cor nova.", "section": "colors" },
+      { "name": "A Regra da Instrução Completa", "body": "Instrução de exercício é sempre legível como texto puro, sem depender do vídeo.", "section": "typography" },
+      { "name": "A Regra do Plano em Repouso", "body": "Superfície parada é superfície plana. Se um card precisa 'saltar', a causa deve ser um estado do usuário, não estilo.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do usar o azul em três profundidades (Prescrição #2563EB → Profundo #1E3A8A → Marinho Clínico #0F1C47) para construir hierarquia dentro da mesma voz.",
+      "Do dar à ação primária da tela um alvo generoso e óbvio — 'um toque, uma decisão'.",
+      "Do celebrar com evidência: número real, curva real, marco da cartilha, em tom encorajador.",
+      "Do manter toda instrução clínica legível sem vídeo e em linguagem simples."
+    ],
+    "donts": [
+      "Don't usar estética de app de academia/fitness: ranking, competição, intensidade visual.",
+      "Don't usar gamificação infantilizada: mascotes, confete excessivo, pontuação lúdica.",
+      "Don't parecer sistema hospitalar/prontuário: tabelas densas, jargão médico, frieza burocrática.",
+      "Don't usar clichês de SaaS de IA: gradientes roxos, glassmorphism, glow escuro, estética de template.",
+      "Don't usar barra lateral colorida grossa em card (border-left > 1px como listra).",
+      "Don't aplicar o gradiente de dor fora da semântica de dor/alerta.",
+      "Don't punir visualmente: meta não atingida, streak quebrado ou dor alta jamais recebem vermelho de culpa."
+    ]
+  }
+}
