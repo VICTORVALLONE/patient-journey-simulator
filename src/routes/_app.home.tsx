@@ -16,7 +16,7 @@ import { EmptyTreatmentState } from "@/components/treatment/EmptyTreatmentState"
 import { getProtocol, getWeekGuide, weekForCompletedSessions } from "@/data/protocols";
 
 export const Route = createFileRoute("/_app/home")({
-  head: () => ({ meta: [{ title: "Início · FisioCare" }] }),
+  head: () => ({ meta: [{ title: "Início · FisioApp" }] }),
   component: HomePage,
 });
 

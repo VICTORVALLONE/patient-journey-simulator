@@ -17,7 +17,7 @@ export async function generateDoctorReport(
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(20);
   doc.setFont("helvetica", "bold");
-  doc.text("FisioCare — Relatório de Evolução", 40, 50);
+  doc.text("FisioApp — Relatório de Evolução", 40, 50);
 
   y = 110;
   doc.setTextColor(15, 22, 41);
@@ -105,7 +105,7 @@ export async function generateDoctorReport(
   doc.setFontSize(9);
   doc.setTextColor(120, 120, 120);
   doc.text(
-    `Gerado em ${new Date().toLocaleString("pt-BR")} · FisioCare`,
+    `Gerado em ${new Date().toLocaleString("pt-BR")} · FisioApp`,
     40,
     doc.internal.pageSize.getHeight() - 30,
   );

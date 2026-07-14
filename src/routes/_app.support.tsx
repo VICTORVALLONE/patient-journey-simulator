@@ -6,7 +6,7 @@ import { AiDoctorChat } from "@/components/support/AiDoctorChat";
 import aiDoctorAvatar from "@/assets/ai-doctor.jpg";
 
 export const Route = createFileRoute("/_app/support")({
-  head: () => ({ meta: [{ title: "Suporte · FisioCare" }] }),
+  head: () => ({ meta: [{ title: "Suporte · FisioApp" }] }),
   component: SupportPage,
 });
 
@@ -73,7 +73,7 @@ function SupportPage() {
         </p>
         <div className="mt-2 space-y-2">
           <a
-            href="https://wa.me/5511999990000?text=Ol%C3%A1%2C%20preciso%20de%20ajuda%20no%20FisioCare"
+            href="https://wa.me/5511999990000?text=Ol%C3%A1%2C%20preciso%20de%20ajuda%20no%20FisioApp"
             target="_blank"
             rel="noreferrer"
             className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4"
@@ -132,8 +132,8 @@ function SupportPage() {
 
       <section className="mt-8 mb-4 rounded-2xl bg-bg-subtle p-4">
         <p className="text-xs text-muted-foreground">
-          Atendimento clínico continua sendo realizado pelo seu médico. O FisioCare apoia a adesão
-          ao protocolo prescrito — não substitui consulta presencial.
+          Atendimento clínico continua sendo realizado pelo seu médico. O FisioApp apoia a adesão ao
+          protocolo prescrito — não substitui consulta presencial.
         </p>
       </section>
     </div>

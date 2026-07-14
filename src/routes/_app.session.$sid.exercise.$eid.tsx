@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 import type { BadgeId } from "@/lib/types";
 
 export const Route = createFileRoute("/_app/session/$sid/exercise/$eid")({
-  head: () => ({ meta: [{ title: "Exercício · FisioCare" }] }),
+  head: () => ({ meta: [{ title: "Exercício · FisioApp" }] }),
   component: ExecutionPage,
 });
 

@@ -1,6 +1,6 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
-// FisioCare native shell (iOS + Android) built with Capacitor.
+// FisioApp native shell (iOS + Android) built with Capacitor.
 //
 // The app runs as a static SPA (TanStack Start `spa` mode → dist/client) loaded
 // into a native WebView. There is NO server on-device: the AI Doctor endpoint
@@ -10,8 +10,8 @@ import type { CapacitorConfig } from "@capacitor/cli";
 // appId is permanent once an app is published — confirm the final reverse-domain
 // id with the store accounts before the first submission.
 const config: CapacitorConfig = {
-  appId: "com.fisiocare.app",
-  appName: "FisioCare",
+  appId: "com.fisioapp.app",
+  appName: "FisioApp",
   webDir: "dist/client",
   server: {
     // https scheme on Android avoids mixed-content blocks when the WebView

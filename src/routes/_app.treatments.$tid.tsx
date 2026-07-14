@@ -10,7 +10,7 @@ import { generateDoctorReport } from "@/lib/pdfReport";
 import { realAdherencePct } from "@/lib/dynamicMessages";
 
 export const Route = createFileRoute("/_app/treatments/$tid")({
-  head: () => ({ meta: [{ title: "Tratamento · FisioCare" }] }),
+  head: () => ({ meta: [{ title: "Tratamento · FisioApp" }] }),
   component: TreatmentDetailPage,
 });
 

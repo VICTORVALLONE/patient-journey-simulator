@@ -10,7 +10,7 @@ import type { BodyRegion } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/exercises")({
-  head: () => ({ meta: [{ title: "Exercícios · FisioCare" }] }),
+  head: () => ({ meta: [{ title: "Exercícios · FisioApp" }] }),
   component: ExercisesPage,
 });
 

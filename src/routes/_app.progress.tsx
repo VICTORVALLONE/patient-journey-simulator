@@ -18,7 +18,7 @@ import { TreatmentSwitcher } from "@/components/treatment/TreatmentSwitcher";
 import { EmptyTreatmentState } from "@/components/treatment/EmptyTreatmentState";
 
 export const Route = createFileRoute("/_app/progress")({
-  head: () => ({ meta: [{ title: "Progresso · FisioCare" }] }),
+  head: () => ({ meta: [{ title: "Progresso · FisioApp" }] }),
   component: ProgressPage,
 });
 

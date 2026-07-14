@@ -13,7 +13,7 @@ import type { AffectedSide, InjuryType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/onboarding/treatment")({
-  head: () => ({ meta: [{ title: "Novo tratamento · FisioCare" }] }),
+  head: () => ({ meta: [{ title: "Novo tratamento · FisioApp" }] }),
   component: TreatmentOnboardingPage,
 });
 

@@ -7,7 +7,7 @@ import { usePatientStore } from "@/store/patient";
 export const Route = createFileRoute("/welcome")({
   head: () => ({
     meta: [
-      { title: "Bem-vindo ao FisioCare" },
+      { title: "Bem-vindo ao FisioApp" },
       { name: "description", content: "Sua jornada de recuperação começa aqui." },
     ],
   }),
@@ -30,7 +30,7 @@ function WelcomePage() {
               Sua fisioterapia, no seu ritmo.
             </h1>
             <p className="mt-3 text-base text-white/80">
-              O FisioCare guia sua recuperação entre as consultas com vídeos, lembretes e
+              O FisioApp guia sua recuperação entre as consultas com vídeos, lembretes e
               acompanhamento clínico do seu progresso.
             </p>
           </div>

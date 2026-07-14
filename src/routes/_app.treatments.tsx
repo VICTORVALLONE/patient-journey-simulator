@@ -7,7 +7,7 @@ import { TreatmentCard } from "@/components/treatment/TreatmentCard";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/treatments")({
-  head: () => ({ meta: [{ title: "Meus tratamentos · FisioCare" }] }),
+  head: () => ({ meta: [{ title: "Meus tratamentos · FisioApp" }] }),
   component: TreatmentsPage,
 });
 

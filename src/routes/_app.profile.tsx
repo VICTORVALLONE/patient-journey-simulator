@@ -15,7 +15,7 @@ import { usePatientStore } from "@/store/patient";
 import { TreatmentCard } from "@/components/treatment/TreatmentCard";
 
 export const Route = createFileRoute("/_app/profile")({
-  head: () => ({ meta: [{ title: "Perfil · FisioCare" }] }),
+  head: () => ({ meta: [{ title: "Perfil · FisioApp" }] }),
   component: ProfilePage,
 });
 

@@ -12,7 +12,7 @@ import { getProtocol, getWeekGuide, weekForCompletedSessions } from "@/data/prot
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/session/$sid")({
-  head: () => ({ meta: [{ title: "Visão da sessão · FisioCare" }] }),
+  head: () => ({ meta: [{ title: "Visão da sessão · FisioApp" }] }),
   component: SessionOverview,
 });
 

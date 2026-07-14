@@ -12,7 +12,7 @@ import type { RecoveryGoal } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/onboarding")({
-  head: () => ({ meta: [{ title: "Criar minha conta · FisioCare" }] }),
+  head: () => ({ meta: [{ title: "Criar minha conta · FisioApp" }] }),
   component: OnboardingPage,
 });
 
