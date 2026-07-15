@@ -8,7 +8,7 @@ FisioApp — a mobile-first web app (accessed by link) that walks orthopedic-kne
 
 > **Not a PWA** despite what product docs say — there is no manifest/service worker. It's an SSR app with SPA build mode enabled (`vite.config.ts`), which also feeds the future **Capacitor** native packaging. Keep code **web-first, native-aware**: nothing on the critical path may depend solely on SSR; the AI `/api/chat` and any future backend must be reachable as remote HTTP (client SDK), not SSR-coupled server functions.
 
-> **Workflow (see the workspace `../../CLAUDE.md`):** engineering is 100% local (single writer); GitHub `main` is the source of truth. Lovable = Publish (hosting) + AI gateway for the coach during validation; the real data backend will be **our own Supabase** (never Lovable Cloud), gated until after pilot validation (LGPD). Lovable writes build-config commits to the repo on publish, so **always `git fetch` + `git merge --ff-only origin/main` before pushing**.
+> **Governance & publishing live in the workspace `../../CLAUDE.md` — read it first.** In short: single writer (local Claude Code), GitHub `main` is source of truth, Lovable = Publish + AI gateway, own Supabase later (LGPD gate). Only rule you need while editing code: **`git fetch` + `git merge --ff-only origin/main` before every push** (Lovable writes build-config commits on publish).
 
 > The parent `SPEC.md` describes an _earlier intended_ stack (Vite + React Router + Supabase, "no localStorage for clinical data"). Implementation diverged: TanStack Start, TanStack Router, localStorage. Trust the code here over that doc for stack; use it for screen/model reference.
 
