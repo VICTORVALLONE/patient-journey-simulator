@@ -12,6 +12,8 @@ FisioApp — a mobile-first web app (accessed by link) that walks orthopedic-kne
 
 > The parent `SPEC.md` describes an _earlier intended_ stack (Vite + React Router + Supabase, "no localStorage for clinical data"). Implementation diverged: TanStack Start, TanStack Router, localStorage. Trust the code here over that doc for stack; use it for screen/model reference.
 
+> **Companion docs (siblings of this file):** `CONVENTIONS.md` (code style/authoring rules) · `DESIGN.md` / `PRODUCT.md` (design system + product context) · `GLOSSARY.md` (clinical/domain terms: ADM, Lag sign, alert triad) · `DECISIONS.md` (why the locked decisions are what they are). This file owns *architecture*; those own their slices — don't duplicate.
+
 ## Commands
 
 Package manager is **Bun** (`bun.lock`, `bunfig.toml`).
