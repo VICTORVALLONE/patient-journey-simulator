@@ -74,11 +74,12 @@ interface PatientState {
   setTreatmentDraft: (d: TreatmentOnboardingDraft) => void;
   startTreatment: () => string;
   setActiveTreatment: (id: string) => void;
+  completeWelcome: (treatmentId?: string) => void;
 
   // demo / reset
   resetToDemo: () => void;
   resetToInitial: () => void;
-  logout: () => void;
+  startFreshSignup: () => void;
 
   // session
   completeSession: (input: CompleteSessionInput) => CompleteSessionResult;
@@ -147,7 +148,11 @@ function makeTreatment(userId: string, draft: TreatmentOnboardingDraft): Treatme
 export const usePatientStore = create<PatientState>()(
   persist(
     (set, get) => ({
-      isOnboarded: true,
+      // A jornada real é o default: visitante novo entra por /welcome, não na
+      // demo. O seed MOCK_* fica inerte (inalcançável enquanto isOnboarded for
+      // false) em vez de virar null — evita uma cascata de null-safety em toda
+      // tela que lê `user`. resetToDemo() o traz de volta.
+      isOnboarded: false,
       user: MOCK_USER,
       treatments: [MOCK_TREATMENT_LCA_ACTIVE, MOCK_TREATMENT_PATELLO_DONE],
       activeTreatmentId: MOCK_TREATMENT_LCA_ACTIVE.id,
@@ -178,13 +183,9 @@ export const usePatientStore = create<PatientState>()(
           recovery_goal: draft.recovery_goal ?? "daily_life",
           created_at: new Date().toISOString(),
         };
-        set({
-          isOnboarded: true,
-          user,
-          treatments: [],
-          activeTreatmentId: null,
-          onboardingDraft: {},
-        });
+        // NÃO limpa `treatments`: "terminei meu perfil" nunca deveria apagar
+        // tratamento. O wipe é explícito, em startFreshSignup().
+        set({ isOnboarded: true, user, onboardingDraft: {} });
       },
 
       startTreatment: () => {
@@ -202,6 +203,20 @@ export const usePatientStore = create<PatientState>()(
       setActiveTreatment: (id) => {
         const t = get().treatments.find((x) => x.id === id);
         if (t) set({ activeTreatmentId: id });
+      },
+
+      // Carimba a CONCLUSÃO DA TELA de boas-vindas — não o fato de ter assistido
+      // ao vídeo. Ver DECISIONS.md: o produto não bloqueia por vídeo não visto.
+      completeWelcome: (treatmentId) => {
+        const state = get();
+        const tid = treatmentId ?? state.activeTreatmentId;
+        if (!tid) return;
+        const stamp = new Date().toISOString();
+        set({
+          treatments: state.treatments.map((t) =>
+            t.id === tid ? { ...t, welcome_completed_at: stamp } : t,
+          ),
+        });
       },
 
       resetToDemo: () =>
@@ -222,9 +237,15 @@ export const usePatientStore = create<PatientState>()(
           onboardingDraft: {},
         }),
 
-      logout: () =>
+      // Zera para percorrer a jornada real do começo. Substitui o antigo
+      // `logout`, que preservava os tratamentos — o que fazia o próximo cadastro
+      // herdar os tratamentos do anterior agora que completePersonalOnboarding
+      // não limpa mais nada.
+      startFreshSignup: () =>
         set({
           isOnboarded: false,
+          treatments: [],
+          activeTreatmentId: null,
           onboardingDraft: {},
         }),
 
@@ -393,6 +414,21 @@ export const usePatientStore = create<PatientState>()(
     },
   ),
 );
+
+// Reidratação síncrona no cliente ---------------------------------------------
+//
+// `skipHydration: true` existe para o SSR não tocar em localStorage, mas deixa a
+// reidratação dentro do useEffect de useHydratedStore — que só roda DEPOIS de um
+// componente montar. `beforeLoad` roda antes disso, então um guard de rota leria
+// o seed inerte e deixaria passar um refresh direto em /session/today.
+//
+// localStorage é síncrono: chamar rehydrate() aqui deixa o estado real pronto
+// assim que este módulo é avaliado no cliente, sem SSR ler storage. São dois
+// canais deliberados: este, síncrono, para o router; e useHydratedStore, baseado
+// em efeito, para gatear render (evita mismatch de markup SSR/cliente).
+if (typeof window !== "undefined") {
+  void usePatientStore.persist.rehydrate();
+}
 
 // Selectors / derived helpers ------------------------------------------------
 

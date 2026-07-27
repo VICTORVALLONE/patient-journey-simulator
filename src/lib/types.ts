@@ -164,6 +164,10 @@ export interface Treatment {
   reminder_time?: string;
   status: "active" | "completed" | "paused";
 
+  // Boas-vindas: carimbo de conclusão da tela (não de assistir ao vídeo).
+  // Ausente + sessões > 0 = tratamento anterior à tela (ver isWelcomePending).
+  welcome_completed_at?: string;
+
   // Progress indicators (per-treatment)
   current_phase: number;
   phases_completed: number[];

@@ -23,7 +23,7 @@ function ProfilePage() {
   const navigate = useNavigate();
   const user = usePatientStore((s) => s.user);
   const treatments = usePatientStore((s) => s.treatments);
-  const logout = usePatientStore((s) => s.logout);
+  const startFreshSignup = usePatientStore((s) => s.startFreshSignup);
   const resetToInitial = usePatientStore((s) => s.resetToInitial);
   const resetToDemo = usePatientStore((s) => s.resetToDemo);
 
@@ -135,7 +135,7 @@ function ProfilePage() {
           variant="outline"
           className="w-full rounded-xl"
           onClick={() => {
-            logout();
+            startFreshSignup();
             navigate({ to: "/onboarding" });
           }}
         >
@@ -145,7 +145,7 @@ function ProfilePage() {
           variant="ghost"
           className="w-full rounded-xl text-danger hover:bg-destructive/5 hover:text-danger"
           onClick={() => {
-            logout();
+            startFreshSignup();
             navigate({ to: "/welcome" });
           }}
         >

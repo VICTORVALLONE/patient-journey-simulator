@@ -222,6 +222,9 @@ export const MOCK_TREATMENT_LCA_ACTIVE: Treatment = (() => {
     prescribed_by: "Dr. Carlos Mendes",
     reminder_time: "09:00",
     status: "active",
+    // A demo entra direto no /home: quem abre por resetToDemo() nunca deve
+    // topar com o gate de boas-vindas.
+    welcome_completed_at: startedAt.toISOString(),
     current_phase: currentPhase,
     phases_completed: phasesCompleted,
     badges_unlocked: DEMO_BADGES_LCA,
@@ -300,6 +303,7 @@ export const MOCK_TREATMENT_PATELLO_DONE: Treatment = (() => {
     prescribed_by: "Dra. Marina Costa",
     reminder_time: "19:00",
     status: "completed",
+    welcome_completed_at: startDate.toISOString(),
     current_phase: protocol.phases.length,
     phases_completed: protocol.phases.map((p) => p.phase_number),
     badges_unlocked: DEMO_BADGES_PATELLO,

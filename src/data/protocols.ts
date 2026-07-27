@@ -1,4 +1,4 @@
-import type { BodyRegion, Protocol, WeekGuideEntry } from "@/lib/types";
+import type { BodyRegion, InjuryType, Protocol, WeekGuideEntry } from "@/lib/types";
 import thumbJoelho from "@/assets/thumb-joelho.jpg";
 import thumbQuadril from "@/assets/thumb-quadril.jpg";
 import thumbTornozelo from "@/assets/thumb-tornozelo.jpg";
@@ -1065,6 +1065,15 @@ for (const protocol of Object.values(PROTOCOLS)) {
     }
   }
 }
+
+// Protocolos pós-cirúrgicos derivam toda a progressão da data da cirurgia, então
+// o campo é obrigatório no onboarding deles. Patelofemoral é tratamento
+// conservador — não há cirurgia, e o fallback continua sendo `started_at`.
+export const REQUIRES_SURGERY_DATE: Record<InjuryType, boolean> = {
+  lca: true,
+  meniscus: true,
+  patellofemoral: false,
+};
 
 export function getProtocol(id: string): Protocol {
   return PROTOCOLS[id] ?? PROTOCOL_LCA;
