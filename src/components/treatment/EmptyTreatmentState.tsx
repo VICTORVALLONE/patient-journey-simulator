@@ -9,9 +9,10 @@ export function EmptyTreatmentState() {
         <Activity className="h-7 w-7" />
       </div>
       <h2 className="mt-4 text-lg font-bold text-foreground">Nenhum tratamento ativo</h2>
+      {/* Sem "lembretes diários": este build não os envia (MVP_ASK_REMINDER em
+          lib/mvpFlags.ts). Revisar junto com a volta da flag. */}
       <p className="mt-1 text-sm text-muted-foreground">
-        Inicie um tratamento para receber seu plano personalizado, lembretes diários e
-        acompanhamento da evolução.
+        Inicie um tratamento para receber seu plano personalizado e o acompanhamento da evolução.
       </p>
       <Link to="/onboarding/treatment">
         <Button size="lg" className="mt-5 w-full rounded-xl">

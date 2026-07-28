@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, Bell, CalendarDays, CheckCircle2, Info } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarDays, CheckCircle2, Info, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,7 @@ import { useHydratedStore } from "@/hooks/useHydratedStore";
 import { getProtocol, REQUIRES_SURGERY_DATE } from "@/data/protocols";
 import { totalSessionsForProtocol } from "@/lib/prescription";
 import { postOpWeekFromDays, surgeryDateValidity, todayISO } from "@/lib/entry";
+import { MVP_ASK_REMINDER, MVP_ASK_SURGERY_DATE } from "@/lib/mvpFlags";
 import type { AffectedSide, InjuryType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +40,21 @@ const INJURY_OPTIONS: {
 
 const EMPTY_TREATMENT_DRAFT: TreatmentOnboardingDraft = {};
 
+/**
+ * Passos derivados das flags do MVP, não numerados à mão: a barra de progresso,
+ * o botão Voltar e o passo final leem todos desta lista. Desligar um passo em
+ * `mvpFlags.ts` encurta a barra e reencadeia a navegação sozinho — sem nenhum
+ * índice mágico para corrigir em três lugares.
+ */
+type StepKey = "injury" | "surgery" | "side" | "doctor";
+
+const STEPS: StepKey[] = [
+  "injury",
+  ...(MVP_ASK_SURGERY_DATE ? (["surgery"] as StepKey[]) : []),
+  "side",
+  "doctor",
+];
+
 function TreatmentOnboardingPage() {
   const hydrated = useHydratedStore();
   const navigate = useNavigate();
@@ -48,8 +64,9 @@ function TreatmentOnboardingPage() {
   const setDraft = usePatientStore((s) => s.setTreatmentDraft);
   const startTreatment = usePatientStore((s) => s.startTreatment);
 
-  const [step, setStep] = useState(1);
-  const totalSteps = 4;
+  const [stepIndex, setStepIndex] = useState(0);
+  const step = STEPS[stepIndex]!;
+  const goNext = () => setStepIndex((i) => Math.min(i + 1, STEPS.length - 1));
 
   useEffect(() => {
     if (hydrated && !isOnboarded) {
@@ -80,44 +97,47 @@ function TreatmentOnboardingPage() {
       <div className="flex min-h-screen flex-col">
         <header className="flex items-center gap-3 p-4">
           <button
-            onClick={() => (step === 1 ? goBackFromFirstStep() : setStep(step - 1))}
+            onClick={() => (stepIndex === 0 ? goBackFromFirstStep() : setStepIndex(stepIndex - 1))}
             className="rounded-full p-2 text-muted-foreground hover:bg-muted"
             aria-label="Voltar"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div className="flex flex-1 gap-1">
-            {Array.from({ length: totalSteps }).map((_, i) => (
+            {STEPS.map((key, i) => (
               <div
-                key={i}
-                className={cn("h-1 flex-1 rounded-full", i < step ? "bg-primary" : "bg-muted")}
+                key={key}
+                className={cn(
+                  "h-1 flex-1 rounded-full",
+                  i <= stepIndex ? "bg-primary" : "bg-muted",
+                )}
               />
             ))}
           </div>
         </header>
 
         <div className="flex-1 px-5 pb-8">
-          {step === 1 && (
+          {step === "injury" && (
             <StepInjury
               injury={injury}
               protocolName={protocol.name}
               totalWeeks={protocol.total_weeks}
               totalSessions={totalSessions}
               onChange={setDraft}
-              onNext={() => setStep(2)}
+              onNext={goNext}
             />
           )}
-          {step === 2 && (
+          {step === "surgery" && (
             <StepSurgeryDate
               draft={draft}
               required={REQUIRES_SURGERY_DATE[injury]}
               totalWeeks={protocol.total_weeks}
               onChange={setDraft}
-              onNext={() => setStep(3)}
+              onNext={goNext}
             />
           )}
-          {step === 3 && <StepSide draft={draft} onChange={setDraft} onNext={() => setStep(4)} />}
-          {step === 4 && (
+          {step === "side" && <StepSide draft={draft} onChange={setDraft} onNext={goNext} />}
+          {step === "doctor" && (
             <StepDoctor
               draft={draft}
               onChange={setDraft}
@@ -357,11 +377,11 @@ function StepDoctor({
   return (
     <div>
       <div className="mx-auto mt-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-muted text-primary">
-        <Bell className="h-7 w-7" />
+        <Stethoscope className="h-7 w-7" />
       </div>
       <h1 className="mt-6 text-center text-3xl font-bold leading-tight">Quem prescreveu?</h1>
       <p className="mt-2 text-center text-sm text-muted-foreground">
-        E quando devemos lembrar você das sessões.
+        O nome aparece no seu protocolo e no relatório que você compartilha.
       </p>
       <div className="mt-8 space-y-4">
         <Field label="Médico que prescreveu">
@@ -372,19 +392,23 @@ function StepDoctor({
             className="h-12"
           />
         </Field>
-        <Field label="Horário do lembrete">
-          <Input
-            type="time"
-            value={draft.reminder_time ?? "09:00"}
-            onChange={(e) => onChange({ reminder_time: e.target.value })}
-            className="h-14 text-2xl font-semibold"
-          />
-        </Field>
+        {MVP_ASK_REMINDER && (
+          <Field label="Horário do lembrete">
+            <Input
+              type="time"
+              value={draft.reminder_time ?? "09:00"}
+              onChange={(e) => onChange({ reminder_time: e.target.value })}
+              className="h-14 text-2xl font-semibold"
+            />
+          </Field>
+        )}
       </div>
-      <div className="mt-3 rounded-xl bg-bg-subtle p-3 text-xs text-muted-foreground">
-        <CheckCircle2 className="mr-1 inline h-3.5 w-3.5 text-success" />
-        No MVP, lembretes ainda não são enviados — sua escolha fica salva.
-      </div>
+      {MVP_ASK_REMINDER && (
+        <div className="mt-3 rounded-xl bg-bg-subtle p-3 text-xs text-muted-foreground">
+          <CheckCircle2 className="mr-1 inline h-3.5 w-3.5 text-success" />
+          No MVP, lembretes ainda não são enviados — sua escolha fica salva.
+        </div>
+      )}
       <Button size="lg" className="mt-8 w-full rounded-xl" onClick={onFinish}>
         Iniciar tratamento
       </Button>

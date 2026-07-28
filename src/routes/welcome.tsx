@@ -31,9 +31,13 @@ function WelcomePage() {
             <h1 className="mt-6 text-4xl font-bold leading-tight">
               Sua fisioterapia, no seu ritmo.
             </h1>
+            {/* Sem "lembretes" na promessa: este build não os envia (ver
+                MVP_ASK_REMINDER em lib/mvpFlags.ts). A primeira tela do app não
+                pode vender o que ele não faz. Revisar esta cópia junto com a
+                volta da flag. */}
             <p className="mt-3 text-base text-white/80">
-              O FisioApp guia sua recuperação entre as consultas com vídeos, lembretes e
-              acompanhamento clínico do seu progresso.
+              O FisioApp guia sua recuperação entre as consultas com vídeos, exercícios do seu
+              protocolo e acompanhamento clínico do seu progresso.
             </p>
           </div>
 

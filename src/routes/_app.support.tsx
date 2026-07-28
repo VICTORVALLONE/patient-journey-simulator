@@ -2,6 +2,7 @@ import { createFileRoute, ClientOnly } from "@tanstack/react-router";
 import { ChevronDown, MessageCircle, Phone, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { MVP_ASK_REMINDER } from "@/lib/mvpFlags";
 import { AiDoctorChat } from "@/components/support/AiDoctorChat";
 import aiDoctorAvatar from "@/assets/ai-doctor.jpg";
 
@@ -27,10 +28,16 @@ const FAQ = [
     q: "Em quanto tempo verei resultados?",
     a: "A maioria dos pacientes nota redução de dor entre a 3ª e a 4ª semana. Mobilidade volta junto. Força leva mais tempo — siga o protocolo completo.",
   },
-  {
-    q: "Posso trocar o horário do lembrete?",
-    a: "Sim, no seu perfil em Configurações > Notificações. (Notificações ainda não estão ativas neste MVP.)",
-  },
+  // Pergunta sobre lembrete fica fora enquanto MVP_ASK_REMINDER está desligada:
+  // ela mandava o paciente a "Configurações > Notificações", que não existe.
+  ...(MVP_ASK_REMINDER
+    ? [
+        {
+          q: "Posso trocar o horário do lembrete?",
+          a: "Sim, no seu perfil em Configurações > Notificações. (Notificações ainda não estão ativas neste MVP.)",
+        },
+      ]
+    : []),
 ];
 
 function SupportPage() {

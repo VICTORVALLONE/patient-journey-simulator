@@ -160,3 +160,55 @@ durabilidade de config nossa através do Publish ainda é questão aberta.
 - **A primeira impressão do médico fica vazia** — gráfico de dor sem pontos, 0/90 sessões, adesão
   0%. É a tela real de quem acabou de entrar. A mitigação é mostrar a jornada limpa pelo link e
   depois abrir `/demo` para exibir um paciente adiantado.
+
+## 2026-07-28 — Corte de testes do piloto: sem data de cirurgia e sem lembrete no onboarding
+
+**Decisão.** Para a rodada de validação com o cliente, o onboarding do tratamento perde dois
+elementos: a **tela da data da cirurgia** e o **campo de horário do lembrete**. Passa de 4 para 3
+passos (diagnóstico → lado afetado → quem prescreveu). Todo paciente novo começa na **semana 1**.
+As duas features ficam **desligadas, não removidas**: `src/lib/mvpFlags.ts` (`MVP_ASK_SURGERY_DATE`,
+`MVP_ASK_REMINDER`) governa cada uma, e o código que elas escondem continua no repo. **Ambas voltam
+na versão final, depois dos ajustes do MVP com o cliente.**
+
+**Por quê.** Motivos distintos por feature:
+
+- **Data da cirurgia:** a tela funciona, mas ela deixa o paciente entrar em qualquer semana do
+  protocolo — quem informasse uma cirurgia de cinco semanas atrás cairia na semana 5, cujo conteúdo
+  clínico **não foi revisado com o médico** e cujos vídeos não existem. O único conteúdo validado
+  contra a cartilha neste corte é a semana 1. Travar o ponto de partida é travar o teste no que se
+  pode defender.
+- **Lembrete:** o campo coletava preferência para algo que o app não faz — não há push, cron nem
+  service worker. A própria tela admitia ("no MVP, lembretes ainda não são enviados"). Gastava um
+  passo do onboarding e criava expectativa que o piloto não cumpre.
+
+**Como a semana 1 fica garantida sem a tela.** `postOpWeekOf` ancora em `surgery_date ||
+started_at`. Sem data, a âncora é o `started_at`, gravado como hoje no `makeTreatment` — dia 0,
+semana 1. **Não se grava dado falso:** `surgery_date` fica `undefined`, não "hoje". Inventar data de
+cirurgia para satisfazer o cálculo poluiria o prontuário com informação clínica que ninguém
+informou. A progressão continua real: no oitavo dia o piloto avança para a semana 2 pelo mesmo
+cálculo de sempre — o que se travou é o **ponto de partida**, não o relógio.
+
+**Alternativas descartadas.** (a) _Branch separada para o piloto_ — divergiria da `main` enquanto o
+piloto roda (o Lovable escreve commits de build a cada Publish) e o merge de volta chegaria
+conflitado; é a mesma lógica que descartou "duas versões do app" nesta mesma data. (b) _Deletar as
+telas e reescrever depois_ — a validação da data (`surgeryDateValidity`), o eco ao vivo da semana e
+os testes deles são trabalho pronto; jogar fora para refazer é a forma mais cara de esperar.
+(c) _Congelar a semana em 1 permanentemente_ (ignorar o relógio) — o paciente-piloto ficaria preso
+na semana 1 para sempre, o que quebra o próprio objeto do teste: ver a progressão acontecer.
+
+**Consequências.**
+
+- **A cópia teve de acompanhar.** Três lugares prometiam lembretes e foram ajustados: a promessa do
+  `/welcome`, o texto do `EmptyTreatmentState` e a pergunta do FAQ em `/support` — esta última
+  mandava o paciente a "Configurações > Notificações", que não existe. Revisar todas as três quando
+  a flag voltar.
+- **A barra de progresso passou a ser derivada**, não numerada à mão: `STEPS` em
+  `onboarding.treatment.tsx` é a lista de passos ativos, e o botão Voltar, a barra e o passo final
+  leem dela. Religar a flag reencadeia a navegação sozinho.
+- **`reminder_time` continua no tipo `Treatment`, no draft e no `makeTreatment`** — o dado nunca
+  perdeu casa, só deixou de ser preenchido. Retomada de verdade (envio) depende de Capacitor + push.
+- **O código das telas desligadas ainda vai no bundle** (o `StepSurgeryDate` continua referenciado,
+  logo não é removido por tree-shaking). É o custo aceito de estacionar em vez de deletar: alguns KB
+  contra a garantia de que a volta é uma troca de `false` por `true`.
+- As flags são anotadas como `boolean`, não como literal: sem isso o TypeScript apaga o ramo
+  desligado na checagem de tipo e a volta da flag viraria erro de compilação.
