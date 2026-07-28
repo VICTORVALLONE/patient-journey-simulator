@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { entryStage, isWelcomePending, surgeryDateValidity, type EntrySnapshot } from "@/lib/entry";
+import {
+  entryStage,
+  isWelcomePending,
+  postOpWeekFromDays,
+  surgeryDateValidity,
+  type EntrySnapshot,
+} from "@/lib/entry";
 import type { Treatment } from "@/lib/types";
 
 function treatment(over: Partial<Treatment> = {}): Treatment {
@@ -129,5 +135,27 @@ describe("surgeryDateValidity", () => {
     const r = surgeryDateValidity("2026-02-09", opts);
     expect(r.daysSinceSurgery).toBe(168);
     expect(r.state).toBe("ok");
+  });
+});
+
+describe("postOpWeekFromDays", () => {
+  it("põe o dia da cirurgia na semana 1", () => {
+    expect(postOpWeekFromDays(0)).toBe(1);
+  });
+
+  it("mantém os 7 primeiros dias na semana 1", () => {
+    expect(postOpWeekFromDays(6)).toBe(1);
+  });
+
+  it("vira a semana no 7º dia decorrido", () => {
+    expect(postOpWeekFromDays(7)).toBe(2);
+    expect(postOpWeekFromDays(13)).toBe(2);
+    expect(postOpWeekFromDays(14)).toBe(3);
+  });
+
+  it("nunca devolve semana menor que 1", () => {
+    // Data futura já é barrada por surgeryDateValidity; a guarda existe para
+    // que nenhum chamador precise saber disso.
+    expect(postOpWeekFromDays(-3)).toBe(1);
   });
 });

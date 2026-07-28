@@ -99,7 +99,9 @@ function PersonalOnboardingPage() {
               onChange={(g) => setPersonalDraft({ recovery_goal: g })}
               onFinish={() => {
                 completePersonalOnboarding();
-                navigate({ to: "/home" });
+                // O cadastro pessoal desemboca no tratamento, não na home: sem
+                // tratamento não há protocolo, e /home só sabe renderizar um.
+                void navigate({ to: "/onboarding/treatment" });
               }}
             />
           )}
@@ -252,8 +254,11 @@ function StepGoal({
         })}
       </div>
       <Button size="lg" disabled={!value} className="mt-8 w-full rounded-xl" onClick={onFinish}>
-        Finalizar cadastro
+        Continuar <ArrowRight className="ml-1 h-4 w-4" />
       </Button>
+      <p className="mt-3 text-center text-xs text-muted-foreground">
+        Em seguida, os dados do seu tratamento.
+      </p>
     </div>
   );
 }

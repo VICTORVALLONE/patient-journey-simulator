@@ -61,16 +61,19 @@ function WelcomePage() {
             >
               Começar minha recuperação
             </Button>
-            <button
-              type="button"
+            {/* Promovido de link a botão outline: com a jornada real como default,
+                esta é uma das duas portas do demo (a outra é /demo). */}
+            <Button
+              size="lg"
+              variant="outline"
+              className="w-full rounded-xl border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white"
               onClick={() => {
                 resetToDemo();
-                navigate({ to: "/home" });
+                void navigate({ to: "/home" });
               }}
-              className="block w-full text-center text-sm text-white/80 underline-offset-2 hover:underline"
             >
               Continuar como Alexandre (demo)
-            </button>
+            </Button>
           </div>
         </div>
       </div>

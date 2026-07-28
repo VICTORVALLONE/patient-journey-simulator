@@ -5,6 +5,7 @@ import {
   Globe,
   HelpCircle,
   LogOut,
+  PlayCircle,
   Plus,
   RotateCcw,
   Shield,
@@ -131,6 +132,13 @@ function ProfilePage() {
         <Button variant="outline" className="w-full rounded-xl" onClick={resetToDemo}>
           Carregar demo (LCA + Patelofemoral)
         </Button>
+        {/* Rever as boas-vindas sem refazer o cadastro: é a tela que se mostra
+            ao médico, e o gate normal só a exibe uma vez por tratamento. */}
+        <Link to="/boas-vindas" className="block">
+          <Button variant="outline" className="w-full rounded-xl">
+            <PlayCircle className="mr-2 h-4 w-4" /> Rever a tela de boas-vindas
+          </Button>
+        </Link>
         <Button
           variant="outline"
           className="w-full rounded-xl"

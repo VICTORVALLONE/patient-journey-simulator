@@ -17,6 +17,21 @@ export interface User {
   avatar_url?: string;
 }
 
+/**
+ * Referência a um vídeo hospedado. Guardamos **ids, não URLs**: trocar embed por
+ * HLS, mudar de pull zone ou de provedor não pode custar reescrever 43 literais.
+ * A derivação de URL mora em `lib/video.ts`.
+ */
+export interface VideoRef {
+  provider: "bunny";
+  library_id: string;
+  video_id: string; // GUID do Bunny
+  poster_url?: string;
+  duration_seconds?: number;
+  /** "vídeo 22" da lista dos médicos — rastreabilidade clínica, não identificador técnico. */
+  catalog_number?: number;
+}
+
 export interface Exercise {
   id: string;
   name: string;

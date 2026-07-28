@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, Bell, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Bell, CalendarDays, CheckCircle2, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,7 +8,8 @@ import { MobileFrame } from "@/components/layout/MobileFrame";
 import { usePatientStore } from "@/store/patient";
 import type { TreatmentOnboardingDraft } from "@/store/patient";
 import { useHydratedStore } from "@/hooks/useHydratedStore";
-import { getProtocol, totalSessionsForProtocol } from "@/data/protocols";
+import { getProtocol, totalSessionsForProtocol, REQUIRES_SURGERY_DATE } from "@/data/protocols";
+import { postOpWeekFromDays, surgeryDateValidity, todayISO } from "@/lib/entry";
 import type { AffectedSide, InjuryType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -41,16 +42,17 @@ function TreatmentOnboardingPage() {
   const hydrated = useHydratedStore();
   const navigate = useNavigate();
   const isOnboarded = usePatientStore((s) => s.isOnboarded);
+  const hasTreatments = usePatientStore((s) => s.treatments.length > 0);
   const draft = usePatientStore((s) => s.onboardingDraft.treatment ?? EMPTY_TREATMENT_DRAFT);
   const setDraft = usePatientStore((s) => s.setTreatmentDraft);
   const startTreatment = usePatientStore((s) => s.startTreatment);
 
   const [step, setStep] = useState(1);
-  const totalSteps = 3;
+  const totalSteps = 4;
 
   useEffect(() => {
     if (hydrated && !isOnboarded) {
-      navigate({ to: "/welcome" });
+      void navigate({ to: "/welcome" });
     }
   }, [hydrated, isOnboarded, navigate]);
 
@@ -68,12 +70,16 @@ function TreatmentOnboardingPage() {
 
   if (!isOnboarded) return null;
 
+  // Voltar do passo 1: quem já tem tratamento veio do app (está adicionando um
+  // segundo); quem não tem veio do cadastro pessoal.
+  const goBackFromFirstStep = () => void navigate({ to: hasTreatments ? "/home" : "/onboarding" });
+
   return (
     <MobileFrame withNav={false}>
       <div className="flex min-h-screen flex-col">
         <header className="flex items-center gap-3 p-4">
           <button
-            onClick={() => (step === 1 ? navigate({ to: "/home" }) : setStep(step - 1))}
+            onClick={() => (step === 1 ? goBackFromFirstStep() : setStep(step - 1))}
             className="rounded-full p-2 text-muted-foreground hover:bg-muted"
             aria-label="Voltar"
           >
@@ -100,14 +106,25 @@ function TreatmentOnboardingPage() {
               onNext={() => setStep(2)}
             />
           )}
-          {step === 2 && <StepSide draft={draft} onChange={setDraft} onNext={() => setStep(3)} />}
-          {step === 3 && (
+          {step === 2 && (
+            <StepSurgeryDate
+              draft={draft}
+              required={REQUIRES_SURGERY_DATE[injury]}
+              totalWeeks={protocol.total_weeks}
+              onChange={setDraft}
+              onNext={() => setStep(3)}
+            />
+          )}
+          {step === 3 && <StepSide draft={draft} onChange={setDraft} onNext={() => setStep(4)} />}
+          {step === 4 && (
             <StepDoctor
               draft={draft}
               onChange={setDraft}
               onFinish={() => {
                 startTreatment();
-                navigate({ to: "/home" });
+                // A jornada não termina no app: termina nas boas-vindas, que são
+                // o gate da semana 1.
+                void navigate({ to: "/boas-vindas" });
               }}
             />
           )}
@@ -185,6 +202,97 @@ function StepInjury({
   );
 }
 
+/**
+ * Tela própria para a data da cirurgia. Ela ganhou o palco porque virou o input
+ * mais consequente do produto: fase, meta de ADM, marcos e gráfico derivam dela.
+ *
+ * O eco ao vivo ("você está na semana N") é a defesa contra data digitada errada
+ * — e é deliberadamente **azul, nunca vermelho**: o DESIGN.md reserva Vermelho
+ * Alerta para alerta clínico, e "nunca punir" vale também para entrada de dado.
+ */
+function StepSurgeryDate({
+  draft,
+  required,
+  totalWeeks,
+  onChange,
+  onNext,
+}: {
+  draft: TreatmentOnboardingDraft;
+  required: boolean;
+  totalWeeks: number;
+  onChange: (v: TreatmentOnboardingDraft) => void;
+  onNext: () => void;
+}) {
+  const validity = surgeryDateValidity(draft.surgery_date, { totalWeeks });
+  const canContinue = required ? validity.canContinue : validity.state !== "future";
+
+  return (
+    <div>
+      <div className="mx-auto mt-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-muted text-primary">
+        <CalendarDays className="h-7 w-7" />
+      </div>
+      <h1 className="mt-6 text-center text-3xl font-bold leading-tight">
+        Quando foi a sua cirurgia?
+      </h1>
+      <p className="mt-2 text-center text-sm text-muted-foreground">
+        Todo o seu protocolo — exercícios, metas e marcos — é contado a partir dessa data.
+      </p>
+
+      <div className="mt-8">
+        <Field label={required ? "Data da cirurgia" : "Data da cirurgia (opcional)"}>
+          <Input
+            type="date"
+            max={todayISO()}
+            value={draft.surgery_date ?? ""}
+            onChange={(e) => onChange({ surgery_date: e.target.value })}
+            className="h-14 text-lg"
+          />
+        </Field>
+      </div>
+
+      <div className="mt-4 min-h-[64px]">
+        {validity.state === "ok" && (
+          <div className="rounded-xl bg-primary-muted p-3.5 text-center">
+            <p className="text-sm text-primary-dark">
+              Você está na{" "}
+              <span className="font-bold">
+                semana {postOpWeekFromDays(validity.daysSinceSurgery ?? 0)}
+              </span>{" "}
+              do pós-operatório.
+            </p>
+          </div>
+        )}
+        {validity.state === "stale" && (
+          <div className="flex items-start gap-2 rounded-xl bg-warning/10 p-3">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+            <p className="text-xs leading-snug text-foreground/80">
+              Essa data já passou do fim do protocolo ({totalWeeks} semanas). Se estiver certa, pode
+              seguir — só confira antes.
+            </p>
+          </div>
+        )}
+        {validity.state === "future" && (
+          <div className="flex items-start gap-2 rounded-xl bg-warning/10 p-3">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+            <p className="text-xs leading-snug text-foreground/80">
+              Essa data ainda não chegou. O acompanhamento começa depois da cirurgia.
+            </p>
+          </div>
+        )}
+        {validity.state === "missing" && required && (
+          <p className="px-1 text-center text-xs text-muted-foreground">
+            Precisamos dessa data para montar a sua semana 1.
+          </p>
+        )}
+      </div>
+
+      <Button size="lg" disabled={!canContinue} className="mt-4 w-full rounded-xl" onClick={onNext}>
+        Continuar <ArrowRight className="ml-1 h-4 w-4" />
+      </Button>
+    </div>
+  );
+}
+
 function StepSide({
   draft,
   onChange,
@@ -219,14 +327,6 @@ function StepSide({
               </button>
             ))}
           </div>
-        </Field>
-        <Field label="Data da cirurgia (opcional)">
-          <Input
-            type="date"
-            value={draft.surgery_date ?? ""}
-            onChange={(e) => onChange({ surgery_date: e.target.value })}
-            className="h-12"
-          />
         </Field>
         <Field label="Apelido para esse tratamento (opcional)">
           <Input

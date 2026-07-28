@@ -110,3 +110,16 @@ export function surgeryDateValidity(
   if (days > totalWeeks * 7) return { state: "stale", canContinue: true, daysSinceSurgery: days };
   return { state: "ok", canContinue: true, daysSinceSurgery: days };
 }
+
+/**
+ * Semana pós-operatória 1-indexada a partir de dias decorridos: o dia da
+ * cirurgia é o dia 1 da semana 1, e a semana vira a cada 7 dias.
+ *
+ * Este é o **único** cálculo de semana-por-data do código. `postOpWeekOf` da
+ * spec 01 deve consumir este helper em vez de reimplementá-lo: o app já carrega
+ * três cálculos divergentes de semana por *contagem de sessões* (que a spec 01
+ * unifica) e um quarto, agora por data, seria a mesma dívida de novo.
+ */
+export function postOpWeekFromDays(days: number): number {
+  return Math.max(1, Math.floor(days / 7) + 1);
+}

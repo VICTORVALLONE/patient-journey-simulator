@@ -5,46 +5,60 @@
 //     error logger plugins, and sandbox detection (port/host/strictPort).
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
-import { copyFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import type { PluginOption } from "vite";
 
 // The TanStack Start preview server plugin (used during SPA prerender) imports
-// `dist/server/<entry>.js`, but nitro always writes the server bundle as
-// `dist/server/index.mjs`. Copy it into place after the server build so the
-// prerender step can load the handler.
+// `dist/server/server.js`, but nitro writes its bundle to `.output/server/` with
+// `index.mjs` as the entry. Bridge the two so the prerender step finds a handler.
+//
+// **Why this matters beyond convenience:** when the bridge fails, prerender does
+// not fail loudly — it boots whatever stale `dist/server/server.js` is still on
+// disk and emits a `_shell.html` referencing that old build's asset hashes. The
+// shell then 404s its own entry chunk and the published SPA never boots. Two
+// bugs used to do exactly that: the source path still pointed at the old
+// `dist/server/index.mjs` (nitro had moved), and the copy was guarded by
+// `!existsSync(dest)`, so it never refreshed even when it did run once.
+//
+// The bridge is a **shim, not a copy**: `index.mjs` imports `./_libs/*.mjs` by
+// relative path, so a lone copied entry resolves nothing and copying the whole
+// 5 MB tree races with nitro still writing it. Re-exporting by absolute file URL
+// leaves the bundle where it belongs and can never go stale.
 function aliasNitroServerEntry(): PluginOption {
   return {
     name: "fisiocare:alias-nitro-server-entry",
     apply: "build",
     enforce: "post",
     closeBundle() {
-      const dir = resolve(process.cwd(), "dist/server");
-      const src = resolve(dir, "index.mjs");
-      const dest = resolve(dir, "server.js");
-      if (existsSync(src) && !existsSync(dest)) {
-        copyFileSync(src, dest);
-        // Nitro's Cloudflare preset wraps our entry with `env.ASSETS` checks
-        // that crash when the preview/prerender step calls fetch(request)
-        // without an env argument. Make the access null-safe so SPA prerender
-        // succeeds locally without changing the Cloudflare runtime behavior.
-        try {
-          let contents = readFileSync(dest, "utf8");
-          // 1) Guard against missing `env` (SPA prerender/preview calls fetch
-          //    without CF bindings).
-          contents = contents.replace(/if\s*\(\s*env\.ASSETS\s*&&/g, "if (env && env.ASSETS &&");
-          // 2) The srvx NodeRequest used by the preview server exposes `ip`
-          //    as a getter-only property; nitro's Cloudflare adapter tries to
-          //    assign it and crashes. Skip the assignment when it's not writable.
-          contents = contents.replace(
+      const entry = resolve(process.cwd(), ".output/server/index.mjs");
+      if (!existsSync(entry)) return;
+
+      // Nitro's Cloudflare preset wraps the entry with `env.ASSETS` checks that
+      // crash when the preview/prerender step calls fetch(request) without an
+      // env argument, and assigns `req.ip`, which srvx exposes getter-only.
+      // Patch both in place — preview-only concerns, no change to the
+      // Cloudflare runtime behavior.
+      try {
+        const patched = readFileSync(entry, "utf8")
+          .replace(/if\s*\(\s*env\.ASSETS\s*&&/g, "if (env && env.ASSETS &&")
+          .replace(
             /req\.ip\s*=\s*cfReq\.headers\.get\("cf-connecting-ip"\)\s*\|\|\s*void 0;/,
             'try { req.ip = cfReq.headers.get("cf-connecting-ip") || void 0; } catch { /* preview: ip is read-only */ }',
           );
-          writeFileSync(dest, contents);
-        } catch {
-          /* best-effort */
-        }
+        writeFileSync(entry, patched);
+      } catch {
+        /* best-effort */
       }
+
+      const dir = resolve(process.cwd(), "dist/server");
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(
+        resolve(dir, "server.js"),
+        `// Gerado por vite.config.ts — ponte para o bundle do nitro.\n` +
+          `export { default } from ${JSON.stringify(pathToFileURL(entry).href)};\n`,
+      );
     },
   };
 }

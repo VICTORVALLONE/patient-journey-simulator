@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as DemoRouteImport } from './routes/demo'
+import { Route as BoasVindasRouteImport } from './routes/boas-vindas'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OnboardingTreatmentRouteImport } from './routes/onboarding.treatment'
@@ -33,6 +35,16 @@ const WelcomeRoute = WelcomeRouteImport.update({
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BoasVindasRoute = BoasVindasRouteImport.update({
+  id: '/boas-vindas',
+  path: '/boas-vindas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
@@ -103,6 +115,8 @@ const AppSessionSidExerciseEidRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/boas-vindas': typeof BoasVindasRoute
+  '/demo': typeof DemoRoute
   '/onboarding': typeof OnboardingRouteWithChildren
   '/welcome': typeof WelcomeRoute
   '/exercises': typeof AppExercisesRoute
@@ -119,6 +133,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/boas-vindas': typeof BoasVindasRoute
+  '/demo': typeof DemoRoute
   '/onboarding': typeof OnboardingRouteWithChildren
   '/welcome': typeof WelcomeRoute
   '/exercises': typeof AppExercisesRoute
@@ -137,6 +153,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
+  '/boas-vindas': typeof BoasVindasRoute
+  '/demo': typeof DemoRoute
   '/onboarding': typeof OnboardingRouteWithChildren
   '/welcome': typeof WelcomeRoute
   '/_app/exercises': typeof AppExercisesRoute
@@ -155,6 +173,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/boas-vindas'
+    | '/demo'
     | '/onboarding'
     | '/welcome'
     | '/exercises'
@@ -171,6 +191,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/boas-vindas'
+    | '/demo'
     | '/onboarding'
     | '/welcome'
     | '/exercises'
@@ -188,6 +210,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_app'
+    | '/boas-vindas'
+    | '/demo'
     | '/onboarding'
     | '/welcome'
     | '/_app/exercises'
@@ -206,6 +230,8 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  BoasVindasRoute: typeof BoasVindasRoute
+  DemoRoute: typeof DemoRoute
   OnboardingRoute: typeof OnboardingRouteWithChildren
   WelcomeRoute: typeof WelcomeRoute
   ApiChatRoute: typeof ApiChatRoute
@@ -225,6 +251,20 @@ declare module '@tanstack/react-router' {
       path: '/onboarding'
       fullPath: '/onboarding'
       preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/boas-vindas': {
+      id: '/boas-vindas'
+      path: '/boas-vindas'
+      fullPath: '/boas-vindas'
+      preLoaderRoute: typeof BoasVindasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app': {
@@ -382,6 +422,8 @@ const OnboardingRouteWithChildren = OnboardingRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  BoasVindasRoute: BoasVindasRoute,
+  DemoRoute: DemoRoute,
   OnboardingRoute: OnboardingRouteWithChildren,
   WelcomeRoute: WelcomeRoute,
   ApiChatRoute: ApiChatRoute,
