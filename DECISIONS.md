@@ -60,3 +60,51 @@ Formato: `## AAAA-MM-DD — Título` · **Decisão** · **Por quê** · (opciona
 
 **Decisão.** **Adotados:** ciclo **spec-kit** (skills `/speckit-*`, CLI `specify`; pular `constitution`/`analyze` — o CLAUDE.md cumpre esse papel) e **impeccable** (guardião de UI via hook PostToolUse; `PRODUCT.md`/`DESIGN.md` são o contexto de design). **Descartados:** `superpowers` (redundante com o nativo; workflow rígido) e `ui-ux-pro-max-skill` (catálogo CSV que briga com o design system travado). **Planejados:** `supabase/agent-skills` em H1.5; skill própria de a11y em H1.4.
 **Por quê.** Time enxuto / escritor único — só entra tooling que agrega sem atrito. Detalhe operacional por fase em `docs/specs/README.md`.
+
+## 2026-07-28 — `surgery_date` obrigatória em protocolos pós-cirúrgicos
+
+**Decisão.** `surgery_date` passa a ser **obrigatória** para LCA e menisco (`REQUIRES_SURGERY_DATE`), capturada em **tela própria** no onboarding, com eco ao vivo da semana pós-op. Patelofemoral segue sem — é conservador, e o fallback continua `started_at`.
+**Por quê.** Toda a spec 01 depende dela e nada no produto produzia uma: o campo era rotulado "opcional", dividia espaço com um campo de apelido e não era lido por ninguém. Isto **reverte** a alternativa descartada em `docs/specs/01-modelo-medicao-adm/research.md` D1, que a rejeitou por "quebraria mocks e onboarding atual" — restrição que o próprio 08-A removeu.
+**Consequência.** O eco é **azul, nunca vermelho**: o `DESIGN.md` reserva Vermelho Alerta para alerta clínico, e "nunca punir" vale também para entrada de dado. Data futura bloqueia; data além do fim do protocolo só avisa.
+
+## 2026-07-28 — A jornada real é o default; o demo tem porta própria
+
+**Decisão.** `isOnboarded` nasce `false`: visitante novo entra por `/welcome` e percorre cadastro → tratamento → boas-vindas → semana 1. O demo do Alexandre é preservado por três portas: o botão no `/welcome` (promovido a outline), a rota nova `/demo` e o `/profile`.
+**Por quê.** A jornada real era inalcançável — a store já vinha semeada com o demo e `/welcome` só era acessível por dois botões escondidos no perfil.
+**Consequência.** `/demo` **não é idempotente de propósito**: reabrir reinicia o demo, que é o que se quer de um link mandado a um médico. Com `isOnboarded: false`, o `/profile` deixou de ser porta de entrada — visitante novo não chega lá.
+
+## 2026-07-28 — Boas-vindas gateiam a semana 1; o gate é concluir a tela
+
+**Decisão.** `/boas-vindas` (rota nova, em pt-BR porque `/welcome` é o `maskPath` do prerender SPA e precisa renderizar sem estado) fica entre o cadastro e a primeira sessão. O gate é `Treatment.welcome_completed_at`, carimbado ao **concluir a tela** — não ao assistir ao vídeo.
+**Por quê.** Bloquear por vídeo não visto contraria `FisioApp_Descricao_Produto.md` e o "nunca punir" do `PRODUCT.md`.
+**Consequência.** **Regra de vovô** em `isWelcomePending`: tratamento sem carimbo mas com sessão concluída conta como já recebido. É o que evita jogar todo localStorage existente para `/boas-vindas` no primeiro carregamento depois do deploy — e o que permitiu a feature inteira **sem bump de versão** do persist.
+
+## 2026-07-28 — Vídeos no Bunny Stream; o estado sem-vídeo é caminho de primeira classe
+
+**Decisão.** Vídeos hospedados no **Bunny Stream**, via **iframe embed**. Guardamos `library_id` + GUID (`VideoRef`) e derivamos URL em `lib/video.ts`; o catálogo é indexado pelo **número da lista dos médicos** (`src/data/videos.ts`).
+**Por quê.** Vídeo de exercício é conteúdo estático, não dado de paciente — não trava no gate LGPD. Não vai no **Lovable Cloud** porque ativá-lo instalaria o backend vetado. Embed em vez de `<video>`+HLS: bitrate adaptativo e Safari iOS de graça, sem `hls.js`. Ids em vez de URL: trocar embed→HLS ou pull zone não pode custar reescrever 43 literais.
+**Consequência.** Enquanto os GUIDs não chegam, `isPlayable()` é `false` e tudo cai no **estado sem-vídeo**, que é silencioso e mantém as instruções escritas completas (Regra da Instrução Completa) — não é erro nem carregamento. O Treino de Marcha fica sem vídeo **para sempre**: vídeo genérico de marcha é clinicamente errado para quem está em carga zero.
+
+## 2026-07-28 — A semana pós-op é função da data da cirurgia, não das sessões feitas
+
+**Decisão.** Toda derivação de semana passa por `postOpWeekOf` (`lib/prescription.ts`): `postOpWeekOf → phaseForWeek → itemsForWeek`. `weekForCompletedSessions` foi **deletada** e `completeSession` passou a derivar a fase da mesma fonte que o seletor.
+**Por quê.** Havia três cálculos divergentes de semana, todos inferindo a partir de sessões concluídas — o que fazia o paciente que faltou uma semana voltar no tempo. O protocolo clínico não espera ninguém. E, enquanto reducer e seletor discordavam, a tela dizia "Fase 2" e a sessão era gravada com `phase_number: 1`.
+**Consequência.** O eixo do histórico de dor passa a ser a semana pós-op — o mesmo eixo do gráfico de ADM e dos marcos.
+
+## 2026-07-28 — Semana 1 é diária; a adesão dela conta dias, não doses
+
+**Decisão.** `clinical_guide.weeks[0].sessions_per_week = 7` para o LCA. `times_per_day` é **exibido, nunca capturado**. `totalSessionsForProtocol` passa a somar semana a semana.
+**Por quê.** A cartilha prescreve os cuidados da semana 1 **3× ao dia**, não 3× na semana. E o app não tem como saber se foram 1 ou 3 aplicações de gelo — "adesão 100%" na semana 1 significa "compareceu todos os dias", nunca "fez 21 aplicações".
+**Consequência.** O total do LCA vai de **86 para 90** e desloca o `adherence_rate` de todo tratamento existente: **quebra intencional da SC-005 da spec 01**, registrada aqui para não ser triada como bug daqui a duas semanas. A migração v3→v4 recalcula o total dos tratamentos **ativos**; os **concluídos ficam intactos**, porque recalcular o denominador deles desligaria o badge `protocol_complete` de quem já terminou.
+
+## 2026-07-28 — Nem tudo que a cartilha prescreve é exercício
+
+**Decisão.** `ItemKind` separa `exercise`, `care` (crioterapia) e `instruction` (treino de marcha). `session_phase` e `thumbnail_url` viram opcionais; `week_start`/`week_end`/`display_order` recortam e ordenam o item por semana. Variante (parede × cadeira) é **aninhada** no item, não item irmão. Nenhum id de exercício foi deletado.
+**Por quê.** Tratar cuidado e orientação como "exercício" era o que empurrava a crioterapia e a marcha para fora da semana 1. Variante irmã faria os sete pontos de iteração contarem o item duas vezes ("Exercício 3 de 7" viraria 8). Deletar id deixaria dangling em `Session.exercises_completed` persistido, forçando migração transformadora sem necessidade.
+**Consequência.** Onde não há arco de intensidade (a semana 1), a visão da sessão cai numa **lista plana** e a tela de execução não mostra o stepper — agrupar por aquecimento/pico ali sumiria com todo item sem `session_phase`.
+
+## 2026-07-28 — O prerender SPA vinha produzindo um shell obsoleto em silêncio
+
+**Decisão.** A ponte para o prerender (`aliasNitroServerEntry` em `vite.config.ts`) virou um **shim** que reexporta o entry atual do nitro por URL absoluta, em vez de uma cópia condicional.
+**Por quê.** A cópia apontava para `dist/server/`, de onde o nitro já tinha saído (`.output/server/`), e ainda era guardada por `!existsSync(dest)`. Resultado: o prerender bootava um `server.js` de 14/07 deixado no disco e emitia um `_shell.html` referenciando hashes daquele build — um shell que dá 404 no próprio chunk de entrada. O build **passava**; só o artefato estava quebrado.
+**Consequência.** Um `bun run build` num diretório limpo agora falha se a ponte falhar, em vez de mascarar. `dist/` e `.output/` são gerados e ignorados pelo git — limpe os dois quando desconfiar do artefato.
