@@ -6,7 +6,8 @@ import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useActiveTreatment } from "@/store/patient";
-import { getProtocol, getWeekGuide, weekForCompletedSessions } from "@/data/protocols";
+import { getProtocol, getWeekGuide } from "@/data/protocols";
+import { postOpWeekOf } from "@/lib/prescription";
 import { realAdherencePct } from "@/lib/dynamicMessages";
 import { cn } from "@/lib/utils";
 import { apiUrl } from "@/lib/api-base";
@@ -43,7 +44,7 @@ export function AiDoctorChat({ className }: { className?: string } = {}) {
     const protocol = getProtocol(treatment.protocol_id);
     const phase = protocol.phases.find((p) => p.phase_number === treatment.current_phase);
     const lastPainEntry = treatment.pain_history[treatment.pain_history.length - 1];
-    const currentWeek = weekForCompletedSessions(protocol, treatment.total_sessions_completed);
+    const currentWeek = postOpWeekOf(treatment, protocol);
     const weekGuide = getWeekGuide(protocol, currentWeek);
     const guide = protocol.clinical_guide;
     return {

@@ -1,11 +1,9 @@
-import type { BodyRegion, InjuryType, Protocol, WeekGuideEntry } from "@/lib/types";
+import type { BodyRegion, Exercise, InjuryType, Protocol, WeekGuideEntry } from "@/lib/types";
+import { videoByCatalogNumber } from "@/data/videos";
 import thumbJoelho from "@/assets/thumb-joelho.jpg";
 import thumbQuadril from "@/assets/thumb-quadril.jpg";
 import thumbTornozelo from "@/assets/thumb-tornozelo.jpg";
 import thumbCore from "@/assets/thumb-core.jpg";
-
-// Placeholder media — vídeos reais virão do Bunny.net no backend.
-const PLACEHOLDER_VIDEO = "";
 
 const THUMB_BY_REGION: Record<BodyRegion, string> = {
   joelho: thumbJoelho,
@@ -43,13 +41,17 @@ export const PROTOCOL_LCA: Protocol = {
         week_end: 1,
         rom_target_degrees: 90,
         rom_target_label: "Dobrar o joelho até 90°",
+        // Diária: a cartilha prescreve estes cuidados 3× ao dia, não 3× na
+        // semana. A adesão da semana 1 conta DIAS, não doses — o app não tem
+        // como saber se foram 1 ou 3 aplicações de gelo.
+        sessions_per_week: 7,
         milestones: [
           "Marcha com muletas (tipo de carga conforme orientação do cirurgião)",
           "Gelo (crioterapia): 30 min, 3x ao dia, com intervalo mínimo de 1h",
           "Alongamento com joelho esticado: 30 min, 3x ao dia",
         ],
         caution:
-          "Mantenha o joelho esticado a maior parte do tempo — não coloque apoio embaixo dele.",
+          "Mantenha o joelho esticado a maior parte do tempo — não coloque apoio embaixo dele, exceto por restrições do tipo de cirurgia.",
       },
       {
         week_start: 2,
@@ -144,11 +146,60 @@ export const PROTOCOL_LCA: Protocol = {
       phase_number: 1,
       name: "Controle de Edema e Dor",
       duration_weeks: 2,
+      // Governa a semana 2. A semana 1 é diária e declara a própria cadência em
+      // `clinical_guide.weeks[0].sessions_per_week`.
       sessions_per_week: 3,
-      focus: "Semanas 1–2 · Reduzir o inchaço, controlar a dor e dobrar o joelho até 90–100°",
+      focus:
+        "Semanas 1–2 · Cuidados diários na 1ª semana; reduzir o inchaço, controlar a dor e dobrar o joelho até 90–100°",
       doctor_message:
         "Parabéns por concluir a Fase 1. Seu edema está sob controle e sua amplitude de movimento está melhorando. Na próxima fase, vamos focar na mobilidade articular.",
+      // Semana 1 (display_order 1–6) espelha a ordem da cartilha; a semana 2
+      // (7–8) acrescenta as elevações de perna, que a cartilha só introduz ali.
       exercises: [
+        {
+          id: "ex_alongamento_joelho_esticado",
+          name: "Alongamento com o Joelho Esticado",
+          description:
+            "Mantém a extensão completa do joelho — o ganho mais difícil de recuperar se for perdido.",
+          instructions: [
+            "Deite de barriga para cima com a perna operada esticada",
+            "Não coloque nada embaixo do joelho: ele precisa ficar reto",
+            "Mantenha por 30 minutos, 3 vezes ao dia",
+            "Se estiver difícil, apoie só o calcanhar num rolinho e ponha um peso de 2 a 5 kg sobre a coxa",
+          ],
+          duration_seconds: 1800,
+          times_per_day: 3,
+          rest_seconds: 0,
+          difficulty: 1,
+          body_region: "joelho",
+          week_start: 1,
+          week_end: 1,
+          display_order: 1,
+          video: videoByCatalogNumber(1),
+        },
+        {
+          id: "ex_crioterapia",
+          name: "Gelo (Crioterapia)",
+          description: "Controla o inchaço e a dor na primeira semana.",
+          instructions: [
+            "Aplique gelo sobre o joelho por 30 minutos",
+            "Repita 3 vezes ao dia, com pelo menos 1 hora de intervalo entre as aplicações",
+            "Use uma barreira de pano entre o gelo e a pele",
+          ],
+          kind: "care",
+          duration_seconds: 1800,
+          times_per_day: 3,
+          min_interval_hours: 1,
+          safety_stop:
+            "Se houver irritação ou mudança na cor da pele, interrompa e avise seu médico.",
+          rest_seconds: 0,
+          difficulty: 1,
+          body_region: "joelho",
+          week_start: 1,
+          week_end: 1,
+          display_order: 2,
+          video: videoByCatalogNumber(2),
+        },
         {
           id: "ex_mobilizacao_patela",
           name: "Mobilização Patelar",
@@ -158,14 +209,15 @@ export const PROTOCOL_LCA: Protocol = {
             "Mobilize para cima e para baixo 30 vezes",
             "Depois, mobilize de um lado para o outro mais 30 vezes",
           ],
-          sets: 2,
           reps: 30,
           rest_seconds: 30,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T3,
           difficulty: 1,
-          session_phase: "warmup",
           body_region: "joelho",
+          week_start: 1,
+          week_end: 1,
+          display_order: 3,
+          video: videoByCatalogNumber(22),
         },
         {
           id: "ex_pump_tornozelo",
@@ -173,17 +225,21 @@ export const PROTOCOL_LCA: Protocol = {
           description: "Estimula a circulação e reduz o inchaço no pós-operatório.",
           instructions: [
             "Movimente os pés para frente e para trás, como se apertasse um pedal",
-            "Faça 30 vezes, 3 vezes ao dia",
-            "Mantenha o movimento contínuo, sem pausar",
+            "Faça 30 vezes seguidas, sem pausar",
+            "Repita 3 vezes ao dia",
           ],
-          sets: 3,
+          // Antes: `sets: 3` codificava "3× ao dia" — o app somava três séries
+          // dentro de uma sessão. Agora a frequência diária tem campo próprio.
           reps: 30,
+          times_per_day: 3,
           rest_seconds: 20,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T2,
           difficulty: 1,
-          session_phase: "warmup",
           body_region: "tornozelo",
+          week_start: 1,
+          week_end: 1,
+          display_order: 4,
+          video: videoByCatalogNumber(3),
         },
         {
           id: "ex_dobrar_joelhos_parede",
@@ -192,16 +248,69 @@ export const PROTOCOL_LCA: Protocol = {
           instructions: [
             "Deitado, apoie as pernas na parede e dobre o joelho operado até a meta da semana",
             "Coloque a perna não operada sobre a operada e force suavemente para baixo",
-            "Alternativa: sentado em uma cadeira, use a perna não operada para ajudar a dobrar",
           ],
-          sets: 1,
           reps: 30,
           rest_seconds: 30,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T1,
           difficulty: 1,
-          session_phase: "active",
           body_region: "joelho",
+          week_start: 1,
+          week_end: 2,
+          display_order: 5,
+          video: videoByCatalogNumber(23),
+          variants: [
+            {
+              id: "ex_dobrar_joelhos_cadeira",
+              label: "Sentado na cadeira",
+              instructions: [
+                "Sentado em uma cadeira, deslize o pé operado para trás",
+                "Use a perna não operada à frente do tornozelo para ajudar a dobrar",
+              ],
+              video: videoByCatalogNumber(24),
+            },
+          ],
+        },
+        {
+          id: "ex_treino_marcha",
+          name: "Treino de Marcha",
+          description: "Como andar com muletas nesta fase, conforme a liberação do seu cirurgião.",
+          instructions: [
+            "Ande com as duas muletas, apoiando a perna operada conforme a orientação abaixo",
+            "Dê passos curtos e mantenha o joelho esticado ao apoiar o pé no chão",
+          ],
+          // Sem vídeo, e isto NÃO é lacuna: um vídeo genérico de marcha é
+          // clinicamente errado para quem está em carga zero. O parâmetro
+          // abaixo é o que muda a instrução, e quem o define é o cirurgião.
+          kind: "instruction",
+          rest_seconds: 0,
+          difficulty: 1,
+          body_region: "joelho",
+          week_start: 1,
+          week_end: 1,
+          display_order: 6,
+          parameter: {
+            key: "load_type",
+            label: "Tipo de carga liberado pelo cirurgião",
+            options: [
+              {
+                value: "partial",
+                label: "Carga parcial",
+                detail: "Apoie parte do peso na perna operada, conforme tolerar.",
+              },
+              {
+                value: "touch",
+                label: "Toque de marcha",
+                detail: "Apenas encoste o pé no chão para equilíbrio, sem descarregar peso.",
+              },
+              {
+                value: "none",
+                label: "Carga zero",
+                detail: "Não apoie a perna operada no chão em nenhum momento.",
+              },
+            ],
+            fallback_text:
+              "Confirme com seu cirurgião quanto peso pode apoiar na perna operada antes de treinar a marcha.",
+          },
         },
         {
           id: "ex_elevacao_membro",
@@ -215,11 +324,12 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           reps: 15,
           rest_seconds: 45,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T2,
           difficulty: 1,
           session_phase: "active",
           body_region: "quadril",
+          week_start: 2,
+          display_order: 7,
         },
         {
           id: "ex_elevacao_lateral",
@@ -233,11 +343,12 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           reps: 15,
           rest_seconds: 30,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T2,
           difficulty: 1,
           session_phase: "active",
           body_region: "quadril",
+          week_start: 2,
+          display_order: 8,
         },
       ],
     },
@@ -263,7 +374,6 @@ export const PROTOCOL_LCA: Protocol = {
           ],
           duration_seconds: 600,
           rest_seconds: 60,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T1,
           difficulty: 1,
           session_phase: "warmup",
@@ -281,7 +391,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           reps: 15,
           rest_seconds: 45,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T1,
           difficulty: 2,
           session_phase: "active",
@@ -299,7 +408,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           duration_seconds: 20,
           rest_seconds: 45,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T2,
           difficulty: 1,
           session_phase: "active",
@@ -317,7 +425,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           reps: 15,
           rest_seconds: 30,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T2,
           difficulty: 2,
           session_phase: "active",
@@ -335,7 +442,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           reps: 15,
           rest_seconds: 30,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T3,
           difficulty: 1,
           session_phase: "active",
@@ -353,7 +459,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           reps: 10,
           rest_seconds: 60,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T1,
           difficulty: 2,
           session_phase: "peak",
@@ -383,7 +488,6 @@ export const PROTOCOL_LCA: Protocol = {
           ],
           duration_seconds: 600,
           rest_seconds: 60,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T1,
           difficulty: 1,
           session_phase: "warmup",
@@ -401,7 +505,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           reps: 10,
           rest_seconds: 60,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T3,
           difficulty: 2,
           session_phase: "active",
@@ -419,7 +522,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           reps: 10,
           rest_seconds: 30,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T1,
           difficulty: 2,
           session_phase: "active",
@@ -437,7 +539,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           duration_seconds: 30,
           rest_seconds: 45,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T2,
           difficulty: 2,
           session_phase: "active",
@@ -455,7 +556,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           reps: 10,
           rest_seconds: 60,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T1,
           difficulty: 3,
           session_phase: "peak",
@@ -472,7 +572,6 @@ export const PROTOCOL_LCA: Protocol = {
           ],
           duration_seconds: 900,
           rest_seconds: 90,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T3,
           difficulty: 3,
           session_phase: "peak",
@@ -490,7 +589,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           reps: 10,
           rest_seconds: 60,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T1,
           difficulty: 3,
           session_phase: "peak",
@@ -508,7 +606,6 @@ export const PROTOCOL_LCA: Protocol = {
           duration_seconds: 30,
           sets: 3,
           rest_seconds: 30,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T2,
           difficulty: 2,
           session_phase: "active",
@@ -539,7 +636,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           reps: 1,
           rest_seconds: 45,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T3,
           difficulty: 2,
           session_phase: "warmup",
@@ -557,7 +653,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           reps: 10,
           rest_seconds: 60,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T1,
           difficulty: 3,
           session_phase: "active",
@@ -575,7 +670,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           reps: 10,
           rest_seconds: 60,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T1,
           difficulty: 3,
           session_phase: "active",
@@ -593,7 +687,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           reps: 10,
           rest_seconds: 90,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T2,
           difficulty: 3,
           session_phase: "peak",
@@ -611,7 +704,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 1,
           reps: 10,
           rest_seconds: 60,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T3,
           difficulty: 3,
           session_phase: "peak",
@@ -629,7 +721,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 5,
           duration_seconds: 30,
           rest_seconds: 60,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T3,
           difficulty: 3,
           session_phase: "peak",
@@ -647,7 +738,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           duration_seconds: 60,
           rest_seconds: 90,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T1,
           difficulty: 3,
           session_phase: "peak",
@@ -687,7 +777,6 @@ export const PROTOCOL_MENISCUS: Protocol = {
           sets: 3,
           reps: 15,
           rest_seconds: 30,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T1,
           difficulty: 1,
           session_phase: "active",
@@ -705,7 +794,6 @@ export const PROTOCOL_MENISCUS: Protocol = {
           sets: 3,
           reps: 12,
           rest_seconds: 45,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T2,
           difficulty: 1,
           session_phase: "active",
@@ -723,7 +811,6 @@ export const PROTOCOL_MENISCUS: Protocol = {
           sets: 3,
           reps: 12,
           rest_seconds: 45,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T3,
           difficulty: 1,
           session_phase: "active",
@@ -751,7 +838,6 @@ export const PROTOCOL_MENISCUS: Protocol = {
           ],
           duration_seconds: 600,
           rest_seconds: 60,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T1,
           difficulty: 1,
           session_phase: "warmup",
@@ -769,7 +855,6 @@ export const PROTOCOL_MENISCUS: Protocol = {
           sets: 3,
           reps: 15,
           rest_seconds: 45,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T2,
           difficulty: 2,
           session_phase: "active",
@@ -787,7 +872,6 @@ export const PROTOCOL_MENISCUS: Protocol = {
           sets: 3,
           reps: 12,
           rest_seconds: 60,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T3,
           difficulty: 2,
           session_phase: "peak",
@@ -816,7 +900,6 @@ export const PROTOCOL_MENISCUS: Protocol = {
           sets: 4,
           reps: 12,
           rest_seconds: 60,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T1,
           difficulty: 3,
           session_phase: "peak",
@@ -834,7 +917,6 @@ export const PROTOCOL_MENISCUS: Protocol = {
           duration_seconds: 30,
           sets: 3,
           rest_seconds: 30,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T2,
           difficulty: 2,
           session_phase: "active",
@@ -852,7 +934,6 @@ export const PROTOCOL_MENISCUS: Protocol = {
           sets: 3,
           reps: 10,
           rest_seconds: 60,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T3,
           difficulty: 3,
           session_phase: "peak",
@@ -891,7 +972,6 @@ export const PROTOCOL_PATELLOFEMORAL: Protocol = {
           sets: 3,
           reps: 20,
           rest_seconds: 30,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T1,
           difficulty: 1,
           session_phase: "active",
@@ -909,7 +989,6 @@ export const PROTOCOL_PATELLOFEMORAL: Protocol = {
           duration_seconds: 30,
           sets: 3,
           rest_seconds: 20,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T2,
           difficulty: 1,
           session_phase: "rest",
@@ -927,7 +1006,6 @@ export const PROTOCOL_PATELLOFEMORAL: Protocol = {
           sets: 3,
           reps: 15,
           rest_seconds: 30,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T3,
           difficulty: 1,
           session_phase: "active",
@@ -956,7 +1034,6 @@ export const PROTOCOL_PATELLOFEMORAL: Protocol = {
           sets: 3,
           reps: 10,
           rest_seconds: 60,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T1,
           difficulty: 2,
           session_phase: "peak",
@@ -974,7 +1051,6 @@ export const PROTOCOL_PATELLOFEMORAL: Protocol = {
           duration_seconds: 30,
           sets: 3,
           rest_seconds: 60,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T2,
           difficulty: 2,
           session_phase: "peak",
@@ -992,7 +1068,6 @@ export const PROTOCOL_PATELLOFEMORAL: Protocol = {
           sets: 3,
           reps: 15,
           rest_seconds: 45,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T3,
           difficulty: 2,
           session_phase: "active",
@@ -1021,7 +1096,6 @@ export const PROTOCOL_PATELLOFEMORAL: Protocol = {
           sets: 4,
           reps: 15,
           rest_seconds: 60,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T1,
           difficulty: 3,
           session_phase: "peak",
@@ -1039,7 +1113,6 @@ export const PROTOCOL_PATELLOFEMORAL: Protocol = {
           sets: 3,
           reps: 10,
           rest_seconds: 60,
-          video_url: PLACEHOLDER_VIDEO,
           thumbnail_url: T2,
           difficulty: 3,
           session_phase: "peak",
@@ -1056,14 +1129,16 @@ export const PROTOCOLS: Record<string, Protocol> = {
   proto_patellofemoral: PROTOCOL_PATELLOFEMORAL,
 };
 
-// Override every exercise thumbnail with the region-appropriate photo,
-// so any new exercise added just needs a valid `body_region`.
-for (const protocol of Object.values(PROTOCOLS)) {
-  for (const phase of protocol.phases) {
-    for (const ex of phase.exercises) {
-      ex.thumbnail_url = THUMB_BY_REGION[ex.body_region] ?? thumbJoelho;
-    }
-  }
+/**
+ * Foto do item, por região do corpo.
+ *
+ * Substitui um laço que, no import do módulo, **mutava os 43 exercícios** e
+ * sobrescrevia qualquer `thumbnail_url` explícito — o que tornava impossível
+ * dar foto própria a um item e fazia o protocolo mudar de forma como efeito
+ * colateral de carregar o arquivo. Puro: quem tem foto própria a mantém.
+ */
+export function thumbnailFor(ex: Pick<Exercise, "thumbnail_url" | "body_region">): string {
+  return ex.thumbnail_url ?? THUMB_BY_REGION[ex.body_region] ?? thumbJoelho;
 }
 
 // Protocolos pós-cirúrgicos derivam toda a progressão da data da cirurgia, então
@@ -1079,26 +1154,14 @@ export function getProtocol(id: string): Protocol {
   return PROTOCOLS[id] ?? PROTOCOL_LCA;
 }
 
-export function totalSessionsForProtocol(p: Protocol): number {
-  return p.phases.reduce((sum, ph) => sum + ph.duration_weeks * ph.sessions_per_week, 0);
-}
-
-// Semana pós-op estimada a partir das sessões concluídas, espelhando a cadência
-// (sessions_per_week) de cada fase — 1-indexada e limitada ao total do protocolo.
-export function weekForCompletedSessions(p: Protocol, completedSessions: number): number {
-  let remaining = Math.max(0, completedSessions);
-  let week = 0;
-  for (const ph of p.phases) {
-    const phaseSessions = ph.duration_weeks * ph.sessions_per_week;
-    if (remaining >= phaseSessions) {
-      remaining -= phaseSessions;
-      week += ph.duration_weeks;
-    } else {
-      return Math.min(week + Math.floor(remaining / ph.sessions_per_week) + 1, p.total_weeks);
-    }
-  }
-  return p.total_weeks;
-}
+// `totalSessionsForProtocol` mudou de casa: agora soma semana a semana e vive
+// em `lib/prescription.ts`, junto do resto da derivação por semana pós-op. A
+// versão que morava aqui multiplicava `duration_weeks × sessions_per_week` por
+// fase e passou a estar errada quando a semana 1 virou diária.
+//
+// `weekForCompletedSessions` foi DELETADA. Ela inferia a semana a partir das
+// sessões concluídas, o que fazia o paciente que faltou uma semana "voltar no
+// tempo" — a semana é função da data da cirurgia. Use `postOpWeekOf`.
 
 // Bloco do guia clínico (cartilha) correspondente a uma semana pós-op.
 export function getWeekGuide(p: Protocol, week: number): WeekGuideEntry | undefined {

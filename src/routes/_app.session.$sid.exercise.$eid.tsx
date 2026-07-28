@@ -1,9 +1,17 @@
 import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Bell, CheckCircle2, SkipForward, ThumbsDown, Trophy } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Bell,
+  CheckCircle2,
+  SkipForward,
+  ThumbsDown,
+  Trophy,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { VideoPlayer } from "@/components/session/VideoPlayer";
+import { BunnyVideo } from "@/components/video/BunnyVideo";
 import { SessionStepper } from "@/components/session/SessionStepper";
 import { EmojiPainScale } from "@/components/session/EmojiPainScale";
 import { ConfettiBurst } from "@/components/celebration/Confetti";
@@ -43,6 +51,9 @@ function ExecutionPage() {
     exercises.findIndex((e: { id: string }) => e.id === eid),
   );
   const [index, setIndex] = useState(initialIndex);
+  // Variante escolhida, resetada ao trocar de item — a escolha é do item atual,
+  // não do paciente.
+  const [variantId, setVariantId] = useState<string | null>(null);
   const [completed, setCompleted] = useState<string[]>([]);
   const [stage, setStage] = useState<Stage>({ kind: "exercise" });
   const [pain, setPain] = useState<number | null>(null);
@@ -56,11 +67,13 @@ function ExecutionPage() {
   }
 
   const ex = exercises[index]!;
+  const activeVariant = ex.variants?.find((v) => v.id === variantId) ?? null;
   const isLast = index >= exercises.length - 1;
 
   function next() {
     setCompleted((prev) => Array.from(new Set([...prev, ex.id])));
     if (!isLast) {
+      setVariantId(null);
       setIndex((i) => i + 1);
     } else {
       setStage({ kind: "checkin", step: 1 });
@@ -68,8 +81,12 @@ function ExecutionPage() {
   }
 
   function skip() {
-    if (!isLast) setIndex((i) => i + 1);
-    else setStage({ kind: "checkin", step: 1 });
+    if (!isLast) {
+      setVariantId(null);
+      setIndex((i) => i + 1);
+    } else {
+      setStage({ kind: "checkin", step: 1 });
+    }
   }
 
   function finish() {
@@ -140,12 +157,50 @@ function ExecutionPage() {
       </header>
 
       <div className="mt-4">
-        <VideoPlayer thumbnailUrl={ex.thumbnail_url} durationSeconds={ex.duration_seconds ?? 60} />
+        <BunnyVideo video={activeVariant?.video ?? ex.video} title={ex.name} />
       </div>
 
-      <div className="mt-4">
-        <SessionStepper current={ex.session_phase} />
-      </div>
+      {/* Variante é escolha de execução do mesmo item (parede × cadeira), não um
+          segundo item: trocar aqui não muda a contagem "Exercício N de M". */}
+      {ex.variants && ex.variants.length > 0 && (
+        <div className="mt-3 flex gap-2 overflow-x-auto">
+          <button
+            type="button"
+            onClick={() => setVariantId(null)}
+            className={cn(
+              "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium",
+              !variantId
+                ? "border-primary bg-primary-muted text-primary-dark"
+                : "border-border bg-card text-muted-foreground",
+            )}
+          >
+            Como no vídeo
+          </button>
+          {ex.variants.map((v) => (
+            <button
+              key={v.id}
+              type="button"
+              onClick={() => setVariantId(v.id)}
+              className={cn(
+                "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium",
+                variantId === v.id
+                  ? "border-primary bg-primary-muted text-primary-dark"
+                  : "border-border bg-card text-muted-foreground",
+              )}
+            >
+              {v.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* O arco de intensidade não existe na semana 1: cuidados e orientações
+          não têm aquecimento/pico/descanso. Sem `session_phase`, sem stepper. */}
+      {ex.session_phase && (
+        <div className="mt-4">
+          <SessionStepper current={ex.session_phase} />
+        </div>
+      )}
 
       <h1 className="mt-5 text-2xl font-bold leading-tight text-foreground">{ex.name}</h1>
       <p className="mt-1 text-sm text-muted-foreground">{ex.description}</p>
@@ -155,7 +210,7 @@ function ExecutionPage() {
           Instruções principais
         </p>
         <ol className="mt-2 space-y-2">
-          {ex.instructions.map((line: string, i: number) => (
+          {(activeVariant?.instructions ?? ex.instructions).map((line: string, i: number) => (
             <li key={i} className="flex gap-3 text-sm text-foreground">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
                 {i + 1}
@@ -166,11 +221,63 @@ function ExecutionPage() {
         </ol>
       </section>
 
+      {/* Parâmetro do cirurgião. Enquanto não houver resposta, mostra o
+          `fallback_text` — nunca uma lacuna: o paciente precisa saber que
+          precisa perguntar. */}
+      {ex.parameter && (
+        <section className="mt-4 rounded-2xl border border-border bg-card p-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            {ex.parameter.label}
+          </p>
+          {(() => {
+            const chosen = treatment?.surgeon_parameters?.[ex.parameter.key];
+            const option = ex.parameter.options.find((o) => o.value === chosen);
+            if (!option) {
+              return (
+                <p className="mt-2 text-sm leading-snug text-foreground/80">
+                  {ex.parameter.fallback_text}
+                </p>
+              );
+            }
+            return (
+              <>
+                <p className="mt-2 text-sm font-semibold text-foreground">{option.label}</p>
+                {option.detail && (
+                  <p className="mt-0.5 text-sm leading-snug text-muted-foreground">
+                    {option.detail}
+                  </p>
+                )}
+              </>
+            );
+          })()}
+        </section>
+      )}
+
+      {ex.safety_stop && (
+        <div className="mt-4 flex items-start gap-2.5 rounded-2xl bg-warning/10 p-4">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+          <div>
+            <p className="text-sm font-semibold text-foreground">Quando interromper</p>
+            <p className="mt-1 text-sm leading-snug text-foreground/80">{ex.safety_stop}</p>
+          </div>
+        </div>
+      )}
+
       <div className="mt-4 flex items-center justify-between rounded-2xl bg-bg-subtle p-3 text-sm">
         <span className="font-semibold text-foreground">
-          {ex.duration_seconds
-            ? `${Math.round(ex.duration_seconds / 60) || 1} min`
-            : `${ex.sets ?? 3} séries × ${ex.reps ?? 12} reps`}
+          {[
+            ex.duration_seconds
+              ? `${Math.round(ex.duration_seconds / 60) || 1} min`
+              : ex.reps
+                ? ex.sets
+                  ? `${ex.sets} séries × ${ex.reps} reps`
+                  : `${ex.reps} repetições`
+                : null,
+            ex.times_per_day ? `${ex.times_per_day}× ao dia` : null,
+            ex.min_interval_hours ? `intervalo de ${ex.min_interval_hours}h` : null,
+          ]
+            .filter(Boolean)
+            .join(" · ") || "Siga a orientação da sua equipe"}
         </span>
         <span className="flex items-center gap-1 text-muted-foreground">
           Dificuldade

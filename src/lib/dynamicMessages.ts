@@ -1,5 +1,6 @@
 import type { Treatment } from "@/lib/types";
-import { getProtocol, totalSessionsForProtocol } from "@/data/protocols";
+import { getProtocol } from "@/data/protocols";
+import { totalSessionsForProtocol } from "@/lib/prescription";
 
 /** Redução percentual da dor entre primeira e última semana registrada.
  * Retorna null quando não há dados suficientes. */

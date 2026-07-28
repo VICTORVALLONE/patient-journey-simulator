@@ -1,6 +1,7 @@
 import type { BadgeId, PainEntry, Protocol, Treatment, User, WeekFrequency } from "@/lib/types";
 import type { Session } from "@/lib/types";
-import { getProtocol, totalSessionsForProtocol } from "@/data/protocols";
+import { getProtocol } from "@/data/protocols";
+import { totalSessionsForProtocol } from "@/lib/prescription";
 import { computeWeeklyStreak } from "@/lib/streak";
 import avatarAlexandre from "@/assets/avatar-alexandre.jpg";
 
@@ -235,6 +236,69 @@ export const MOCK_TREATMENT_LCA_ACTIVE: Treatment = (() => {
     longest_streak: streak.longest,
     pain_history: DEMO_PAIN_HISTORY,
     weekly_frequency: weeklyFrequencyForCurrentWeek(sessions, 3),
+    sessions,
+  };
+})();
+
+/**
+ * Demo: LCA na **semana 1** — cirurgia há 3 dias, 2 dias de cuidados feitos.
+ *
+ * Existe porque a semana 1 é o conteúdo que mais mudou (alongamento,
+ * crioterapia e treino de marcha entraram; as elevações de perna saíram para a
+ * semana 2) e nenhum outro mock alcança essa semana. Sem ele, a própria demo
+ * que vai ao médico não conseguiria mostrar a semana 1 sem refazer o cadastro.
+ *
+ * `welcome_completed_at` preenchido: quem abre por `/demo` não deve topar com o
+ * gate de boas-vindas.
+ */
+export const MOCK_TREATMENT_LCA_WEEK1: Treatment = (() => {
+  const protocol = getProtocol("proto_lca");
+  const surgery = new Date();
+  surgery.setDate(surgery.getDate() - 3);
+  surgery.setHours(9, 0, 0, 0);
+
+  // Semana 1 é diária: os 2 dias concluídos são ontem e anteontem.
+  const sessions: Session[] = [2, 1].map((daysAgo, i) => {
+    const dt = new Date();
+    dt.setDate(dt.getDate() - daysAgo);
+    dt.setHours(9, 30, 0, 0);
+    return {
+      id: `sess_w1_${i}`,
+      treatment_id: "tr_lca_week1",
+      phase_number: 1,
+      session_number: 2 - i,
+      scheduled_date: dateOnly(dt),
+      completed_at: dt.toISOString(),
+      exercises_completed: [],
+      pain_level: i === 0 ? 6 : 5,
+      difficulty_rating: 2,
+      duration_minutes: 35,
+    } satisfies Session;
+  });
+
+  return {
+    id: "tr_lca_week1",
+    user_id: MOCK_USER.id,
+    nickname: "Joelho esquerdo (LCA) · 1ª semana",
+    protocol_id: "proto_lca",
+    injury_type: "lca",
+    affected_side: "left",
+    surgery_date: dateOnly(surgery),
+    started_at: dateOnly(surgery),
+    prescribed_by: "Dr. Carlos Mendes",
+    reminder_time: "09:00",
+    status: "active",
+    welcome_completed_at: surgery.toISOString(),
+    current_phase: 1,
+    phases_completed: [],
+    badges_unlocked: ["first_session"],
+    total_sessions_prescribed: totalSessionsForProtocol(protocol),
+    total_sessions_completed: 2,
+    adherence_rate: Math.round((2 / totalSessionsForProtocol(protocol)) * 100),
+    current_streak: 0,
+    longest_streak: 0,
+    pain_history: [{ week: 1, average_pain: 5.5, session_count: 2 }],
+    weekly_frequency: weeklyFrequencyForCurrentWeek(sessions, 7),
     sessions,
   };
 })();

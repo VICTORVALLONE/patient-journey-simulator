@@ -4,10 +4,20 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import {
   MOCK_USER,
   MOCK_TREATMENT_LCA_ACTIVE,
+  MOCK_TREATMENT_LCA_WEEK1,
   MOCK_TREATMENT_PATELLO_DONE,
   emptyWeeklyFrequency,
 } from "@/data/mockUser";
-import { getProtocol, totalSessionsForProtocol } from "@/data/protocols";
+import { getProtocol } from "@/data/protocols";
+import {
+  firstWeekOfPhase,
+  phaseForWeek,
+  phaseForWeekWithItems,
+  postOpWeekOf,
+  sessionsInPhase,
+  sessionsThroughWeek,
+  totalSessionsForProtocol,
+} from "@/lib/prescription";
 import { checkNewBadges } from "@/lib/badges";
 import { computeWeeklyStreak } from "@/lib/streak";
 import type {
@@ -107,11 +117,6 @@ function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-function weekIndexFor(treatment: Treatment, sessionsPerWeek: number): number {
-  const sessionNumber = treatment.total_sessions_completed + 1;
-  return Math.max(1, Math.ceil(sessionNumber / Math.max(1, sessionsPerWeek)));
-}
-
 function makeTreatment(userId: string, draft: TreatmentOnboardingDraft): Treatment {
   const injury = (draft.injury_type ?? "lca") as InjuryType;
   const affected = draft.affected_side ?? "right";
@@ -145,6 +150,34 @@ function makeTreatment(userId: string, draft: TreatmentOnboardingDraft): Treatme
   };
 }
 
+/**
+ * Migração v3 → v4. Um único passo não-identidade: **recalcular
+ * `total_sessions_prescribed`**.
+ *
+ * A semana 1 do LCA virou diária, o que leva o total de 86 para 90. Sem
+ * recalcular, todo tratamento já salvo continuaria dividindo a adesão por um
+ * denominador que não existe mais — e a adesão passaria a subir sozinha.
+ *
+ * **Tratamento concluído fica intacto.** Recalcular o total dele empurraria
+ * `total_sessions_completed` para baixo do novo total e desligaria o badge
+ * `protocol_complete` de quem já terminou: uma conquista sumindo da tela por
+ * causa de uma mudança de conteúdo. O passado fica com o denominador do
+ * passado.
+ */
+export function migrateTreatmentToV4(t: Treatment): Treatment {
+  if (t.status === "completed") return t;
+  const protocol = getProtocol(t.protocol_id);
+  const recalculated = totalSessionsForProtocol(protocol);
+  if (recalculated === t.total_sessions_prescribed) return t;
+  return {
+    ...t,
+    total_sessions_prescribed: recalculated,
+    adherence_rate: recalculated
+      ? Math.round((t.total_sessions_completed / recalculated) * 100)
+      : 0,
+  };
+}
+
 export const usePatientStore = create<PatientState>()(
   persist(
     (set, get) => ({
@@ -154,7 +187,11 @@ export const usePatientStore = create<PatientState>()(
       // tela que lê `user`. resetToDemo() o traz de volta.
       isOnboarded: false,
       user: MOCK_USER,
-      treatments: [MOCK_TREATMENT_LCA_ACTIVE, MOCK_TREATMENT_PATELLO_DONE],
+      treatments: [
+        MOCK_TREATMENT_LCA_ACTIVE,
+        MOCK_TREATMENT_LCA_WEEK1,
+        MOCK_TREATMENT_PATELLO_DONE,
+      ],
       activeTreatmentId: MOCK_TREATMENT_LCA_ACTIVE.id,
       onboardingDraft: {},
 
@@ -223,7 +260,11 @@ export const usePatientStore = create<PatientState>()(
         set({
           isOnboarded: true,
           user: MOCK_USER,
-          treatments: [MOCK_TREATMENT_LCA_ACTIVE, MOCK_TREATMENT_PATELLO_DONE],
+          treatments: [
+            MOCK_TREATMENT_LCA_ACTIVE,
+            MOCK_TREATMENT_LCA_WEEK1,
+            MOCK_TREATMENT_PATELLO_DONE,
+          ],
           activeTreatmentId: MOCK_TREATMENT_LCA_ACTIVE.id,
           onboardingDraft: {},
         }),
@@ -264,24 +305,20 @@ export const usePatientStore = create<PatientState>()(
         const protocol = getProtocol(treatment.protocol_id);
         const totalPhases = protocol.phases.length;
 
-        // Find phase of the just-completed session
-        let cumulative = 0;
-        let phaseOfThisSession: ProtocolPhase = protocol.phases[0]!;
-        let sessionsBeforeThisPhase = 0;
-        for (const ph of protocol.phases) {
-          const ses = ph.duration_weeks * ph.sessions_per_week;
-          if (treatment.total_sessions_completed < cumulative + ses) {
-            phaseOfThisSession = ph;
-            sessionsBeforeThisPhase = cumulative;
-            break;
-          }
-          cumulative += ses;
-        }
+        // A fase da sessão vem da MESMA derivação que o seletor usa
+        // (`todaySessionInfoOf` → semana pós-op). Enquanto o reducer contava
+        // sessões e o seletor contava semanas, os dois discordavam: a tela dizia
+        // "Fase 2" e a sessão era gravada com `phase_number: 1`.
+        const currentWeek = postOpWeekOf(treatment, protocol);
+        const phaseOfThisSession = phaseForWeek(protocol, currentWeek);
+        const sessionsBeforeThisPhase = sessionsThroughWeek(
+          protocol,
+          firstWeekOfPhase(protocol, phaseOfThisSession) - 1,
+        );
 
         const newCompletedCount = treatment.total_sessions_completed + 1;
-        const sessionsInThisPhaseDone = newCompletedCount - sessionsBeforeThisPhase;
-        const sessionsInThisPhaseTotal =
-          phaseOfThisSession.duration_weeks * phaseOfThisSession.sessions_per_week;
+        const sessionsInThisPhaseDone = Math.max(1, newCompletedCount - sessionsBeforeThisPhase);
+        const sessionsInThisPhaseTotal = sessionsInPhase(protocol, phaseOfThisSession);
         const phaseJustCompleted =
           sessionsInThisPhaseDone >= sessionsInThisPhaseTotal &&
           !treatment.phases_completed.includes(phaseOfThisSession.phase_number);
@@ -315,7 +352,9 @@ export const usePatientStore = create<PatientState>()(
         const current_streak = streak.current;
         const longest_streak = Math.max(treatment.longest_streak, streak.longest);
 
-        const weekIdx = weekIndexFor(treatment, phaseOfThisSession.sessions_per_week);
+        // O eixo do histórico de dor é a semana pós-op — o mesmo eixo do gráfico
+        // de ADM e dos marcos. Antes era mais uma contagem por sessões.
+        const weekIdx = currentWeek;
         const painHistory = treatment.pain_history.map((p) => ({ ...p }));
         const existing = painHistory.find((p) => p.week === weekIdx);
         if (existing) {
@@ -388,7 +427,7 @@ export const usePatientStore = create<PatientState>()(
     }),
     {
       name: "fisiocare-patient-v2",
-      version: 3,
+      version: 4,
       migrate: (persisted: unknown, version) => {
         if (!persisted || typeof persisted !== "object") return persisted as PatientState;
         const state = persisted as Partial<PatientState>;
@@ -397,6 +436,9 @@ export const usePatientStore = create<PatientState>()(
           if (state.user && state.user.id === MOCK_USER.id && !state.user.avatar_url) {
             state.user = { ...state.user, avatar_url: MOCK_USER.avatar_url };
           }
+        }
+        if (version < 4) {
+          state.treatments = (state.treatments ?? []).map(migrateTreatmentToV4);
         }
         return state as PatientState;
       },
@@ -450,47 +492,29 @@ export function currentPhaseOf(treatment: Treatment) {
   );
 }
 
+/**
+ * O que o paciente faz **hoje**.
+ *
+ * Antes, a fase saía da contagem de sessões concluídas; agora sai da semana
+ * pós-operatória. A diferença aparece em quem falta: pela contagem, faltar uma
+ * semana fazia o paciente permanecer na semana 1 indefinidamente — o protocolo
+ * clínico não espera ninguém. `exercises` já vem recortado para a semana, então
+ * a semana 1 mostra os cuidados da semana 1 e não os exercícios da semana 2.
+ */
 export function todaySessionInfoOf(treatment: Treatment) {
   const protocol = getProtocol(treatment.protocol_id);
-  let cumulative = 0;
-  for (const ph of protocol.phases) {
-    const ses = ph.duration_weeks * ph.sessions_per_week;
-    if (treatment.total_sessions_completed < cumulative + ses) {
-      return {
-        phase: withOrderedExercises(ph),
-        sessionNumber: treatment.total_sessions_completed - cumulative + 1,
-        sessionsInPhase: ses,
-        sessionsBeforePhase: cumulative,
-        protocol,
-      };
-    }
-    cumulative += ses;
-  }
-  const last = protocol.phases[protocol.phases.length - 1]!;
+  const week = postOpWeekOf(treatment, protocol);
+  const phase = phaseForWeekWithItems(protocol, week);
+  const firstWeek = firstWeekOfPhase(protocol, phase);
+  const sessionsBeforePhase = sessionsThroughWeek(protocol, firstWeek - 1);
+  const inPhase = sessionsInPhase(protocol, phase);
+  const done = Math.max(0, treatment.total_sessions_completed - sessionsBeforePhase);
   return {
-    phase: withOrderedExercises(last),
-    sessionNumber: last.duration_weeks * last.sessions_per_week,
-    sessionsInPhase: last.duration_weeks * last.sessions_per_week,
-    sessionsBeforePhase: cumulative - last.duration_weeks * last.sessions_per_week,
+    week,
+    phase,
+    sessionNumber: Math.min(done + 1, inPhase),
+    sessionsInPhase: inPhase,
+    sessionsBeforePhase,
     protocol,
   };
-}
-
-const SESSION_PHASE_ORDER: Record<SessionPhase, number> = {
-  warmup: 0,
-  active: 1,
-  peak: 2,
-  rest: 3,
-};
-
-function withOrderedExercises(phase: ProtocolPhase): ProtocolPhase {
-  const sorted = [...phase.exercises]
-    .map((ex, idx) => ({ ex, idx }))
-    .sort((a, b) => {
-      const diff =
-        SESSION_PHASE_ORDER[a.ex.session_phase] - SESSION_PHASE_ORDER[b.ex.session_phase];
-      return diff !== 0 ? diff : a.idx - b.idx;
-    })
-    .map((entry) => entry.ex);
-  return { ...phase, exercises: sorted };
 }

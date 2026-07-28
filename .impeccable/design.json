@@ -4,34 +4,121 @@
   "title": "Design System: FisioApp",
   "extensions": {
     "colorMeta": {
-      "azul-prescricao": { "role": "primary", "displayName": "Azul Prescrição", "canonical": "oklch(0.54 0.21 263)", "tonalRamp": ["oklch(0.18 0.21 263)", "oklch(0.28 0.21 263)", "oklch(0.38 0.21 263)", "oklch(0.48 0.21 263)", "oklch(0.58 0.21 263)", "oklch(0.70 0.15 263)", "oklch(0.84 0.08 263)", "oklch(0.95 0.03 263)"] },
-      "azul-profundo": { "role": "primary", "displayName": "Azul Profundo", "canonical": "oklch(0.32 0.18 265)", "tonalRamp": ["oklch(0.15 0.18 265)", "oklch(0.25 0.18 265)", "oklch(0.35 0.18 265)", "oklch(0.45 0.16 265)", "oklch(0.55 0.14 265)", "oklch(0.68 0.10 265)", "oklch(0.82 0.06 265)", "oklch(0.95 0.02 265)"] },
-      "marinho-clinico": { "role": "primary", "displayName": "Marinho Clínico", "canonical": "oklch(0.22 0.12 268)", "tonalRamp": ["oklch(0.15 0.12 268)", "oklch(0.22 0.12 268)", "oklch(0.32 0.11 268)", "oklch(0.44 0.10 268)", "oklch(0.56 0.08 268)", "oklch(0.70 0.06 268)", "oklch(0.84 0.04 268)", "oklch(0.95 0.02 268)"] },
-      "nevoa-azul": { "role": "primary", "displayName": "Névoa Azul", "canonical": "oklch(0.96 0.03 256)" },
-      "tinta-marinho": { "role": "neutral", "displayName": "Tinta Marinho", "canonical": "oklch(0.18 0.04 265)" },
-      "branco-consultorio": { "role": "neutral", "displayName": "Branco Consultório", "canonical": "oklch(1 0 0)" },
-      "repouso": { "role": "neutral", "displayName": "Repouso", "canonical": "oklch(0.985 0.012 256)" },
-      "cinza-apoio": { "role": "neutral", "displayName": "Cinza Apoio", "canonical": "oklch(0.55 0.04 257)" },
-      "borda-suave": { "role": "neutral", "displayName": "Borda Suave", "canonical": "oklch(0.92 0.012 256)" },
-      "verde-recuperacao": { "role": "semantic", "displayName": "Verde Recuperação", "canonical": "oklch(0.7 0.16 162)" },
-      "ambar-atencao": { "role": "semantic", "displayName": "Âmbar Atenção", "canonical": "oklch(0.78 0.16 75)" },
-      "vermelho-alerta": { "role": "semantic", "displayName": "Vermelho Alerta", "canonical": "oklch(0.65 0.22 27)" }
+      "azul-prescricao": {
+        "role": "primary",
+        "displayName": "Azul Prescrição",
+        "canonical": "oklch(0.54 0.21 263)",
+        "tonalRamp": [
+          "oklch(0.18 0.21 263)",
+          "oklch(0.28 0.21 263)",
+          "oklch(0.38 0.21 263)",
+          "oklch(0.48 0.21 263)",
+          "oklch(0.58 0.21 263)",
+          "oklch(0.70 0.15 263)",
+          "oklch(0.84 0.08 263)",
+          "oklch(0.95 0.03 263)"
+        ]
+      },
+      "azul-profundo": {
+        "role": "primary",
+        "displayName": "Azul Profundo",
+        "canonical": "oklch(0.32 0.18 265)",
+        "tonalRamp": [
+          "oklch(0.15 0.18 265)",
+          "oklch(0.25 0.18 265)",
+          "oklch(0.35 0.18 265)",
+          "oklch(0.45 0.16 265)",
+          "oklch(0.55 0.14 265)",
+          "oklch(0.68 0.10 265)",
+          "oklch(0.82 0.06 265)",
+          "oklch(0.95 0.02 265)"
+        ]
+      },
+      "marinho-clinico": {
+        "role": "primary",
+        "displayName": "Marinho Clínico",
+        "canonical": "oklch(0.22 0.12 268)",
+        "tonalRamp": [
+          "oklch(0.15 0.12 268)",
+          "oklch(0.22 0.12 268)",
+          "oklch(0.32 0.11 268)",
+          "oklch(0.44 0.10 268)",
+          "oklch(0.56 0.08 268)",
+          "oklch(0.70 0.06 268)",
+          "oklch(0.84 0.04 268)",
+          "oklch(0.95 0.02 268)"
+        ]
+      },
+      "nevoa-azul": {
+        "role": "primary",
+        "displayName": "Névoa Azul",
+        "canonical": "oklch(0.96 0.03 256)"
+      },
+      "tinta-marinho": {
+        "role": "neutral",
+        "displayName": "Tinta Marinho",
+        "canonical": "oklch(0.18 0.04 265)"
+      },
+      "branco-consultorio": {
+        "role": "neutral",
+        "displayName": "Branco Consultório",
+        "canonical": "oklch(1 0 0)"
+      },
+      "repouso": {
+        "role": "neutral",
+        "displayName": "Repouso",
+        "canonical": "oklch(0.985 0.012 256)"
+      },
+      "cinza-apoio": {
+        "role": "neutral",
+        "displayName": "Cinza Apoio",
+        "canonical": "oklch(0.55 0.04 257)"
+      },
+      "borda-suave": {
+        "role": "neutral",
+        "displayName": "Borda Suave",
+        "canonical": "oklch(0.92 0.012 256)"
+      },
+      "verde-recuperacao": {
+        "role": "semantic",
+        "displayName": "Verde Recuperação",
+        "canonical": "oklch(0.7 0.16 162)"
+      },
+      "ambar-atencao": {
+        "role": "semantic",
+        "displayName": "Âmbar Atenção",
+        "canonical": "oklch(0.78 0.16 75)"
+      },
+      "vermelho-alerta": {
+        "role": "semantic",
+        "displayName": "Vermelho Alerta",
+        "canonical": "oklch(0.65 0.22 27)"
+      }
     },
     "typographyMeta": {
       "headline": { "displayName": "Headline", "purpose": "Título da tela; um por tela." },
       "title": { "displayName": "Title", "purpose": "Título de card e seção." },
-      "body": { "displayName": "Body", "purpose": "Texto corrente e instruções de exercício — sempre legível sem vídeo." },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Texto corrente e instruções de exercício — sempre legível sem vídeo."
+      },
       "label": { "displayName": "Label", "purpose": "Metadados, chips, navegação inferior." }
     },
     "shadows": [
-      { "name": "separacao", "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)", "purpose": "Sussurro de separação de card (shadcn shadow-sm); nunca dramatização." }
+      {
+        "name": "separacao",
+        "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+        "purpose": "Sussurro de separação de card (shadcn shadow-sm); nunca dramatização."
+      }
     ],
     "motion": [
-      { "name": "transition-colors", "value": "color, background-color, border-color 150ms cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Transição padrão de estado em botões e inputs." }
+      {
+        "name": "transition-colors",
+        "value": "color, background-color, border-color 150ms cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Transição padrão de estado em botões e inputs."
+      }
     ],
-    "breakpoints": [
-      { "name": "md", "value": "768px" }
-    ]
+    "breakpoints": [{ "name": "md", "value": "768px" }]
   },
   "components": [
     {
@@ -93,10 +180,26 @@
       "Motivação por evidência: gráficos e marcos são protagonistas, não confete"
     ],
     "rules": [
-      { "name": "A Regra da Escala de Dor", "body": "O gradiente verde→âmbar→vermelho pertence exclusivamente à semântica clínica de dor e alertas. Proibido usá-lo como decoração, categoria de gráfico ou cor de marca.", "section": "colors" },
-      { "name": "A Regra do Acento Único", "body": "O azul é a única família de acento da interface. Se uma tela pede uma segunda cor 'de marca', a resposta é hierarquia tipográfica ou espaço — não uma cor nova.", "section": "colors" },
-      { "name": "A Regra da Instrução Completa", "body": "Instrução de exercício é sempre legível como texto puro, sem depender do vídeo.", "section": "typography" },
-      { "name": "A Regra do Plano em Repouso", "body": "Superfície parada é superfície plana. Se um card precisa 'saltar', a causa deve ser um estado do usuário, não estilo.", "section": "elevation" }
+      {
+        "name": "A Regra da Escala de Dor",
+        "body": "O gradiente verde→âmbar→vermelho pertence exclusivamente à semântica clínica de dor e alertas. Proibido usá-lo como decoração, categoria de gráfico ou cor de marca.",
+        "section": "colors"
+      },
+      {
+        "name": "A Regra do Acento Único",
+        "body": "O azul é a única família de acento da interface. Se uma tela pede uma segunda cor 'de marca', a resposta é hierarquia tipográfica ou espaço — não uma cor nova.",
+        "section": "colors"
+      },
+      {
+        "name": "A Regra da Instrução Completa",
+        "body": "Instrução de exercício é sempre legível como texto puro, sem depender do vídeo.",
+        "section": "typography"
+      },
+      {
+        "name": "A Regra do Plano em Repouso",
+        "body": "Superfície parada é superfície plana. Se um card precisa 'saltar', a causa deve ser um estado do usuário, não estilo.",
+        "section": "elevation"
+      }
     ],
     "dos": [
       "Do usar o azul em três profundidades (Prescrição #2563EB → Profundo #1E3A8A → Marinho Clínico #0F1C47) para construir hierarquia dentro da mesma voz.",

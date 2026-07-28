@@ -13,7 +13,8 @@ import { usePatientStore, useActiveTreatment, todaySessionInfoOf } from "@/store
 import { getDynamicMessage, greeting, painReductionPct } from "@/lib/dynamicMessages";
 import { TreatmentSwitcher } from "@/components/treatment/TreatmentSwitcher";
 import { EmptyTreatmentState } from "@/components/treatment/EmptyTreatmentState";
-import { getProtocol, getWeekGuide, weekForCompletedSessions } from "@/data/protocols";
+import { getProtocol, getWeekGuide } from "@/data/protocols";
+import { postOpWeekOf } from "@/lib/prescription";
 
 export const Route = createFileRoute("/_app/home")({
   head: () => ({ meta: [{ title: "Início · FisioApp" }] }),
@@ -57,7 +58,7 @@ function HomePage() {
   const reduction = painReductionPct(treatment);
   const totalPhases = protocol.phases.length;
   const phasePct = Math.round((treatment.current_phase / totalPhases) * 100);
-  const currentWeek = weekForCompletedSessions(protocol, treatment.total_sessions_completed);
+  const currentWeek = postOpWeekOf(treatment, protocol);
   const weekGuide = getWeekGuide(protocol, currentWeek);
 
   return (

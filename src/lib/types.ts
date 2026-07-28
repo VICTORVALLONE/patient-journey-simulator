@@ -32,6 +32,37 @@ export interface VideoRef {
   catalog_number?: number;
 }
 
+/**
+ * Nem tudo que a cartilha prescreve é exercício. A crioterapia é um cuidado; o
+ * treino de marcha é uma instrução sem repetições. Tratar os três como
+ * "exercício" era o que empurrava cuidados para fora da semana 1.
+ */
+export type ItemKind = "exercise" | "care" | "instruction";
+
+/**
+ * Variante do mesmo item (vídeo 23, na parede × vídeo 24, na cadeira).
+ *
+ * Aninhada dentro do item, e não como item irmão com `alternative_of`: irmã
+ * faria os 7 pontos de iteração contarem o item duas vezes ("Exercício 3 de 7"
+ * viraria 8, `exercises_completed` ganharia dois ids). Aninhar torna a contagem
+ * dupla estruturalmente impossível.
+ */
+export interface ItemVariant {
+  id: string;
+  label: string;
+  instructions: string[];
+  video?: VideoRef;
+}
+
+/** Parâmetro que só o cirurgião define — ex.: tipo de carga na marcha. */
+export interface ItemParameter {
+  key: "load_type";
+  label: string;
+  options: { value: string; label: string; detail?: string }[];
+  /** Exibido enquanto o parâmetro não foi definido. NUNCA vazio. */
+  fallback_text: string;
+}
+
 export interface Exercise {
   id: string;
   name: string;
@@ -41,11 +72,34 @@ export interface Exercise {
   reps?: number;
   duration_seconds?: number;
   rest_seconds: number;
-  video_url: string;
-  thumbnail_url: string;
+  thumbnail_url?: string;
   difficulty: 1 | 2 | 3;
-  session_phase: SessionPhase;
   body_region: BodyRegion;
+
+  /** Ausente = "exercise". */
+  kind?: ItemKind;
+  /**
+   * Recorte de semanas pós-op em que o item aparece. Ausente = a fase inteira.
+   * Espelha o vocabulário que `WeekGuideEntry` já usa, e compõe com a semana
+   * pós-op em vez de brigar: `postOpWeekOf → phaseForWeek → itemsForWeek`.
+   */
+  week_start?: number;
+  week_end?: number;
+  /** Ordem editorial da cartilha. Vence `session_phase` quando presente. */
+  display_order?: number;
+  /** "faça 3× ao dia". Instrução EXIBIDA — o app não captura doses. */
+  times_per_day?: number;
+  min_interval_hours?: number;
+  safety_stop?: string;
+  parameter?: ItemParameter;
+  variants?: ItemVariant[];
+  video?: VideoRef;
+  /**
+   * Opcional: a semana 1 é uma lista de cuidados sem arco de intensidade, e
+   * forçar um `session_phase` ali seria inventar estrutura que a cartilha não
+   * tem. Ausente é lido como "active".
+   */
+  session_phase?: SessionPhase;
 }
 
 export interface ProtocolPhase {
@@ -68,6 +122,11 @@ export interface WeekGuideEntry {
   rom_target_label: string; // ex.: "Dobrar o joelho até 90°" | "Amplitude máxima"
   milestones: string[]; // marcos funcionais do bloco, ex.: "Andar sem muletas"
   caution?: string; // alerta de segurança específico do bloco
+  /**
+   * Cadência do bloco, quando difere da fase. A semana 1 é diária (7): a
+   * cartilha prescreve os cuidados 3× ao dia, não 3× por semana.
+   */
+  sessions_per_week?: number;
 }
 
 export interface ClinicalGuide {
@@ -182,6 +241,12 @@ export interface Treatment {
   // Boas-vindas: carimbo de conclusão da tela (não de assistir ao vídeo).
   // Ausente + sessões > 0 = tratamento anterior à tela (ver isWelcomePending).
   welcome_completed_at?: string;
+  /**
+   * Respostas aos `ItemParameter` do protocolo, por `key` — ex.:
+   * `{ load_type: "partial" }`. Quem define é o cirurgião, não o paciente;
+   * enquanto vier vazio, o item exibe seu `fallback_text`.
+   */
+  surgeon_parameters?: Record<string, string>;
 
   // Progress indicators (per-treatment)
   current_phase: number;

@@ -5,7 +5,7 @@ Atalho de contexto para os termos que aparecem espalhados pelo código, specs e 
 ## Recuperação e medição
 
 - **ADM / ROM** — Amplitude de Movimento (Range of Motion). Ângulo de flexão do joelho, em graus. É o **marcador mensurável objetivo** dentro de cada fase pós-op. Curva-alvo da cartilha: 90° → 100° → 110° → 120° → máx.
-- **Curva-alvo** — a trajetória esperada de ADM por semana pós-op (90/100/110/120…). O **gráfico principal de recuperação** é *ADM real × curva-alvo* + tendência de dor. Reusa `clinical_guide.weeks`/`getWeekGuide` de `src/data/protocols.ts` (sem seed novo). Ver spec 01 (`docs/specs/01-modelo-medicao-adm/`).
+- **Curva-alvo** — a trajetória esperada de ADM por semana pós-op (90/100/110/120…). O **gráfico principal de recuperação** é _ADM real × curva-alvo_ + tendência de dor. Reusa `clinical_guide.weeks`/`getWeekGuide` de `src/data/protocols.ts` (sem seed novo). Ver spec 01 (`docs/specs/01-modelo-medicao-adm/`).
 - **Semana pós-operatória (pós-op)** — o **eixo** do protocolo. A progressão de fase é travada por semanas pós-op (não por contagem de sessões concluídas — modelo antigo). Derivada da data de cirurgia (`surgery_date` em `Treatment`, fallback `started_at`).
 - **Progressão de fase** — avanço do paciente pelas fases do protocolo, governada pelo calendário (semanas pós-op) com a meta de ADM da semana como check de prontidão. Meta não atingida **informa**, não segura a fase — segurar exercício é decisão do médico (ver `DECISIONS.md`, Q2).
 - **Adesão (adherence)** — % de sessões prescritas concluídas. Métrica de engajamento, não de desfecho clínico.

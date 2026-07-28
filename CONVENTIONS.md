@@ -1,6 +1,6 @@
 # CONVENTIONS.md — code conventions (FisioApp)
 
-Canonical home for **code-style and authoring conventions**. Companion to `CLAUDE.md` (which owns *architecture*) and `DESIGN.md` (which owns *visual design tokens*). This file does not repeat those — it points. Rescued and corrected from the retired `obsoleto/CLAUDE.md` (2026-07-14): rules that were still true were kept; rules the stack outgrew were fixed (noted inline).
+Canonical home for **code-style and authoring conventions**. Companion to `CLAUDE.md` (which owns _architecture_) and `DESIGN.md` (which owns _visual design tokens_). This file does not repeat those — it points. Rescued and corrected from the retired `obsoleto/CLAUDE.md` (2026-07-14): rules that were still true were kept; rules the stack outgrew were fixed (noted inline).
 
 ## Language & platform
 
@@ -32,7 +32,7 @@ Canonical home for **code-style and authoring conventions**. Companion to `CLAUD
 
 ## Data & state
 
-- **localStorage IS used** for the current mock: the Zustand store persists to key `fisiocare-patient-v2` (schema `version: 3`, with a `migrate` fn). ⚠️ This *reverses* the old rule "no localStorage for clinical data" — that rule assumed a Supabase backend that doesn't exist yet. When real patient data arrives (own Supabase, LGPD gate — see `DECISIONS.md`), revisit.
+- **localStorage IS used** for the current mock: the Zustand store persists to key `fisiocare-patient-v2` (schema `version: 3`, with a `migrate` fn). ⚠️ This _reverses_ the old rule "no localStorage for clinical data" — that rule assumed a Supabase backend that doesn't exist yet. When real patient data arrives (own Supabase, LGPD gate — see `DECISIONS.md`), revisit.
 - Bump **both** the persist `version` and the `migrate` fn when changing the persisted shape.
 - Derive, don't duplicate: current phase, today's session, ordered exercises all come from selector helpers at the bottom of `patient.ts`. Don't recompute them ad-hoc in components.
 
