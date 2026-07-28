@@ -48,7 +48,15 @@ File-based. `routeTree.gen.ts` is **auto-generated — never edit by hand**. Nam
 
 ### State (`src/store/patient.ts`)
 
-Single Zustand store (`usePatientStore`) with `persist` middleware → `window.localStorage` key `fisiocare-patient-v2` (schema `version: 3`, with a `migrate` fn — bump both when changing persisted shape). Holds the user, treatments, active treatment, onboarding draft, and the core `completeSession()` reducer that recomputes phase progression, streaks, adherence, pain history, weekly frequency, and unlocked badges.
+Single Zustand store (`usePatientStore`) with `persist` middleware → `window.localStorage` key `fisiocare-patient-v2` (schema `version: 4`, with a `migrate` fn — bump both when changing persisted shape). Holds the user, treatments, active treatment, onboarding draft, and the core `completeSession()` reducer that recomputes phase progression, streaks, adherence, pain history, weekly frequency, and unlocked badges.
+
+**The store seeds EMPTY** — `freshPatientData()`: blank `EMPTY_USER`, no treatments, `isOnboarded: false`. The demo patient is not the initial state; it arrives only through `resetToDemo()`, whose single door is the `/demo` route. See `DECISIONS.md` (2026-07-28) for what leaked when the mock _was_ the seed.
+
+**Three localStorage keys**, not one — the other two live outside the store on purpose:
+
+- `fisiocare-patient-v2` — the store (patient record).
+- `fisiocare-aidoctor-v1` — AI coach transcript (`lib/aiDoctorHistory.ts`). Clear it whenever the person changes; it used to survive every reset and carry one patient's conversation into the next.
+- `fisioapp-demo-mode-v1` — operator's demo unlock (`lib/demoMode.ts`). Property of the browser, not of the record, so it must never move into the store. Read it synchronously in `beforeLoad`, and **only via `useDemoMode()` in render** — `/welcome` is the SPA prerender `maskPath`, so reading client state while rendering it is a hydration mismatch on the app's first screen.
 
 **SSR hydration is manual.** The store uses `skipHydration: true` and a no-op storage on the server. Any component reading patient state must gate on `useHydratedStore()` (calls `persist.rehydrate()`) to avoid SSR/client mismatch — see `_app.tsx`. Don't read store data during the un-hydrated render.
 

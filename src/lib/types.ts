@@ -7,8 +7,13 @@ export type AffectedSide = "left" | "right" | "bilateral";
 export interface User {
   id: string;
   name: string;
-  phone: string;
-  email: string;
+  /**
+   * Opcionais porque **o cadastro nunca os pede**. Eram obrigatórios só porque o
+   * único usuário que existia era o mock do Alexandre, que os tinha — e era daí
+   * que `alexandre@email.com` vazava para o PDF de um paciente real.
+   */
+  phone?: string;
+  email?: string;
   birth_date: string;
   weight_kg: number;
   height_cm: number;

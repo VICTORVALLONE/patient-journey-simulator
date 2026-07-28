@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { usePatientStore, useActiveTreatment, todaySessionInfoOf } from "@/store/patient";
 import { getDynamicMessage, greeting, painReductionPct } from "@/lib/dynamicMessages";
 import { TreatmentSwitcher } from "@/components/treatment/TreatmentSwitcher";
+import { UserAvatar } from "@/components/layout/UserAvatar";
 import { EmptyTreatmentState } from "@/components/treatment/EmptyTreatmentState";
 import { getProtocol, getWeekGuide } from "@/data/protocols";
 import { postOpWeekOf } from "@/lib/prescription";
@@ -213,26 +214,9 @@ function StatCard({
 }
 
 function ProfileAvatarLink({ avatarUrl, name }: { avatarUrl?: string; name: string }) {
-  if (avatarUrl) {
-    return (
-      <Link
-        to="/profile"
-        className="block h-10 w-10 overflow-hidden rounded-full ring-2 ring-primary/20"
-      >
-        <img
-          src={avatarUrl}
-          alt={name}
-          loading="lazy"
-          width={40}
-          height={40}
-          className="h-full w-full object-cover"
-        />
-      </Link>
-    );
-  }
   return (
-    <Link to="/profile" className="rounded-full bg-primary-muted p-2.5 text-primary-dark">
-      <UserIcon className="h-5 w-5" />
+    <Link to="/profile" className="block" aria-label="Abrir perfil">
+      <UserAvatar name={name} avatarUrl={avatarUrl} size={40} />
     </Link>
   );
 }

@@ -9,6 +9,7 @@ import { WELCOME_VIDEO } from "@/data/videos";
 import { useHydratedStore } from "@/hooks/useHydratedStore";
 import { postOpWeekFromDays, surgeryDateValidity } from "@/lib/entry";
 import { requireStage } from "@/lib/route-guards";
+import { firstName } from "@/lib/user";
 import { useActiveTreatment, usePatientStore } from "@/store/patient";
 
 /**
@@ -55,7 +56,7 @@ function BoasVindasPage() {
   const week = validity.state === "ok" ? postOpWeekFromDays(validity.daysSinceSurgery ?? 0) : 1;
   const weekGuide = getWeekGuide(protocol, week);
 
-  const firstName = user.name.trim().split(" ")[0] || user.name;
+  const nome = firstName(user.name);
 
   return (
     <MobileFrame withNav={false}>
@@ -66,7 +67,7 @@ function BoasVindasPage() {
         </div>
 
         <h1 className="mt-4 text-3xl font-bold leading-tight text-foreground">
-          Tudo pronto, {firstName}.
+          {nome ? `Tudo pronto, ${nome}.` : "Tudo pronto."}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Assista ao vídeo de orientação e veja como será a sua recuperação.

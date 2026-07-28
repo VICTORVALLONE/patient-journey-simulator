@@ -11,8 +11,8 @@ import { postOpWeekOf } from "@/lib/prescription";
 import { realAdherencePct } from "@/lib/dynamicMessages";
 import { cn } from "@/lib/utils";
 import { apiUrl } from "@/lib/api-base";
+import { AI_DOCTOR_STORAGE_KEY as STORAGE_KEY } from "@/lib/aiDoctorHistory";
 
-const STORAGE_KEY = "fisiocare-aidoctor-v1";
 const SUGGESTIONS = [
   "Posso voltar a correr?",
   "Estou sentindo estalos no joelho, é normal?",

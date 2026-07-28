@@ -1,6 +1,7 @@
 import type { Treatment } from "@/lib/types";
 import { getProtocol } from "@/data/protocols";
 import { totalSessionsForProtocol } from "@/lib/prescription";
+import { firstName } from "@/lib/user";
 
 /** Redução percentual da dor entre primeira e última semana registrada.
  * Retorna null quando não há dados suficientes. */
@@ -64,8 +65,9 @@ export function getEvolutionMessage(treatment: Treatment): string {
 
 export function greeting(name: string): string {
   const h = new Date().getHours();
-  const first = name.split(" ")[0] ?? name;
-  if (h < 12) return `Bom dia, ${first}`;
-  if (h < 18) return `Boa tarde, ${first}`;
-  return `Boa noite, ${first}`;
+  const period = h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
+  // Sem nome, saudação sem vocativo — "Bom dia, " com a vírgula solta é pior
+  // que a saudação seca, e é o que aparecia enquanto o cadastro não terminava.
+  const first = firstName(name);
+  return first ? `${period}, ${first}` : period;
 }

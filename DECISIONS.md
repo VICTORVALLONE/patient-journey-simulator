@@ -108,3 +108,55 @@ Formato: `## AAAA-MM-DD — Título` · **Decisão** · **Por quê** · (opciona
 **Decisão.** A ponte para o prerender (`aliasNitroServerEntry` em `vite.config.ts`) virou um **shim** que reexporta o entry atual do nitro por URL absoluta, em vez de uma cópia condicional.
 **Por quê.** A cópia apontava para `dist/server/`, de onde o nitro já tinha saído (`.output/server/`), e ainda era guardada por `!existsSync(dest)`. Resultado: o prerender bootava um `server.js` de 14/07 deixado no disco e emitia um `_shell.html` referenciando hashes daquele build — um shell que dá 404 no próprio chunk de entrada. O build **passava**; só o artefato estava quebrado.
 **Consequência.** Um `bun run build` num diretório limpo agora falha se a ponte falhar, em vez de mascarar. `dist/` e `.output/` são gerados e ignorados pelo git — limpe os dois quando desconfiar do artefato.
+
+## 2026-07-28 — O MVP nasce vazio; o paciente-demo é destravado por `/demo`
+
+**Decisão.** A semente da store deixa de trazer mockup: `EMPTY_USER`, zero tratamentos,
+`activeTreatmentId: null` (`freshPatientData()` em `store/patient.ts`, usada também pelo
+`startFreshSignup`). O paciente-demo volta só por `resetToDemo()`, que agora tem uma porta única: a
+rota `/demo`. Ela **destrava o modo demo** naquele navegador (chave `fisioapp-demo-mode-v1`), e
+`/demo?sair=1` trava de volta, zera o prontuário e apaga o histórico do coach.
+
+**Por quê.** O MVP vai à mão de um médico e precisa forçar a jornada de cadastro. Não forçava: o
+seed era semeado com o demo sob a justificativa de ficar "inerte enquanto `isOnboarded` for false",
+e não ficava. Quem se cadastrava terminava com **4 tratamentos** (o dele mais os 3 do demo,
+visíveis no seletor da home, em `/treatments` e no `/profile`) e com **o telefone, o e-mail e a
+foto do Alexandre**, porque `completePersonalOnboarding` fazia spread de `MOCK_USER` e só
+sobrescrevia o que o cadastro pergunta. O e-mail do demo chegava a ser impresso no PDF
+"compartilhar com médico". Um F5 no meio do cadastro caía na home do demo, porque
+`activeTreatmentId` apontava para um mock já com `welcome_completed_at` — a jornada só funcionava
+porque a tela navegava à mão.
+
+**Alternativas descartadas.** (a) _Duas versões do app_ — duas cópias divergem e viram dois
+produtos; o padrão é um codebase com configuração por ambiente, e aqui nem isso é preciso: o
+Publish manual do Lovable já separa o que se constrói do que o médico vê. (b) _`user: null`_ —
+cobraria early-return em sete telas para um caso que nunca acontece, porque `entryStage` só devolve
+`ready` depois de `completePersonalOnboarding` gravar um `User` completo; guardas que nunca disparam
+apodrecem. O problema nunca foi "o usuário pode não existir", era "o usuário é de outra pessoa".
+(c) \_Flag de build (`VITE\__`)\* — dependeria de configurar variável no painel do Lovable, e a
+durabilidade de config nossa através do Publish ainda é questão aberta.
+
+**Consequências.**
+
+- **Sem bump de versão do persist.** A forma persistida não muda; muda a fábrica de estado
+  inicial, que o zustand só usa quando não há nada em localStorage. Quem já usava o app **não vê
+  diferença ao atualizar** — a jornada limpa se vê por `/demo?sair=1` ou aba anônima. Um v5 com
+  `migrate` no-op seria mentira no log.
+- `phone` e `email` viram **opcionais** em `User`: o cadastro nunca os pediu, eram obrigatórios só
+  porque o único usuário que existia era o mock. O compilador passou a acusar o único consumidor
+  real, o PDF.
+- **Terceira chave de localStorage.** Ao lado do prontuário (`fisiocare-patient-v2`) e do histórico
+  do coach (`fisiocare-aidoctor-v1`). O modo demo mora fora da store porque é propriedade do
+  navegador do operador, não do prontuário — quando o dado migrar para o Supabase próprio, um campo
+  desses lá dentro viraria exceção de migração.
+- **O histórico do coach passou a ser limpo junto.** Ele mora fora da store e nenhum reset o
+  alcançava: a conversa do demo atravessava para quem se cadastrasse depois, e a de um paciente
+  atravessava de volta para quem abrisse a demo.
+- **`beforeLoad` lê o modo demo de forma síncrona; componente lê só por efeito** (`useDemoMode`).
+  `/welcome` é o `maskPath` do prerender SPA: ler estado do cliente durante o render daria mismatch
+  de hidratação na primeira tela do app.
+- **"Sair da conta" saiu do alcance do paciente** junto com a seção Demo. Efeito colateral
+  bem-vindo: sem login, aquele botão apaga tratamentos sem confirmação e sem volta.
+- **A primeira impressão do médico fica vazia** — gráfico de dor sem pontos, 0/90 sessões, adesão
+  0%. É a tela real de quem acabou de entrar. A mitigação é mostrar a jornada limpa pelo link e
+  depois abrir `/demo` para exibir um paciente adiantado.

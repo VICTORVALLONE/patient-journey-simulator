@@ -4,6 +4,7 @@ import {
   ChevronRight,
   Globe,
   HelpCircle,
+  Lock,
   LogOut,
   PlayCircle,
   Plus,
@@ -14,6 +15,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { usePatientStore } from "@/store/patient";
 import { TreatmentCard } from "@/components/treatment/TreatmentCard";
+import { UserAvatar } from "@/components/layout/UserAvatar";
+import { useDemoMode } from "@/hooks/useDemoMode";
+import { ageFromBirthDate } from "@/lib/user";
+import { clearAiDoctorHistory } from "@/lib/aiDoctorHistory";
+import { lockDemo } from "@/lib/demoMode";
 
 export const Route = createFileRoute("/_app/profile")({
   head: () => ({ meta: [{ title: "Perfil · FisioApp" }] }),
@@ -27,6 +33,7 @@ function ProfilePage() {
   const startFreshSignup = usePatientStore((s) => s.startFreshSignup);
   const resetToInitial = usePatientStore((s) => s.resetToInitial);
   const resetToDemo = usePatientStore((s) => s.resetToDemo);
+  const demoUnlocked = useDemoMode();
 
   const goalLabel: Record<string, string> = {
     sports: "Voltar aos esportes",
@@ -34,10 +41,7 @@ function ProfilePage() {
     work: "Retornar ao trabalho",
   };
 
-  const initial = user.name.charAt(0).toUpperCase();
-  const age = Math.floor(
-    (Date.now() - new Date(user.birth_date).getTime()) / (365.25 * 86400 * 1000),
-  );
+  const age = ageFromBirthDate(user.birth_date);
 
   const active = treatments.filter((t) => t.status !== "completed");
   const completed = treatments.filter((t) => t.status === "completed");
@@ -45,20 +49,7 @@ function ProfilePage() {
   return (
     <div className="px-5 pt-6 pb-4">
       <header className="flex flex-col items-center text-center">
-        {user.avatar_url ? (
-          <img
-            src={user.avatar_url}
-            alt={user.name}
-            loading="lazy"
-            width={80}
-            height={80}
-            className="h-20 w-20 rounded-full object-cover ring-2 ring-primary/20"
-          />
-        ) : (
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary text-3xl font-bold text-primary-foreground">
-            {initial}
-          </div>
-        )}
+        <UserAvatar name={user.name} avatarUrl={user.avatar_url} size={80} />
         <h1 className="mt-3 text-xl font-bold text-foreground">{user.name}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {goalLabel[user.recovery_goal] ?? user.recovery_goal}
@@ -70,9 +61,11 @@ function ProfilePage() {
           Dados pessoais
         </p>
         <div className="mt-2 grid grid-cols-3 gap-2">
-          <DataCard label="Idade" value={`${age} anos`} />
-          <DataCard label="Peso" value={`${user.weight_kg} kg`} />
-          <DataCard label="Altura" value={`${user.height_cm} cm`} />
+          {/* Travessão em vez de valor inventado: antes, data vazia virava
+              "NaN anos" e peso zero virava "0 kg". */}
+          <DataCard label="Idade" value={age !== null ? `${age} anos` : "—"} />
+          <DataCard label="Peso" value={user.weight_kg ? `${user.weight_kg} kg` : "—"} />
+          <DataCard label="Altura" value={user.height_cm ? `${user.height_cm} cm` : "—"} />
         </div>
       </section>
 
@@ -124,42 +117,66 @@ function ProfilePage() {
         </div>
       </section>
 
-      <section className="mt-6 space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Demo</p>
-        <Button variant="outline" className="w-full rounded-xl" onClick={resetToInitial}>
-          <RotateCcw className="mr-2 h-4 w-4" /> Resetar para 0 tratamentos
-        </Button>
-        <Button variant="outline" className="w-full rounded-xl" onClick={resetToDemo}>
-          Carregar demo (LCA + Patelofemoral)
-        </Button>
-        {/* Rever as boas-vindas sem refazer o cadastro: é a tela que se mostra
-            ao médico, e o gate normal só a exibe uma vez por tratamento. */}
-        <Link to="/boas-vindas" className="block">
-          <Button variant="outline" className="w-full rounded-xl">
-            <PlayCircle className="mr-2 h-4 w-4" /> Rever a tela de boas-vindas
+      {/* Ferramentas do operador, não do paciente. Ficam atrás do modo demo
+          (destravado por /demo): o médico recebe um perfil sem porta de fuga.
+          Efeito colateral bem-vindo: "Sair da conta" sai do alcance de quem não
+          deveria clicá-lo — sem login, ele apaga os tratamentos sem confirmação
+          e sem volta. */}
+      {demoUnlocked && (
+        <section className="mt-6 space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Demo
+          </p>
+          <Button variant="outline" className="w-full rounded-xl" onClick={resetToInitial}>
+            <RotateCcw className="mr-2 h-4 w-4" /> Resetar para 0 tratamentos
           </Button>
-        </Link>
-        <Button
-          variant="outline"
-          className="w-full rounded-xl"
-          onClick={() => {
-            startFreshSignup();
-            navigate({ to: "/onboarding" });
-          }}
-        >
-          <UserPlus className="mr-2 h-4 w-4" /> Testar criação de perfil
-        </Button>
-        <Button
-          variant="ghost"
-          className="w-full rounded-xl text-danger hover:bg-destructive/5 hover:text-danger"
-          onClick={() => {
-            startFreshSignup();
-            navigate({ to: "/welcome" });
-          }}
-        >
-          <LogOut className="mr-2 h-4 w-4" /> Sair da conta
-        </Button>
-      </section>
+          <Button variant="outline" className="w-full rounded-xl" onClick={resetToDemo}>
+            Carregar demo (LCA + Patelofemoral)
+          </Button>
+          {/* Rever as boas-vindas sem refazer o cadastro: é a tela que se mostra
+            ao médico, e o gate normal só a exibe uma vez por tratamento. */}
+          <Link to="/boas-vindas" className="block">
+            <Button variant="outline" className="w-full rounded-xl">
+              <PlayCircle className="mr-2 h-4 w-4" /> Rever a tela de boas-vindas
+            </Button>
+          </Link>
+          <Button
+            variant="outline"
+            className="w-full rounded-xl"
+            onClick={() => {
+              startFreshSignup();
+              navigate({ to: "/onboarding" });
+            }}
+          >
+            <UserPlus className="mr-2 h-4 w-4" /> Testar criação de perfil
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full rounded-xl text-danger hover:bg-destructive/5 hover:text-danger"
+            onClick={() => {
+              startFreshSignup();
+              navigate({ to: "/welcome" });
+            }}
+          >
+            <LogOut className="mr-2 h-4 w-4" /> Sair da conta
+          </Button>
+
+          {/* Existe porque depois de sair você cai no /welcome, onde esta seção
+            não aparece — sem este botão, só a URL destrava de volta. */}
+          <Button
+            variant="ghost"
+            className="w-full rounded-xl text-muted-foreground"
+            onClick={() => {
+              lockDemo();
+              startFreshSignup();
+              clearAiDoctorHistory();
+              navigate({ to: "/welcome" });
+            }}
+          >
+            <Lock className="mr-2 h-4 w-4" /> Sair do modo demo (ver como o paciente vê)
+          </Button>
+        </section>
+      )}
     </div>
   );
 }

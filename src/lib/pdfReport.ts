@@ -1,6 +1,32 @@
 import type { Treatment, User } from "@/lib/types";
 import { BADGES } from "@/data/badges";
 import { realAdherencePct } from "@/lib/dynamicMessages";
+import { ageFromBirthDate } from "@/lib/user";
+
+/**
+ * Linha de identificação do paciente. Junta **só o que existe**.
+ *
+ * O cadastro nunca pede telefone nem e-mail; esses campos só tinham valor
+ * porque todo usuário herdava o mock. Concatenar às cegas imprimia
+ * "Fulano · undefined · undefined" — num PDF que vai para o prontuário.
+ *
+ * Puro e exportado para poder ser testado sem carregar o jspdf.
+ */
+export function patientIdentityLine(user: User): string {
+  return [user.name.trim(), user.email?.trim(), user.phone?.trim()].filter(Boolean).join(" · ");
+}
+
+/** Linha de biometria, pelo mesmo critério: campo ausente não vira `NaN` nem `0`. */
+export function patientBiometricsLine(user: User, today: Date = new Date()): string {
+  const age = ageFromBirthDate(user.birth_date, today);
+  return [
+    age !== null ? `Idade: ${age} anos` : null,
+    user.weight_kg ? `Peso: ${user.weight_kg} kg` : null,
+    user.height_cm ? `Altura: ${user.height_cm} cm` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
 
 export async function generateDoctorReport(
   user: User,
@@ -26,13 +52,9 @@ export async function generateDoctorReport(
   doc.text("Paciente", 40, y);
   doc.setFont("helvetica", "normal");
   y += 18;
-  doc.text(`${user.name} · ${user.email} · ${user.phone}`, 40, y);
+  doc.text(patientIdentityLine(user), 40, y);
   y += 16;
-  doc.text(
-    `Idade: ${calcAge(user.birth_date)} anos · Peso: ${user.weight_kg} kg · Altura: ${user.height_cm} cm`,
-    40,
-    y,
-  );
+  doc.text(patientBiometricsLine(user), 40, y);
   y += 28;
 
   doc.setFont("helvetica", "bold");
@@ -115,10 +137,4 @@ export async function generateDoctorReport(
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
   doc.save(`fisiocare-relatorio-${slug || "tratamento"}.pdf`);
-}
-
-function calcAge(iso: string): number {
-  const b = new Date(iso);
-  const diff = Date.now() - b.getTime();
-  return Math.floor(diff / (365.25 * 24 * 60 * 60 * 1000));
 }

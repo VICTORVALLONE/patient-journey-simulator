@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Activity, ShieldCheck, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MobileFrame } from "@/components/layout/MobileFrame";
+import { useDemoMode } from "@/hooks/useDemoMode";
 import { usePatientStore } from "@/store/patient";
 
 export const Route = createFileRoute("/welcome")({
@@ -17,6 +18,7 @@ export const Route = createFileRoute("/welcome")({
 function WelcomePage() {
   const navigate = useNavigate();
   const resetToDemo = usePatientStore((s) => s.resetToDemo);
+  const demoUnlocked = useDemoMode();
 
   return (
     <MobileFrame withNav={false}>
@@ -61,19 +63,24 @@ function WelcomePage() {
             >
               Começar minha recuperação
             </Button>
-            {/* Promovido de link a botão outline: com a jornada real como default,
-                esta é uma das duas portas do demo (a outra é /demo). */}
-            <Button
-              size="lg"
-              variant="outline"
-              className="w-full rounded-xl border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white"
-              onClick={() => {
-                resetToDemo();
-                void navigate({ to: "/home" });
-              }}
-            >
-              Continuar como Alexandre (demo)
-            </Button>
+            {/* Só para quem já passou por /demo neste navegador. O médico recebe
+                esta tela sem porta de fuga: o produto é a jornada, não o atalho.
+                Renderizado por efeito (useDemoMode), nunca durante o render —
+                esta é a tela prerenderizada do build SPA e ler estado do cliente
+                aqui daria mismatch de hidratação. */}
+            {demoUnlocked && (
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full rounded-xl border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                onClick={() => {
+                  resetToDemo();
+                  void navigate({ to: "/home" });
+                }}
+              >
+                Continuar como Alexandre (demo)
+              </Button>
+            )}
           </div>
         </div>
       </div>

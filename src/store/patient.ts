@@ -19,6 +19,7 @@ import {
   totalSessionsForProtocol,
 } from "@/lib/prescription";
 import { checkNewBadges } from "@/lib/badges";
+import { EMPTY_USER } from "@/lib/user";
 import { computeWeeklyStreak } from "@/lib/streak";
 import type {
   AffectedSide,
@@ -151,6 +152,32 @@ function makeTreatment(userId: string, draft: TreatmentOnboardingDraft): Treatme
 }
 
 /**
+ * O estado de um app que ninguém usou ainda.
+ *
+ * É a semente da store **e** o destino de `startFreshSignup`, de propósito: as
+ * duas coisas são a mesma pergunta ("o que um paciente vê ao chegar?") e
+ * mantê-las em dois lugares foi o que deixou `startFreshSignup` esquecer de
+ * zerar o `user`.
+ *
+ * Nasce **sem mockup nenhum**. Antes vinha semeada com o paciente-demo, sob a
+ * justificativa de que ficaria inerte enquanto `isOnboarded` fosse `false` — e
+ * não ficava: `completePersonalOnboarding` não limpa tratamentos, então o
+ * paciente novo herdava os três do demo, e o spread de `MOCK_USER` ainda lhe
+ * dava o telefone, o e-mail e a foto de outra pessoa. O demo volta por
+ * `resetToDemo()`, que é chamado só pela rota `/demo` e pelas ferramentas do
+ * operador.
+ */
+function freshPatientData() {
+  return {
+    isOnboarded: false,
+    user: EMPTY_USER,
+    treatments: [] as Treatment[],
+    activeTreatmentId: null,
+    onboardingDraft: {} as OnboardingDraft,
+  };
+}
+
+/**
  * Migração v3 → v4. Um único passo não-identidade: **recalcular
  * `total_sessions_prescribed`**.
  *
@@ -181,19 +208,7 @@ export function migrateTreatmentToV4(t: Treatment): Treatment {
 export const usePatientStore = create<PatientState>()(
   persist(
     (set, get) => ({
-      // A jornada real é o default: visitante novo entra por /welcome, não na
-      // demo. O seed MOCK_* fica inerte (inalcançável enquanto isOnboarded for
-      // false) em vez de virar null — evita uma cascata de null-safety em toda
-      // tela que lê `user`. resetToDemo() o traz de volta.
-      isOnboarded: false,
-      user: MOCK_USER,
-      treatments: [
-        MOCK_TREATMENT_LCA_ACTIVE,
-        MOCK_TREATMENT_LCA_WEEK1,
-        MOCK_TREATMENT_PATELLO_DONE,
-      ],
-      activeTreatmentId: MOCK_TREATMENT_LCA_ACTIVE.id,
-      onboardingDraft: {},
+      ...freshPatientData(),
 
       setPersonalDraft: (d) =>
         set((s) => ({
@@ -210,13 +225,17 @@ export const usePatientStore = create<PatientState>()(
 
       completePersonalOnboarding: () => {
         const draft = get().onboardingDraft.user ?? {};
+        // Base é o usuário VAZIO, não o mock. Com `...MOCK_USER`, os campos que
+        // o cadastro não pede — telefone, e-mail e avatar — sobreviviam ao
+        // spread, e o paciente terminava com a identidade do demo. O e-mail do
+        // demo chegava a ser impresso no PDF "compartilhar com médico".
         const user: User = {
-          ...MOCK_USER,
+          ...EMPTY_USER,
           id: `user_${Date.now()}`,
-          name: draft.name ?? MOCK_USER.name,
-          birth_date: draft.birth_date ?? MOCK_USER.birth_date,
-          weight_kg: draft.weight_kg ?? MOCK_USER.weight_kg,
-          height_cm: draft.height_cm ?? MOCK_USER.height_cm,
+          name: draft.name?.trim() ?? "",
+          birth_date: draft.birth_date ?? "",
+          weight_kg: draft.weight_kg ?? 0,
+          height_cm: draft.height_cm ?? 0,
           recovery_goal: draft.recovery_goal ?? "daily_life",
           created_at: new Date().toISOString(),
         };
@@ -256,6 +275,9 @@ export const usePatientStore = create<PatientState>()(
         });
       },
 
+      // Única porta de entrada do paciente-demo desde que a semente ficou vazia.
+      // Chamada pela rota `/demo` e pelas ferramentas do operador — nunca no
+      // caminho de um paciente.
       resetToDemo: () =>
         set({
           isOnboarded: true,
@@ -269,26 +291,22 @@ export const usePatientStore = create<PatientState>()(
           onboardingDraft: {},
         }),
 
+      // "Como fica o app sem nenhum tratamento" — o estado que a home atende
+      // com o EmptyTreatmentState. **Preserva o usuário atual**: quem testa o
+      // estado vazio quer testá-lo como si mesmo, não virar o Alexandre.
       resetToInitial: () =>
-        set({
+        set((s) => ({
           isOnboarded: true,
-          user: MOCK_USER,
+          user: s.user,
           treatments: [],
           activeTreatmentId: null,
           onboardingDraft: {},
-        }),
+        })),
 
-      // Zera para percorrer a jornada real do começo. Substitui o antigo
-      // `logout`, que preservava os tratamentos — o que fazia o próximo cadastro
-      // herdar os tratamentos do anterior agora que completePersonalOnboarding
-      // não limpa mais nada.
-      startFreshSignup: () =>
-        set({
-          isOnboarded: false,
-          treatments: [],
-          activeTreatmentId: null,
-          onboardingDraft: {},
-        }),
+      // Volta ao começo da jornada real. Zera o `user` junto: antes não zerava,
+      // apesar de o comentário chamá-lo de wipe, e o objeto do paciente
+      // anterior ficava na store esperando alguém lê-lo.
+      startFreshSignup: () => set(freshPatientData()),
 
       completeSession: (input) => {
         const state = get();
