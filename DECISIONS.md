@@ -321,3 +321,32 @@ Além dos itens ausentes, séries/cargas de alguns exercícios existentes estão
 progressão semanal da cartilha (ex.: Apoio Unipodal 2→3→4 kg; Ponte 5×15s → 3×20s → 3×30s).
 **Destino:** revisão clínica com o médico na fase seguinte (roadmap em `docs/specs/README.md`),
 usando `week_start`/`week_end`/`display_order` — o mecanismo que a semana 1 já usa.
+
+## 2026-07-28 — Vídeos da semana 1 no ar; capa do vídeo divergindo do nome do app
+
+**Estado.** Os **6 vídeos da semana 1** subiram para a library Bunny `715714` e estão ligados em
+`src/data/videos.ts` (nºs 1, 2, 3, 22, 23, 24). Verificado no build de produção: cada vídeo aparece
+**no item certo**, a variante "Sentado na cadeira" troca para o **24**, e todos **tocam de verdade**
+(mídia carregada e tempo avançando — 21/21 critérios de navegador). O **53** (boas-vindas, 584 MB)
+segue pendente e as boas-vindas continuam no estado sem-vídeo, como projetado.
+
+**Achado a resolver com o médico — não tem correção em código.** Os vídeos abrem com uma **capa de
+título queimada na imagem**, com o nome que a equipe clínica deu ao exercício. Em dois casos esse
+nome não é o da cartilha, que é o que o app exibe:
+
+| Nº  | Capa do vídeo                               | Item no app (nome da cartilha)      |
+| --- | ------------------------------------------- | ----------------------------------- |
+| 1   | "Ativação isométrica do quadriceps"         | "Alongamento com o Joelho Esticado" |
+| 3   | "Bombeamento da musculatura da panturrilha" | "Movimentos de Tornozelo"           |
+
+**Não é vídeo trocado:** o conteúdo confere com a cartilha (o 1 mostra a perna esticada com apoio no
+calcanhar e peso na coxa, p. 8; o 3 é o movimento de pedal). Mas o paciente lê um nome no título da
+tela e outro dentro do vídeo — e o texto está no pixel, não em legenda. Saídas: (a) o app adota o
+nome do vídeo; (b) a equipe reexporta as capas com o nome da cartilha; (c) aceita-se a divergência.
+**Recomendação: (b)** — a cartilha é a fonte de verdade clínica travada (decisão de 2026-07-14) e
+mudar o nome no app desalinharia o app do manual que o paciente tem em mãos.
+
+**Nota de verificação (para não reaprender).** O embed é montado com `preload=false` para não gastar
+dado do paciente, então antes do play o `<video>` fica em `readyState 0` — **isso não é falha**.
+Verificação de vídeo tem de dar `play()` (com `muted=true`, senão a política de autoplay rejeita) e
+checar que `currentTime` avança; só checar `readyState` produz falso negativo nos 6.

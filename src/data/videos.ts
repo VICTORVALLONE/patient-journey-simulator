@@ -16,15 +16,38 @@ import type { VideoRef } from "@/lib/types";
  */
 export const BUNNY_LIBRARY_ID = "715714";
 
-/** GUID por número de catálogo. Vazio = ainda não subiu. */
+/**
+ * GUID por número de catálogo. Vazio = ainda não subiu.
+ *
+ * Os 6 da semana 1 subiram em 2026-07-28. O nome do arquivo no Bunny carrega o
+ * número (`23 - Dobrar os joelhos na parede`), que é o que permite auditar o
+ * pareamento depois — o GUID não diz qual vídeo é.
+ *
+ * ## Divergência de rótulo vídeo × app (aberta, decisão do médico)
+ *
+ * Os vídeos abrem com uma **capa de título queimada na imagem**, com o nome que
+ * a equipe clínica usou — que em dois casos não é o nome da cartilha:
+ *
+ * | Nº | Capa do vídeo | Item no app (nome da cartilha) |
+ * |----|---------------|--------------------------------|
+ * | 1  | "Ativação isométrica do quadriceps" | "Alongamento com o Joelho Esticado" |
+ * | 3  | "Bombeamento da musculatura da panturrilha" | "Movimentos de Tornozelo" |
+ *
+ * **Não é vídeo trocado** — o conteúdo confere com a cartilha (o 1 mostra a
+ * perna esticada com apoio no calcanhar, p. 8; o 3, o movimento de pedal). Mas
+ * o paciente lê um nome na tela e outro no vídeo, e **não há correção possível
+ * em código**: o texto está no pixel. As saídas são (a) o app adotar o nome do
+ * vídeo, (b) a equipe reexportar as capas, ou (c) aceitar a divergência.
+ * Levar ao médico junto com o piloto.
+ */
 const BUNNY_GUIDS: Record<number, string> = {
-  1: "", // Alongamento com o joelho esticado
-  2: "", // Crioterapia (gelo)
-  3: "", // Bombeamento de tornozelo
-  22: "", // Mobilização de patela
-  23: "", // Dobrar os joelhos na parede
-  24: "", // Dobrar os joelhos sentado na cadeira (variante do 23)
-  53: "", // Boas-vindas / orientação geral do protocolo
+  1: "78ac6ca2-edc6-4e83-9504-ab1089324dde", // Alongamento com o joelho esticado
+  2: "4abc272b-37bb-4b47-9c02-ab50c660ac50", // Crioterapia (gelo)
+  3: "ac1e1962-9d96-4863-85ed-526103d17080", // Bombeamento de tornozelo
+  22: "d35d1724-21ab-46df-8182-d0f55b765409", // Mobilização de patela
+  23: "4e94174f-a70e-4356-a6a0-be733f99768d", // Dobrar os joelhos na parede
+  24: "558cf632-a396-4da7-a69d-2be5371f46a2", // Dobrar os joelhos sentado na cadeira (variante do 23)
+  53: "", // Boas-vindas / orientação geral — 584 MB, upload pendente
 };
 
 /** Rótulo humano de cada número — usado no estado sem-vídeo e em diagnóstico. */
