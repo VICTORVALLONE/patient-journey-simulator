@@ -400,3 +400,29 @@ ação — nunca em render, sem risco de hidratação); a home usa `useDemoMode(
 banner→botão. Fixado em `tests/unit/sessionRepeat.test.ts` (5 casos, incluindo travar de volta) e
 verificado no navegador contra build de produção (7/7: paciente travado, demo repetindo com
 contagem subindo e streak parado).
+
+## 2026-07-29 — 1º Publish falhou no prerender; fix veio do agente do Lovable (exceção auditada)
+
+**O que houve.** O primeiro Publish do MVP falhou no prerender (`Prerendered 0 pages`, exit 1).
+Causa: **na sandbox do Lovable o nitro escreve em `dist/server`/`dist/client`**, não em `.output/`
+como no build local — a ponte do prerender (`vite.config.ts`) apontava só para
+`.output/server/index.mjs`, então lá ela bootava um shim para um arquivo inexistente. A sandbox
+também **subiu o `@lovable.dev/vite-tanstack-config` de 2.7.1 → 2.7.7** e regravou o `bun.lock`
+apontando para o espelho npm deles (`*.pkg.dev` — público; `bun install` local verificado). Nota:
+localmente o 2.7.7 continua saindo em `.output/` — o layout `dist/` é decisão do ambiente deles.
+
+**Exceção ao escritor único, controlada.** O operador acionou o "fix error" no painel e o **agente
+do Lovable editou o `vite.config.ts`** (fallback `.output/... || dist/...`) — primeira edição de
+código vinda do Lovable desde a decisão "escritor único = código local" (2026-07-14). O patch foi
+**auditado commit a commit no diff e absorvido** via `fetch` + `merge --ff-only`: é cirúrgico,
+correto e é o que escreveríamos. A decisão de 2026-07-14 continua valendo como regra; ficou
+demonstrado o protocolo para a exceção: _auditar o diff antes de qualquer push, nunca sobrescrever
+às cegas_.
+
+**Regras práticas que ficam para os próximos Publishes:**
+
+- A ponte do prerender precisa cobrir **os dois layouts** (`.output/` local, `dist/` na sandbox).
+- O `bun.lock` pode voltar do Lovable reescrito para o espelho deles — é benigno e o espelho é
+  público; não "consertar" de volta sem motivo, para não criar ping-pong de lockfile.
+- O `fetch` + `merge --ff-only` antes de push deixou de ser só higiene de commits de build: é o
+  canal por onde chegam edições de código feitas lá.
