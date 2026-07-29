@@ -30,3 +30,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Env: nunca versionar. Para dev local use .env.local (coberto por *.local);
+# esta linha fecha a porta do .env puro, que iria ao GitHub/Lovable no push.
+.env
+.env.*
+!.env.example
