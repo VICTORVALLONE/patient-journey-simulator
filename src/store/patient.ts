@@ -19,6 +19,7 @@ import {
   totalSessionsForProtocol,
 } from "@/lib/prescription";
 import { checkNewBadges } from "@/lib/badges";
+import { isDemoUnlocked } from "@/lib/demoMode";
 import { EMPTY_USER } from "@/lib/user";
 import { computeDayStreak, computeWeeklyStreak } from "@/lib/streak";
 import type {
@@ -319,9 +320,15 @@ export const usePatientStore = create<PatientState>()(
         if (!treatment) {
           return { newBadges: [], protocolCompleted: false };
         }
-        // Guarda: 1 sessão por dia. Se já houver sessão hoje, no-op.
+        // Guarda: 1 sessão por dia — é o que mantém a adesão honesta (dias,
+        // não doses). EXCEÇÃO (2026-07-28): com o modo demo destravado a
+        // repetição é liberada, para o médico exercitar a medição (dor,
+        // contagem, badges) sem esperar o calendário. O paciente não tem a
+        // porta. Streak de dias não infla com a repetição: ele deduplica por
+        // data por construção. Leitura preguiçosa dentro da ação — nunca em
+        // render — então sem risco de hidratação.
         const todayStr = todayISO();
-        if (treatment.sessions.some((s) => s.scheduled_date === todayStr)) {
+        if (!isDemoUnlocked() && treatment.sessions.some((s) => s.scheduled_date === todayStr)) {
           return { newBadges: [], protocolCompleted: treatment.status === "completed" };
         }
         const protocol = getProtocol(treatment.protocol_id);

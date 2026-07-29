@@ -375,3 +375,28 @@ continuaria mostrando a capa, então o placeholder apareceria de todo modo antes
 offset mágico no código é dívida silenciosa — quando o vídeo for reexportado, ninguém lembra de
 removê-lo e o app passa a cortar 7s de conteúdo bom. Se o operador preferir o paliativo para a
 demonstração ao médico, é trivial e reversível — mas com nota de remoção amarrada à reexportação.
+
+## 2026-07-28 — Repetir sessão no mesmo dia: liberado SÓ no modo demo
+
+**Decisão (operador).** Para o médico testar a medição sem esperar o calendário, a guarda de 1
+sessão/dia é **levantada quando o modo demo está destravado** — e só então. O paciente continua
+travado: banner "Sessão de hoje concluída", sem porta. No demo, a home passa a oferecer **"Repetir
+sessão de hoje (demo)"**, com o rótulo dizendo explicitamente que a repetição é coisa do demo, não
+do protocolo.
+
+**Por que atrás do demo e não para todos.** A guarda é o que mantém a adesão honesta — ela conta
+**dias, não doses**, e sem a trava o paciente inflaria adesão repetindo check-ins. O modo demo já é
+a fronteira arquitetural entre "o produto" e "as ferramentas de teste" (um build, um link, dois
+públicos) — reusar a fronteira existente em vez de criar uma segunda.
+
+**O que a repetição alimenta (e o que não).** Alimenta: histórico de dor (média da semana),
+contagem de sessões/adesão, atividade recente, badges de contagem. **Não** alimenta: streak de
+dias (deduplica por data, por construção — a regra "dias, não doses" segue casada) e **não avança
+semanas/fases**, que são função da data da cirurgia. Para mostrar um paciente adiantado no tempo, o
+caminho continua sendo o paciente-demo (Alexandre), que já vem com semanas de histórico.
+
+**Implementação.** `completeSession` consulta `isDemoUnlocked()` (leitura preguiçosa dentro da
+ação — nunca em render, sem risco de hidratação); a home usa `useDemoMode()` para trocar
+banner→botão. Fixado em `tests/unit/sessionRepeat.test.ts` (5 casos, incluindo travar de volta) e
+verificado no navegador contra build de produção (7/7: paciente travado, demo repetindo com
+contagem subindo e streak parado).

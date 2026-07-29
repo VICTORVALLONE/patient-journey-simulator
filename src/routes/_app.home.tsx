@@ -14,6 +14,7 @@ import { getDynamicMessage, greeting, painReductionPct } from "@/lib/dynamicMess
 import { TreatmentSwitcher } from "@/components/treatment/TreatmentSwitcher";
 import { UserAvatar } from "@/components/layout/UserAvatar";
 import { EmptyTreatmentState } from "@/components/treatment/EmptyTreatmentState";
+import { useDemoMode } from "@/hooks/useDemoMode";
 import { getProtocol, getWeekGuide } from "@/data/protocols";
 import { postOpWeekOf } from "@/lib/prescription";
 import { computeDayStreak, computeWeeklyStreak, WEEKLY_STREAK_START_WEEK } from "@/lib/streak";
@@ -26,6 +27,7 @@ export const Route = createFileRoute("/_app/home")({
 function HomePage() {
   const user = usePatientStore((s) => s.user);
   const treatment = useActiveTreatment();
+  const demoUnlocked = useDemoMode();
 
   if (!treatment) {
     return (
@@ -104,17 +106,21 @@ function HomePage() {
           <div className="mt-4 rounded-xl bg-white/15 p-3 text-sm">
             🏆 Tratamento concluído. Parabéns!
           </div>
-        ) : isCompletedToday ? (
+        ) : isCompletedToday && !demoUnlocked ? (
           <div className="mt-4 flex items-center gap-2 rounded-xl bg-white/15 p-3 text-sm font-medium">
             <CheckCircle2 className="h-4 w-4" /> Sessão de hoje concluída
           </div>
         ) : (
+          /* Com o modo demo destravado, a sessão do dia pode ser repetida — é
+             como o médico exercita a medição sem esperar o calendário. O rótulo
+             muda para deixar claro que a repetição é coisa do demo, não do
+             protocolo. Paciente (sem demo) mantém o banner de concluída. */
           <Link to="/session/$sid" params={{ sid: "today" }}>
             <Button
               size="lg"
               className="mt-4 w-full rounded-xl bg-white text-primary hover:bg-white/90"
             >
-              Iniciar sessão de hoje
+              {isCompletedToday ? "Repetir sessão de hoje (demo)" : "Iniciar sessão de hoje"}
             </Button>
           </Link>
         )}
