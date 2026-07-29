@@ -5,19 +5,16 @@ import type { VideoRef } from "@/lib/types";
  * ("vídeo 22"), que é como o de-para foi validado com eles. O GUID do Bunny é
  * detalhe de hospedagem; o número é a chave clínica rastreável.
  *
- * ## STUB — aguardando o pipeline de mídia
+ * ## Pipeline de mídia — library criada, GUIDs a caminho
  *
- * `BUNNY_LIBRARY_ID` e os GUIDs ainda não existem: os arquivos estão no Google
- * Drive e a library do Bunny ainda não foi criada. Enquanto as strings estiverem
- * vazias, `isPlayable()` devolve `false` e toda superfície cai no **estado
- * sem-vídeo**, que é caminho de primeira classe no design (hoje é o estado dos
- * 43 exercícios). Nada quebra quando os valores chegarem: preencher aqui é a
- * única edição necessária.
- *
- * Para preencher: `library_id` fica no painel do Bunny (Stream → sua library);
- * o GUID de cada vídeo, na página do vídeo.
+ * Library "FisioApp" criada no Bunny Stream em 2026-07-28 (embed sem token,
+ * domínios abertos durante o piloto). Os GUIDs entram aqui conforme os
+ * arquivos sobem do Drive. Enquanto um GUID estiver vazio, `isPlayable()`
+ * devolve `false` para aquele vídeo e a superfície cai no **estado
+ * sem-vídeo**, que é caminho de primeira classe no design. Preencher aqui é
+ * a única edição necessária — GUID fica na página de cada vídeo no painel.
  */
-export const BUNNY_LIBRARY_ID = "";
+export const BUNNY_LIBRARY_ID = "715714";
 
 /** GUID por número de catálogo. Vazio = ainda não subiu. */
 const BUNNY_GUIDS: Record<number, string> = {
