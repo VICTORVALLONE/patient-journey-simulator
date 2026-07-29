@@ -2,7 +2,7 @@ import type { BadgeId, PainEntry, Protocol, Treatment, User, WeekFrequency } fro
 import type { Session } from "@/lib/types";
 import { getProtocol } from "@/data/protocols";
 import { totalSessionsForProtocol } from "@/lib/prescription";
-import { computeWeeklyStreak } from "@/lib/streak";
+import { computeDayStreak, computeWeeklyStreak } from "@/lib/streak";
 import avatarAlexandre from "@/assets/avatar-alexandre.jpg";
 
 // --- Helpers (1 sessão por dia, respeitando spw) ---------------------------
@@ -207,8 +207,10 @@ export const MOCK_TREATMENT_LCA_ACTIVE: Treatment = (() => {
   });
   sessions.reverse();
 
-  // Streak, fase e total derivados dos dados reais — sem hardcode incoerente.
-  const streak = computeWeeklyStreak(sessions, "proto_lca", dateOnly(startedAt));
+  // Streaks, fase e total derivados dos dados reais — sem hardcode incoerente.
+  const surgeryISO = dateOnly(new Date(startedAt.getTime() - 5 * 86400000));
+  const weekStreak = computeWeeklyStreak(sessions, lcaProtocol, surgeryISO);
+  const dayStreak = computeDayStreak(sessions);
   const { currentPhase, phasesCompleted } = derivePhaseState(lcaProtocol, COMPLETED);
 
   return {
@@ -218,7 +220,7 @@ export const MOCK_TREATMENT_LCA_ACTIVE: Treatment = (() => {
     protocol_id: "proto_lca",
     injury_type: "lca",
     affected_side: "right",
-    surgery_date: dateOnly(new Date(startedAt.getTime() - 5 * 86400000)),
+    surgery_date: surgeryISO,
     started_at: dateOnly(startedAt),
     prescribed_by: "Dr. Carlos Mendes",
     reminder_time: "09:00",
@@ -232,8 +234,10 @@ export const MOCK_TREATMENT_LCA_ACTIVE: Treatment = (() => {
     total_sessions_prescribed: totalSessionsForProtocol(lcaProtocol),
     total_sessions_completed: COMPLETED,
     adherence_rate: 67,
-    current_streak: streak.current,
-    longest_streak: streak.longest,
+    current_streak: weekStreak.current,
+    longest_streak: weekStreak.longest,
+    current_day_streak: dayStreak.current,
+    longest_day_streak: dayStreak.longest,
     pain_history: DEMO_PAIN_HISTORY,
     weekly_frequency: weeklyFrequencyForCurrentWeek(sessions, 3),
     sessions,
@@ -297,6 +301,8 @@ export const MOCK_TREATMENT_LCA_WEEK1: Treatment = (() => {
     adherence_rate: Math.round((2 / totalSessionsForProtocol(protocol)) * 100),
     current_streak: 0,
     longest_streak: 0,
+    current_day_streak: computeDayStreak(sessions).current,
+    longest_day_streak: computeDayStreak(sessions).longest,
     pain_history: [{ week: 1, average_pain: 5.5, session_count: 2 }],
     weekly_frequency: weeklyFrequencyForCurrentWeek(sessions, 7),
     sessions,

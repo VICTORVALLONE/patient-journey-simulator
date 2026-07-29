@@ -212,3 +212,73 @@ na semana 1 para sempre, o que quebra o próprio objeto do teste: ver a progress
   contra a garantia de que a volta é uma troca de `false` por `true`.
 - As flags são anotadas como `boolean`, não como literal: sem isso o TypeScript apaga o ramo
   desligado na checagem de tipo e a volta da flag viraria erro de compilação.
+
+## 2026-07-28 — Streak em duas camadas: dias como base, semanas só a partir da semana 3
+
+**Decisão.** O streak deixa de ser uma métrica única de semanas e vira duas camadas
+(`lib/streak.ts`): **dias seguidos** de sessão concluída (`computeDayStreak`), visível desde o
+primeiro dia e com marcos próprios (badges **10 Dias Seguidos** e **20 Dias Completos**); e
+**semanas na meta** (`computeWeeklyStreak`), que **só passa a contar a partir da semana pós-op 3**
+(`WEEKLY_STREAK_START_WEEK`). A home mostra dias sempre e acrescenta semanas quando elas existem;
+a celebração e a mensagem dinâmica falam em dias; o PDF traz os dois.
+
+**Por quê.** O streak semanal lia a meta do protocolo (3/semana) enquanto a semana 1 é diária: o
+paciente acendia "1 semana na meta" com 3 dias de 7 — 43% de adesão premiada na tela feita para
+mostrar rigor. Subir a meta para 7 punia quem fizesse 6 de 7 ("nunca punir", PRODUCT.md). O erro
+era de categoria: **uma semana não é uma sequência** — "semanas consecutivas" não significa nada
+na primeira semana de alguém. Na semana 1 a métrica honesta já existia (adesão em dias); o que
+faltava era a camada de engajamento diário, que agora é o streak de dias.
+
+**Regra do multi-dose, casada com a adesão.** Itens 3× ao dia (gelo, alongamento, tornozelo) NÃO
+multiplicam o streak: o dia conta **uma vez** — dias, não doses. Vale por construção: o reducer
+grava no máximo 1 sessão/dia e `times_per_day` é instrução exibida, nunca capturada (mesma decisão
+da adesão da semana 1).
+
+**Duas correções de honestidade que vieram junto:**
+
+- **Âncora**: as semanas do streak agora são as pós-operatórias (`surgery_date || started_at`, a
+  mesma âncora de `postOpWeekOf`) — antes eram semanas corridas desde o início do uso, e o streak
+  podia discordar da tela sobre que semana é.
+- **Meta por semana**: `sessionsPerWeekForWeek` (guia clínico manda, fase é padrão) — antes era o
+  `sessions_per_week` do protocolo (3), que subestimava as fases 2–3 (pedem 4) e deixava o streak
+  acender com menos sessões do que a fase prescreve.
+- **Exibição ao vivo**: a home recalcula os streaks das sessões em vez de ler o campo persistido,
+  que congela no valor da última sessão e mentiria para quem parou. Os campos persistidos
+  (`current_day_streak`/`longest_day_streak`, opcionais, sem migração) existem para os badges e
+  para a celebração, que dispara logo após o recálculo.
+
+**Alternativas descartadas.** (a) _Meta 7 na semana 1_ — pune 6/7. (b) _Deixar a meta 3_ — premia
+43%. (c) _Streak de dias ininterrupto o protocolo inteiro_ — nas fases de 3–4×/semana o descanso
+prescrito quebraria a sequência; por isso o streak de dias tolera o dia corrente pendente e a
+camada de longo prazo é a semanal, que respeita a cadência da fase.
+
+## 2026-07-28 — Lote de ajustes da validação do operador (jornada + superfícies)
+
+**Contexto.** Primeira rodada de validação do operador no build local. Seis ajustes:
+
+1. **Boas-vindas ganham "Ir para a home"** ao lado de "Começar minha primeira sessão". Os dois
+   concluem o gate (que é de conclusão da TELA): prender quem escolheu conhecer o app num loop de
+   boas-vindas puniria a escolha.
+2. **"Tive dificuldade" era cosmético e vazava**: o estado não resetava ao trocar de exercício
+   (marcou no 2º, o 3º nascia marcado) e o toque não gravava nada. Agora reseta por item e os ids
+   marcados vão na sessão (`exercises_with_difficulty`, opcional — sem migração). Vale também para
+   item pulado: quem marcou dificuldade e pulou reportou dificuldade.
+3. **Check-in**: "Como está sua articulação agora?" → **"Como foi o seu nível de dor geral?"**
+   (pedido do operador; a escala continua a mesma, 0–10 em 5 emojis).
+4. **Configurações do /profile só com o que funciona**: Notificações, Privacidade e Idioma eram
+   botões sem onClick — quatro toques mortos na seção que o médico mais vai fuçar. Ficou só
+   Suporte, agora de fato navegando para /support. Cada linha volta com a sua feature
+   (lembretes → `MVP_ASK_REMINDER`; Privacidade → gate LGPD; Idioma → segundo idioma).
+5. **Fotos de banco de imagem removidas dos cards de exercício**: as thumbs genéricas por região
+   não mostravam o exercício prescrito (e podiam ensinar errado). O card mostra o placeholder
+   "Imagem a incluir" até chegarem as imagens reais (`thumbnail_url` volta a ser honrado quando
+   preenchido) — mesmo princípio do estado sem-vídeo. FAQ do suporte também perdeu a resposta que
+   apontava para "Configurações > Notificações" (tela que não existe).
+6. **Auditoria da aba Exercícios contra a cartilha**: os 29 itens do protocolo LCA existem todos
+   no manual (semana 1 espelha a página 8 item a item; fases 2–4 batem com as páginas 11–26,
+   com séries/cargas por vezes compactadas — ex.: a cartilha progride o Apoio Unipodal 2→3→4 kg
+   e o app fixa "2 a 3 kg"). Nenhum exercício inventado. A cartilha tem itens que o app ainda NÃO
+   cobre (Elevação da Perna Para Trás, Fortalecimento de Panturrilha com resistência, Sentar e
+   Levantar, Dobrar os Joelhos em pé, Prancha Lateral, Andar de Lado, Ponta dos Pés com Degrau,
+   Ponte com Elevação/Superfície, Salto com Obstáculo, Isometria 90°–45°) — lacuna de cobertura
+   das fases 2–4, fora do corte da semana 1, registrada para a revisão clínica com o médico.

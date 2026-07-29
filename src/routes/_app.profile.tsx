@@ -1,15 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
-  Bell,
   ChevronRight,
-  Globe,
   HelpCircle,
   Lock,
   LogOut,
   PlayCircle,
   Plus,
   RotateCcw,
-  Shield,
   UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -105,15 +102,26 @@ function ProfilePage() {
         </Link>
       </section>
 
+      {/* Só o que funciona (2026-07-28): Notificações, Privacidade e Idioma
+          eram botões sem onClick — quatro toques mortos na seção que o médico
+          mais vai fuçar. Cada um volta com a sua feature: Notificações com
+          MVP_ASK_REMINDER (lembretes), Privacidade com o gate LGPD/Supabase
+          próprio, Idioma quando houver um segundo idioma. */}
       <section className="mt-6">
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Configurações
         </p>
         <div className="mt-2 overflow-hidden rounded-2xl border border-border bg-card">
-          <Row icon={<Bell className="h-4 w-4" />} label="Notificações" />
-          <Row icon={<Shield className="h-4 w-4" />} label="Privacidade" />
-          <Row icon={<Globe className="h-4 w-4" />} label="Idioma" value="Português" />
-          <Row icon={<HelpCircle className="h-4 w-4" />} label="Suporte" />
+          <Link
+            to="/support"
+            className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-muted"
+          >
+            <span className="text-muted-foreground">
+              <HelpCircle className="h-4 w-4" />
+            </span>
+            <span className="flex-1 text-sm font-medium text-foreground">Suporte</span>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </Link>
         </div>
       </section>
 
@@ -187,16 +195,5 @@ function DataCard({ label, value }: { label: string; value: string }) {
       <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className="mt-0.5 text-sm font-bold text-foreground">{value}</p>
     </div>
-  );
-}
-
-function Row({ icon, label, value }: { icon: React.ReactNode; label: string; value?: string }) {
-  return (
-    <button className="flex w-full items-center gap-3 border-b border-border px-4 py-3 text-left last:border-b-0 hover:bg-muted">
-      <span className="text-muted-foreground">{icon}</span>
-      <span className="flex-1 text-sm font-medium text-foreground">{label}</span>
-      {value && <span className="text-xs text-muted-foreground">{value}</span>}
-      <ChevronRight className="h-4 w-4 text-muted-foreground" />
-    </button>
   );
 }

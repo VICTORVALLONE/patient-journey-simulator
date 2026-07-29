@@ -1,4 +1,4 @@
-import { postOpWeekFromDays, todayISO } from "@/lib/entry";
+import { daysBetweenISODates, postOpWeekFromDays, todayISO } from "@/lib/entry";
 import type {
   Exercise,
   Protocol,
@@ -17,13 +17,6 @@ import type {
  * data da cirurgia, e só dela. Tudo aqui parte de `postOpWeekOf`.
  */
 
-/** Diferença em dias entre duas datas ISO, imune a fuso e horário de verão. */
-function daysBetween(fromISO: string, toISO: string): number {
-  const [fy, fm, fd] = fromISO.split("-").map(Number);
-  const [ty, tm, td] = toISO.split("-").map(Number);
-  return Math.round((Date.UTC(ty!, tm! - 1, td!) - Date.UTC(fy!, fm! - 1, fd!)) / 86_400_000);
-}
-
 /**
  * Semana pós-op do tratamento, 1-indexada e limitada ao fim do protocolo.
  *
@@ -37,7 +30,7 @@ export function postOpWeekOf(
 ): number {
   const anchor = treatment.surgery_date || treatment.started_at;
   if (!anchor) return 1;
-  const days = daysBetween(anchor, today);
+  const days = daysBetweenISODates(anchor, today);
   if (Number.isNaN(days)) return 1;
   return Math.min(postOpWeekFromDays(days), protocol.total_weeks);
 }

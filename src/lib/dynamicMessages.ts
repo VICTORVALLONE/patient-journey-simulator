@@ -49,6 +49,11 @@ export function getDynamicMessage(treatment: Treatment): string {
   if (treatment.current_streak >= 3) {
     return `🔥 ${treatment.current_streak} semanas seguidas batendo sua meta. Hábito em formação.`;
   }
+  // Camada de dias: fala com quem ainda não alcançou o streak semanal (que só
+  // conta a partir da semana 3) — é o caso de todo paciente do piloto.
+  if ((treatment.current_day_streak ?? 0) >= 3) {
+    return `🔥 ${treatment.current_day_streak} dias seguidos de sessão concluída. Hábito em formação.`;
+  }
   if (sessionsLeft > 0 && treatment.total_sessions_completed > 0) {
     return `Faltam ${sessionsLeft} sessões para concluir o protocolo.`;
   }

@@ -16,6 +16,7 @@ import { UserAvatar } from "@/components/layout/UserAvatar";
 import { EmptyTreatmentState } from "@/components/treatment/EmptyTreatmentState";
 import { getProtocol, getWeekGuide } from "@/data/protocols";
 import { postOpWeekOf } from "@/lib/prescription";
+import { computeDayStreak, computeWeeklyStreak, WEEKLY_STREAK_START_WEEK } from "@/lib/streak";
 
 export const Route = createFileRoute("/_app/home")({
   head: () => ({ meta: [{ title: "Início · FisioApp" }] }),
@@ -61,6 +62,12 @@ function HomePage() {
   const phasePct = Math.round((treatment.current_phase / totalPhases) * 100);
   const currentWeek = postOpWeekOf(treatment, protocol);
   const weekGuide = getWeekGuide(protocol, currentWeek);
+  const dayStreak = computeDayStreak(treatment.sessions);
+  const weekStreak = computeWeeklyStreak(
+    treatment.sessions,
+    protocol,
+    treatment.surgery_date || treatment.started_at,
+  );
 
   return (
     <div className="px-5 pt-6 pb-8">
@@ -136,10 +143,21 @@ function HomePage() {
         />
       </section>
 
+      {/* Streak em duas camadas (2026-07-28): dias seguidos é a base, visível
+          desde o dia 1; o de semanas só existe a partir da semana pós-op 3 —
+          antes disso "semanas consecutivas" não é uma sequência. Calculado ao
+          vivo das sessões: o campo persistido congela no valor da última sessão
+          e mentiria para quem parou. */}
       <p className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground">
         <Flame className="h-3 w-3 text-warning" />
-        {treatment.current_streak} {treatment.current_streak === 1 ? "semana" : "semanas"} seguidas
-        na meta · melhor: {treatment.longest_streak}
+        {dayStreak.current} {dayStreak.current === 1 ? "dia seguido" : "dias seguidos"} · melhor:{" "}
+        {Math.max(treatment.longest_day_streak ?? 0, dayStreak.longest)}
+        {currentWeek >= WEEKLY_STREAK_START_WEEK && (
+          <>
+            {" "}
+            · {weekStreak.current} {weekStreak.current === 1 ? "semana" : "semanas"} na meta
+          </>
+        )}
       </p>
 
       <section className="mt-6">

@@ -20,7 +20,7 @@ import {
 } from "@/lib/prescription";
 import { checkNewBadges } from "@/lib/badges";
 import { EMPTY_USER } from "@/lib/user";
-import { computeWeeklyStreak } from "@/lib/streak";
+import { computeDayStreak, computeWeeklyStreak } from "@/lib/streak";
 import type {
   AffectedSide,
   BadgeId,
@@ -62,6 +62,8 @@ interface CompleteSessionInput {
   notes?: string;
   duration_minutes: number;
   exercises_completed: string[];
+  /** Itens marcados "Tive dificuldade" durante a execução. */
+  exercises_with_difficulty?: string[];
 }
 
 interface CompleteSessionResult {
@@ -145,6 +147,8 @@ function makeTreatment(userId: string, draft: TreatmentOnboardingDraft): Treatme
     adherence_rate: 0,
     current_streak: 0,
     longest_streak: 0,
+    current_day_streak: 0,
+    longest_day_streak: 0,
     pain_history: [],
     weekly_frequency: emptyWeeklyFrequency(),
     sessions: [],
@@ -353,6 +357,9 @@ export const usePatientStore = create<PatientState>()(
           scheduled_date: todayISO(),
           completed_at: new Date().toISOString(),
           exercises_completed: input.exercises_completed,
+          exercises_with_difficulty: input.exercises_with_difficulty?.length
+            ? input.exercises_with_difficulty
+            : undefined,
           pain_level: input.pain_level,
           difficulty_rating: input.difficulty_rating,
           notes: input.notes,
@@ -360,15 +367,19 @@ export const usePatientStore = create<PatientState>()(
         };
         const allSessions = [session, ...treatment.sessions];
 
-        // Streak honesto: semanas consecutivas batendo a meta de frequência do
-        // protocolo (não +1 por sessão) — recalculado do histórico real.
-        const streak = computeWeeklyStreak(
+        // Streaks honestos, recalculados do histórico real (não +1 por sessão):
+        // dias seguidos como camada base; semanas batendo a meta, só a partir
+        // da semana pós-op 3 e ancoradas na MESMA âncora da progressão.
+        const dayStreak = computeDayStreak(allSessions);
+        const weekStreak = computeWeeklyStreak(
           allSessions,
-          treatment.protocol_id,
-          treatment.started_at,
+          protocol,
+          treatment.surgery_date || treatment.started_at,
         );
-        const current_streak = streak.current;
-        const longest_streak = Math.max(treatment.longest_streak, streak.longest);
+        const current_streak = weekStreak.current;
+        const longest_streak = Math.max(treatment.longest_streak, weekStreak.longest);
+        const current_day_streak = dayStreak.current;
+        const longest_day_streak = Math.max(treatment.longest_day_streak ?? 0, dayStreak.longest);
 
         // O eixo do histórico de dor é a semana pós-op — o mesmo eixo do gráfico
         // de ADM e dos marcos. Antes era mais uma contagem por sessões.
@@ -410,6 +421,8 @@ export const usePatientStore = create<PatientState>()(
           adherence_rate,
           current_streak,
           longest_streak,
+          current_day_streak,
+          longest_day_streak,
           current_phase: nextPhase,
           phases_completed,
           pain_history: painHistory,

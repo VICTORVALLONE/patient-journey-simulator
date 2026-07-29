@@ -59,7 +59,11 @@ function ExecutionPage() {
   const [pain, setPain] = useState<number | null>(null);
   const [diff, setDiff] = useState<1 | 2 | 3 | null>(null);
   const [notes, setNotes] = useState("");
+  // "Tive dificuldade" é marca DO ITEM atual, não do resto da sessão: ao trocar
+  // de item ela zera (vazava marcada para o exercício seguinte) e o toque vira
+  // dado — os ids marcados vão na sessão em `exercises_with_difficulty`.
   const [hardFlag, setHardFlag] = useState(false);
+  const [hardIds, setHardIds] = useState<string[]>([]);
   const [startedAt] = useState(() => Date.now());
 
   if (!treatment || !today) {
@@ -70,8 +74,17 @@ function ExecutionPage() {
   const activeVariant = ex.variants?.find((v) => v.id === variantId) ?? null;
   const isLast = index >= exercises.length - 1;
 
+  // Consome a marca de dificuldade do item atual e reseta para o próximo.
+  // Vale também para o item pulado: quem marcou dificuldade e pulou reportou
+  // dificuldade do mesmo jeito.
+  function collectHardFlag() {
+    if (hardFlag) setHardIds((prev) => Array.from(new Set([...prev, ex.id])));
+    setHardFlag(false);
+  }
+
   function next() {
     setCompleted((prev) => Array.from(new Set([...prev, ex.id])));
+    collectHardFlag();
     if (!isLast) {
       setVariantId(null);
       setIndex((i) => i + 1);
@@ -81,6 +94,7 @@ function ExecutionPage() {
   }
 
   function skip() {
+    collectHardFlag();
     if (!isLast) {
       setVariantId(null);
       setIndex((i) => i + 1);
@@ -97,6 +111,7 @@ function ExecutionPage() {
       notes: notes.trim() || undefined,
       duration_minutes,
       exercises_completed: completed,
+      exercises_with_difficulty: hardIds,
     });
     setStage({
       kind: "celebrate",
@@ -371,7 +386,7 @@ function CheckInFlow({
       {step === 1 && (
         <>
           <h2 className="mt-2 text-2xl font-bold leading-tight">
-            Como está sua articulação agora?
+            Como foi o seu nível de dor geral?
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Sua resposta nos ajuda a entender sua recuperação.
@@ -495,7 +510,9 @@ function CelebrationScreen({
             </div>
             <div className="mt-2 flex justify-between">
               <span className="text-muted-foreground">Maior sequência</span>
-              <span className="font-semibold">{treatment?.longest_streak} semanas na meta</span>
+              <span className="font-semibold">
+                {treatment?.longest_day_streak ?? 0} dias seguidos
+              </span>
             </div>
           </div>
         </>
@@ -532,10 +549,13 @@ function CelebrationScreen({
             <CheckCircle2 className="h-14 w-14" />
           </div>
           <h1 className="text-3xl font-bold text-foreground">Sessão concluída! 🎉</h1>
+          {/* Dias, não semanas: a celebração dispara logo após a sessão do DIA,
+              e o streak de dias é a camada que responde a ela. Lido do campo
+              persistido porque o completeSession acabou de recalculá-lo. */}
           <p className="mt-2 text-sm text-muted-foreground">
-            🔥 {treatment?.current_streak ?? 0}{" "}
-            {(treatment?.current_streak ?? 0) === 1 ? "semana seguida" : "semanas seguidas"} batendo
-            a meta
+            🔥 {treatment?.current_day_streak ?? 0}{" "}
+            {(treatment?.current_day_streak ?? 0) === 1 ? "dia seguido" : "dias seguidos"} de sessão
+            concluída
           </p>
         </>
       )}

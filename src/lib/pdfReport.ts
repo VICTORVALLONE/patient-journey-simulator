@@ -87,7 +87,7 @@ export async function generateDoctorReport(
   );
   y += 16;
   doc.text(
-    `Semanas seguidas na meta: ${treatment.current_streak} · Melhor sequência: ${treatment.longest_streak} semanas`,
+    `Dias seguidos de sessão: ${treatment.current_day_streak ?? 0} (melhor: ${treatment.longest_day_streak ?? 0}) · Semanas na meta: ${treatment.current_streak}`,
     40,
     y,
   );

@@ -1,22 +1,9 @@
-import type { BodyRegion, Exercise, InjuryType, Protocol, WeekGuideEntry } from "@/lib/types";
+import type { Exercise, InjuryType, Protocol, WeekGuideEntry } from "@/lib/types";
 import { videoByCatalogNumber } from "@/data/videos";
-import thumbJoelho from "@/assets/thumb-joelho.jpg";
-import thumbQuadril from "@/assets/thumb-quadril.jpg";
-import thumbTornozelo from "@/assets/thumb-tornozelo.jpg";
-import thumbCore from "@/assets/thumb-core.jpg";
 
-const THUMB_BY_REGION: Record<BodyRegion, string> = {
-  joelho: thumbJoelho,
-  quadril: thumbQuadril,
-  tornozelo: thumbTornozelo,
-  core: thumbCore,
-};
-
-// Aliases kept for backwards-compat of existing object literals below.
-// Each exercise's thumbnail will be overridden by body_region after the fact.
-const T1 = thumbJoelho;
-const T2 = thumbQuadril;
-const T3 = thumbTornozelo;
+// Sem thumbnails de banco de imagem (2026-07-28): as fotos genéricas por
+// região não mostravam o exercício prescrito. O card exibe o placeholder
+// "Imagem a incluir" até chegarem as imagens reais do protocolo.
 
 export const PROTOCOL_LCA: Protocol = {
   id: "proto_lca",
@@ -211,7 +198,6 @@ export const PROTOCOL_LCA: Protocol = {
           ],
           reps: 30,
           rest_seconds: 30,
-          thumbnail_url: T3,
           difficulty: 1,
           body_region: "joelho",
           week_start: 1,
@@ -233,7 +219,6 @@ export const PROTOCOL_LCA: Protocol = {
           reps: 30,
           times_per_day: 3,
           rest_seconds: 20,
-          thumbnail_url: T2,
           difficulty: 1,
           body_region: "tornozelo",
           week_start: 1,
@@ -251,7 +236,6 @@ export const PROTOCOL_LCA: Protocol = {
           ],
           reps: 30,
           rest_seconds: 30,
-          thumbnail_url: T1,
           difficulty: 1,
           body_region: "joelho",
           week_start: 1,
@@ -324,7 +308,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           reps: 15,
           rest_seconds: 45,
-          thumbnail_url: T2,
           difficulty: 1,
           session_phase: "active",
           body_region: "quadril",
@@ -343,7 +326,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           reps: 15,
           rest_seconds: 30,
-          thumbnail_url: T2,
           difficulty: 1,
           session_phase: "active",
           body_region: "quadril",
@@ -374,7 +356,6 @@ export const PROTOCOL_LCA: Protocol = {
           ],
           duration_seconds: 600,
           rest_seconds: 60,
-          thumbnail_url: T1,
           difficulty: 1,
           session_phase: "warmup",
           body_region: "joelho",
@@ -391,7 +372,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           reps: 15,
           rest_seconds: 45,
-          thumbnail_url: T1,
           difficulty: 2,
           session_phase: "active",
           body_region: "joelho",
@@ -408,7 +388,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           duration_seconds: 20,
           rest_seconds: 45,
-          thumbnail_url: T2,
           difficulty: 1,
           session_phase: "active",
           body_region: "quadril",
@@ -425,7 +404,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           reps: 15,
           rest_seconds: 30,
-          thumbnail_url: T2,
           difficulty: 2,
           session_phase: "active",
           body_region: "quadril",
@@ -442,7 +420,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           reps: 15,
           rest_seconds: 30,
-          thumbnail_url: T3,
           difficulty: 1,
           session_phase: "active",
           body_region: "tornozelo",
@@ -459,7 +436,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           reps: 10,
           rest_seconds: 60,
-          thumbnail_url: T1,
           difficulty: 2,
           session_phase: "peak",
           body_region: "joelho",
@@ -488,7 +464,6 @@ export const PROTOCOL_LCA: Protocol = {
           ],
           duration_seconds: 600,
           rest_seconds: 60,
-          thumbnail_url: T1,
           difficulty: 1,
           session_phase: "warmup",
           body_region: "joelho",
@@ -505,7 +480,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           reps: 10,
           rest_seconds: 60,
-          thumbnail_url: T3,
           difficulty: 2,
           session_phase: "active",
           body_region: "joelho",
@@ -522,7 +496,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           reps: 10,
           rest_seconds: 30,
-          thumbnail_url: T1,
           difficulty: 2,
           session_phase: "active",
           body_region: "joelho",
@@ -539,7 +512,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           duration_seconds: 30,
           rest_seconds: 45,
-          thumbnail_url: T2,
           difficulty: 2,
           session_phase: "active",
           body_region: "core",
@@ -556,7 +528,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           reps: 10,
           rest_seconds: 60,
-          thumbnail_url: T1,
           difficulty: 3,
           session_phase: "peak",
           body_region: "joelho",
@@ -572,7 +543,6 @@ export const PROTOCOL_LCA: Protocol = {
           ],
           duration_seconds: 900,
           rest_seconds: 90,
-          thumbnail_url: T3,
           difficulty: 3,
           session_phase: "peak",
           body_region: "joelho",
@@ -589,7 +559,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           reps: 10,
           rest_seconds: 60,
-          thumbnail_url: T1,
           difficulty: 3,
           session_phase: "peak",
           body_region: "joelho",
@@ -606,7 +575,6 @@ export const PROTOCOL_LCA: Protocol = {
           duration_seconds: 30,
           sets: 3,
           rest_seconds: 30,
-          thumbnail_url: T2,
           difficulty: 2,
           session_phase: "active",
           body_region: "joelho",
@@ -636,7 +604,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           reps: 1,
           rest_seconds: 45,
-          thumbnail_url: T3,
           difficulty: 2,
           session_phase: "warmup",
           body_region: "joelho",
@@ -653,7 +620,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           reps: 10,
           rest_seconds: 60,
-          thumbnail_url: T1,
           difficulty: 3,
           session_phase: "active",
           body_region: "joelho",
@@ -670,7 +636,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           reps: 10,
           rest_seconds: 60,
-          thumbnail_url: T1,
           difficulty: 3,
           session_phase: "active",
           body_region: "joelho",
@@ -687,7 +652,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           reps: 10,
           rest_seconds: 90,
-          thumbnail_url: T2,
           difficulty: 3,
           session_phase: "peak",
           body_region: "joelho",
@@ -704,7 +668,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 1,
           reps: 10,
           rest_seconds: 60,
-          thumbnail_url: T3,
           difficulty: 3,
           session_phase: "peak",
           body_region: "joelho",
@@ -721,7 +684,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 5,
           duration_seconds: 30,
           rest_seconds: 60,
-          thumbnail_url: T3,
           difficulty: 3,
           session_phase: "peak",
           body_region: "joelho",
@@ -738,7 +700,6 @@ export const PROTOCOL_LCA: Protocol = {
           sets: 3,
           duration_seconds: 60,
           rest_seconds: 90,
-          thumbnail_url: T1,
           difficulty: 3,
           session_phase: "peak",
           body_region: "joelho",
@@ -777,7 +738,6 @@ export const PROTOCOL_MENISCUS: Protocol = {
           sets: 3,
           reps: 15,
           rest_seconds: 30,
-          thumbnail_url: T1,
           difficulty: 1,
           session_phase: "active",
           body_region: "joelho",
@@ -794,7 +754,6 @@ export const PROTOCOL_MENISCUS: Protocol = {
           sets: 3,
           reps: 12,
           rest_seconds: 45,
-          thumbnail_url: T2,
           difficulty: 1,
           session_phase: "active",
           body_region: "quadril",
@@ -811,7 +770,6 @@ export const PROTOCOL_MENISCUS: Protocol = {
           sets: 3,
           reps: 12,
           rest_seconds: 45,
-          thumbnail_url: T3,
           difficulty: 1,
           session_phase: "active",
           body_region: "quadril",
@@ -838,7 +796,6 @@ export const PROTOCOL_MENISCUS: Protocol = {
           ],
           duration_seconds: 600,
           rest_seconds: 60,
-          thumbnail_url: T1,
           difficulty: 1,
           session_phase: "warmup",
           body_region: "joelho",
@@ -855,7 +812,6 @@ export const PROTOCOL_MENISCUS: Protocol = {
           sets: 3,
           reps: 15,
           rest_seconds: 45,
-          thumbnail_url: T2,
           difficulty: 2,
           session_phase: "active",
           body_region: "joelho",
@@ -872,7 +828,6 @@ export const PROTOCOL_MENISCUS: Protocol = {
           sets: 3,
           reps: 12,
           rest_seconds: 60,
-          thumbnail_url: T3,
           difficulty: 2,
           session_phase: "peak",
           body_region: "joelho",
@@ -900,7 +855,6 @@ export const PROTOCOL_MENISCUS: Protocol = {
           sets: 4,
           reps: 12,
           rest_seconds: 60,
-          thumbnail_url: T1,
           difficulty: 3,
           session_phase: "peak",
           body_region: "joelho",
@@ -917,7 +871,6 @@ export const PROTOCOL_MENISCUS: Protocol = {
           duration_seconds: 30,
           sets: 3,
           rest_seconds: 30,
-          thumbnail_url: T2,
           difficulty: 2,
           session_phase: "active",
           body_region: "joelho",
@@ -934,7 +887,6 @@ export const PROTOCOL_MENISCUS: Protocol = {
           sets: 3,
           reps: 10,
           rest_seconds: 60,
-          thumbnail_url: T3,
           difficulty: 3,
           session_phase: "peak",
           body_region: "joelho",
@@ -972,7 +924,6 @@ export const PROTOCOL_PATELLOFEMORAL: Protocol = {
           sets: 3,
           reps: 20,
           rest_seconds: 30,
-          thumbnail_url: T1,
           difficulty: 1,
           session_phase: "active",
           body_region: "joelho",
@@ -989,7 +940,6 @@ export const PROTOCOL_PATELLOFEMORAL: Protocol = {
           duration_seconds: 30,
           sets: 3,
           rest_seconds: 20,
-          thumbnail_url: T2,
           difficulty: 1,
           session_phase: "rest",
           body_region: "joelho",
@@ -1006,7 +956,6 @@ export const PROTOCOL_PATELLOFEMORAL: Protocol = {
           sets: 3,
           reps: 15,
           rest_seconds: 30,
-          thumbnail_url: T3,
           difficulty: 1,
           session_phase: "active",
           body_region: "quadril",
@@ -1034,7 +983,6 @@ export const PROTOCOL_PATELLOFEMORAL: Protocol = {
           sets: 3,
           reps: 10,
           rest_seconds: 60,
-          thumbnail_url: T1,
           difficulty: 2,
           session_phase: "peak",
           body_region: "joelho",
@@ -1051,7 +999,6 @@ export const PROTOCOL_PATELLOFEMORAL: Protocol = {
           duration_seconds: 30,
           sets: 3,
           rest_seconds: 60,
-          thumbnail_url: T2,
           difficulty: 2,
           session_phase: "peak",
           body_region: "joelho",
@@ -1068,7 +1015,6 @@ export const PROTOCOL_PATELLOFEMORAL: Protocol = {
           sets: 3,
           reps: 15,
           rest_seconds: 45,
-          thumbnail_url: T3,
           difficulty: 2,
           session_phase: "active",
           body_region: "quadril",
@@ -1096,7 +1042,6 @@ export const PROTOCOL_PATELLOFEMORAL: Protocol = {
           sets: 4,
           reps: 15,
           rest_seconds: 60,
-          thumbnail_url: T1,
           difficulty: 3,
           session_phase: "peak",
           body_region: "joelho",
@@ -1113,7 +1058,6 @@ export const PROTOCOL_PATELLOFEMORAL: Protocol = {
           sets: 3,
           reps: 10,
           rest_seconds: 60,
-          thumbnail_url: T2,
           difficulty: 3,
           session_phase: "peak",
           body_region: "joelho",
@@ -1128,18 +1072,6 @@ export const PROTOCOLS: Record<string, Protocol> = {
   proto_meniscus: PROTOCOL_MENISCUS,
   proto_patellofemoral: PROTOCOL_PATELLOFEMORAL,
 };
-
-/**
- * Foto do item, por região do corpo.
- *
- * Substitui um laço que, no import do módulo, **mutava os 43 exercícios** e
- * sobrescrevia qualquer `thumbnail_url` explícito — o que tornava impossível
- * dar foto própria a um item e fazia o protocolo mudar de forma como efeito
- * colateral de carregar o arquivo. Puro: quem tem foto própria a mantém.
- */
-export function thumbnailFor(ex: Pick<Exercise, "thumbnail_url" | "body_region">): string {
-  return ex.thumbnail_url ?? THUMB_BY_REGION[ex.body_region] ?? thumbJoelho;
-}
 
 // Protocolos pós-cirúrgicos derivam toda a progressão da data da cirurgia, então
 // o campo é obrigatório no onboarding deles. Patelofemoral é tratamento

@@ -19,6 +19,20 @@ export const BADGES: Record<BadgeId, Omit<Badge, "unlocked" | "unlocked_at">> = 
     description: "Concluiu 10 sessões",
     icon: "💪",
   },
+  // Marcos de DIAS (decisão de 2026-07-28): a camada base de engajamento.
+  // Dia conta uma vez, mesmo com itens 3× ao dia — dias, não doses.
+  streak_days_10: {
+    id: "streak_days_10",
+    name: "10 Dias Seguidos",
+    description: "10 dias consecutivos de sessão concluída",
+    icon: "🔥",
+  },
+  days_complete_20: {
+    id: "days_complete_20",
+    name: "20 Dias Completos",
+    description: "20 dias de sessão concluída no total",
+    icon: "🏅",
+  },
   streak_7: {
     id: "streak_7",
     name: "3 Semanas no Ritmo",

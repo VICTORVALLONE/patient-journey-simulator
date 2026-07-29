@@ -76,8 +76,11 @@ export interface SurgeryDateValidity {
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
-/** Diferença em dias entre duas datas ISO, imune a fuso e horário de verão. */
-function daysBetweenISODates(fromISO: string, toISO: string): number {
+/**
+ * Diferença em dias entre duas datas ISO, imune a fuso e horário de verão.
+ * Exportada para ser A cópia única: prescription e streak derivam daqui.
+ */
+export function daysBetweenISODates(fromISO: string, toISO: string): number {
   const [fy, fm, fd] = fromISO.split("-").map(Number);
   const [ty, tm, td] = toISO.split("-").map(Number);
   const from = Date.UTC(fy!, fm! - 1, fd!);

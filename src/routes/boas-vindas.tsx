@@ -165,6 +165,21 @@ function BoasVindasPage() {
         >
           Começar minha primeira sessão
         </Button>
+        {/* Saída secundária: quem quer conhecer o app antes de suar. Também
+            conclui o gate — as boas-vindas são gate de CONCLUSÃO DA TELA, e
+            prender quem escolheu a home num loop de boas-vindas seria punir a
+            escolha. A sessão do dia continua a um toque na home. */}
+        <Button
+          variant="outline"
+          size="lg"
+          className="mt-2 w-full rounded-xl"
+          onClick={() => {
+            completeWelcome(treatment.id);
+            void navigate({ to: "/home" });
+          }}
+        >
+          Ir para a home
+        </Button>
       </div>
     </MobileFrame>
   );

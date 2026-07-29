@@ -77,6 +77,11 @@ export interface Exercise {
   reps?: number;
   duration_seconds?: number;
   rest_seconds: number;
+  /**
+   * Foto real do exercício, quando existir. Sem valor, o card mostra o
+   * placeholder "Imagem a incluir" — nunca foto genérica de banco de imagem
+   * (removidas em 2026-07-28: não mostravam o exercício prescrito).
+   */
   thumbnail_url?: string;
   difficulty: 1 | 2 | 3;
   body_region: BodyRegion;
@@ -173,6 +178,13 @@ export interface Session {
   scheduled_date: string;
   completed_at?: string;
   exercises_completed: string[];
+  /**
+   * Itens em que o paciente tocou "Tive dificuldade" durante a execução.
+   * O botão existia e não gravava nada (e o marcado vazava para o exercício
+   * seguinte); agora o toque vira dado da sessão. Opcional: sessões antigas
+   * não o têm e não precisam de migração.
+   */
+  exercises_with_difficulty?: string[];
   pain_level?: number;
   difficulty_rating?: 1 | 2 | 3;
   notes?: string;
@@ -183,6 +195,8 @@ export type BadgeId =
   | "first_session"
   | "week_1"
   | "sessions_10"
+  | "streak_days_10"
+  | "days_complete_20"
   | "streak_7"
   | "streak_21"
   | "phase_1_complete"
@@ -260,8 +274,16 @@ export interface Treatment {
   total_sessions_prescribed: number;
   total_sessions_completed: number;
   adherence_rate: number;
+  /** Streak SEMANAL — só conta a partir da semana pós-op 3 (ver lib/streak.ts). */
   current_streak: number;
   longest_streak: number;
+  /**
+   * Streak de DIAS seguidos — a camada base de engajamento. Opcionais (sem
+   * migração): tratamentos antigos os ganham na próxima sessão concluída; a
+   * exibição recalcula ao vivo das sessões e não depende destes campos.
+   */
+  current_day_streak?: number;
+  longest_day_streak?: number;
   pain_history: PainEntry[];
   weekly_frequency: WeekFrequency[];
 

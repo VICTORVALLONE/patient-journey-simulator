@@ -11,7 +11,12 @@ export function checkNewBadges(treatment: Treatment, totalPhases: number): Badge
   if (completed >= 1) add("first_session");
   if (completed >= 7) add("week_1");
   if (completed >= 10) add("sessions_10");
-  // Streak em semanas consecutivas batendo a meta semanal
+  // Marcos de dias: seguidos (streak) e completos (total). O guard de 1 sessão
+  // por dia torna `completed` == dias completos.
+  if ((treatment.current_day_streak ?? 0) >= 10) add("streak_days_10");
+  if (completed >= 20) add("days_complete_20");
+  // Streak em semanas consecutivas batendo a meta — só conta a partir da
+  // semana pós-op 3 (lib/streak.ts).
   if (treatment.current_streak >= 3) add("streak_7");
   if (treatment.current_streak >= 8) add("streak_21");
 
