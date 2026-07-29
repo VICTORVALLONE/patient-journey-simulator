@@ -32,8 +32,12 @@ function aliasNitroServerEntry(): PluginOption {
     apply: "build",
     enforce: "post",
     closeBundle() {
-      const entry = resolve(process.cwd(), ".output/server/index.mjs");
-      if (!existsSync(entry)) return;
+      const entry =
+        [
+          resolve(process.cwd(), ".output/server/index.mjs"),
+          resolve(process.cwd(), "dist/server/index.mjs"),
+        ].find((p) => existsSync(p));
+      if (!entry) return;
 
       // Nitro's Cloudflare preset wraps the entry with `env.ASSETS` checks that
       // crash when the preview/prerender step calls fetch(request) without an
