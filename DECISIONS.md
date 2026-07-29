@@ -282,3 +282,42 @@ camada de longo prazo é a semanal, que respeita a cadência da fase.
    Levantar, Dobrar os Joelhos em pé, Prancha Lateral, Andar de Lado, Ponta dos Pés com Degrau,
    Ponte com Elevação/Superfície, Salto com Obstáculo, Isometria 90°–45°) — lacuna de cobertura
    das fases 2–4, fora do corte da semana 1, registrada para a revisão clínica com o médico.
+
+## 2026-07-28 — Semana 1 continua com sessão única diária; doses viram checklist na versão final
+
+**Decisão (operador, 2026-07-28).** A proposta de quebrar o dia da semana 1 em 3 sessões (uma
+completa + duas só com os itens 3× ao dia) **não entra no piloto**. O formato travado para a
+versão final é o caminho do meio: **1 sessão guiada por dia** (como hoje) + **checklist de doses
+leve e não-punitivo** dentro do dia ("gelo: 2ª dose ✓ · 3ª dose ✓"), que alimenta o relatório do
+médico mas **não entra em adesão nem streak**. Pré-requisito honesto: **lembretes** (push via
+Capacitor) — checklist de dose sem lembrete às 15h/21h só documenta esquecimento. Entra junto da
+volta de `MVP_ASK_REMINDER`, na fase da spec 02 (execução de sessão) com dependência da spec 07.
+
+**Por que não as 3 sessões.** (a) Carga de registro ~3h15/dia para um operado de 3 dias, sem
+lembrete nenhum neste build; (b) dose esquecida derrubaria "2/3 do dia" — punição do comportamento
+mais frequente, contra o "nunca punir" e contra a decisão "adesão conta dias, não doses";
+(c) o modelo inteiro assume 1 sessão/dia (guarda do reducer, total 90, streak de dias, migração
+v4) — mudar isso na semana em que o app vai ao médico é risco sem retorno no piloto. O formato
+define o que "adesão" significa no relatório: levar a decisão final ao médico junto com o piloto.
+
+## 2026-07-28 — Cobertura das fases 2–4: 10 exercícios da cartilha a trazer para o app
+
+**Registro para a fase seguinte (operador, 2026-07-28).** A auditoria da aba Exercícios contra a
+cartilha (mesma data, acima) confirmou 29/29 itens do app presentes no manual — e, no sentido
+inverso, itens do manual que o app ainda não cobre, todos de fases 2–4 (fora do corte da semana 1):
+
+1. Elevação da Perna Para Trás (2ª semana em diante; com carga a partir da 12ª)
+2. Fortalecimento de Panturrilha com resistência (2ª–3ª semana; faixa/toalha/bola)
+3. Apoio Unipodal simples (2ª–4ª semana — o app só tem a variante "dupla função" com peso)
+4. Treino de Sentar e Levantar (5ª–7ª) e a progressão Unipodal (8ª–9ª)
+5. Dobrar os Joelhos em pé (5ª–7ª; nota da cartilha: 90°–45° só p/ tendão patelar)
+6. Isometria de Quadríceps 90°–45° (8ª–9ª, progressão da isometria a 90°)
+7. Prancha Lateral (10ª–11ª)
+8. Andar Para o Lado (10ª–12ª)
+9. Ponta dos Pés com Degrau (10ª em diante; com mochila 3→4→5 kg)
+10. Ponte com Elevação de Perna / com Superfície (12ª em diante) e Salto com Obstáculo (13ª–16ª)
+
+Além dos itens ausentes, séries/cargas de alguns exercícios existentes estão compactadas vs. a
+progressão semanal da cartilha (ex.: Apoio Unipodal 2→3→4 kg; Ponte 5×15s → 3×20s → 3×30s).
+**Destino:** revisão clínica com o médico na fase seguinte (roadmap em `docs/specs/README.md`),
+usando `week_start`/`week_end`/`display_order` — o mecanismo que a semana 1 já usa.
