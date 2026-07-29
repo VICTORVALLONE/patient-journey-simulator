@@ -5,23 +5,26 @@ import type { VideoRef } from "@/lib/types";
  * ("vídeo 22"), que é como o de-para foi validado com eles. O GUID do Bunny é
  * detalhe de hospedagem; o número é a chave clínica rastreável.
  *
- * ## Pipeline de mídia — library criada, GUIDs a caminho
+ * ## Pipeline de mídia — completo (2026-07-28)
  *
- * Library "FisioApp" criada no Bunny Stream em 2026-07-28 (embed sem token,
- * domínios abertos durante o piloto). Os GUIDs entram aqui conforme os
- * arquivos sobem do Drive. Enquanto um GUID estiver vazio, `isPlayable()`
- * devolve `false` para aquele vídeo e a superfície cai no **estado
- * sem-vídeo**, que é caminho de primeira classe no design. Preencher aqui é
- * a única edição necessária — GUID fica na página de cada vídeo no painel.
+ * Library "FisioApp" no Bunny Stream (`715714`), criada em 2026-07-28: embed sem
+ * token, domínios abertos durante o piloto. **Os 7 vídeos do corte estão no ar.**
+ *
+ * O mecanismo do estado sem-vídeo continua valendo e não é herança morta: GUID
+ * vazio faz `isPlayable()` devolver `false` e a superfície cai no estado
+ * sem-vídeo, que é caminho de primeira classe no design. É o que sustenta o
+ * Treino de Marcha, que **não terá vídeo nunca** (um vídeo genérico de marcha é
+ * clinicamente errado para quem está em carga zero), e é o que fará os itens das
+ * fases 2–4 aparecerem sem quebrar nada quando chegarem.
  */
 export const BUNNY_LIBRARY_ID = "715714";
 
 /**
  * GUID por número de catálogo. Vazio = ainda não subiu.
  *
- * Os 6 da semana 1 subiram em 2026-07-28. O nome do arquivo no Bunny carrega o
- * número (`23 - Dobrar os joelhos na parede`), que é o que permite auditar o
- * pareamento depois — o GUID não diz qual vídeo é.
+ * Os 7 do corte (6 da semana 1 + boas-vindas) subiram em 2026-07-28. O nome do
+ * arquivo no Bunny carrega o número (`23 - Dobrar os joelhos na parede`), que é
+ * o que permite auditar o pareamento depois — o GUID não diz qual vídeo é.
  *
  * ## Divergência de rótulo vídeo × app (aberta, decisão do médico)
  *
@@ -47,7 +50,7 @@ const BUNNY_GUIDS: Record<number, string> = {
   22: "d35d1724-21ab-46df-8182-d0f55b765409", // Mobilização de patela
   23: "4e94174f-a70e-4356-a6a0-be733f99768d", // Dobrar os joelhos na parede
   24: "558cf632-a396-4da7-a69d-2be5371f46a2", // Dobrar os joelhos sentado na cadeira (variante do 23)
-  53: "", // Boas-vindas / orientação geral — 584 MB, upload pendente
+  53: "a7d9458c-896c-458d-af3e-cde97c751b9a", // Boas-vindas / orientação geral do protocolo
 };
 
 /** Rótulo humano de cada número — usado no estado sem-vídeo e em diagnóstico. */

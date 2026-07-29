@@ -350,3 +350,28 @@ mudar o nome no app desalinharia o app do manual que o paciente tem em mãos.
 dado do paciente, então antes do play o `<video>` fica em `readyState 0` — **isso não é falha**.
 Verificação de vídeo tem de dar `play()` (com `muted=true`, senão a política de autoplay rejeita) e
 checar que `currentTime` avança; só checar `readyState` produz falso negativo nos 6.
+
+## 2026-07-28 — Vídeo 53 (boas-vindas) no ar; capa dele é um placeholder "Nome definir"
+
+**Estado.** O 53 subiu e está ligado. Verificado na **jornada real** (cadastro do zero, não pela
+demo): as boas-vindas saíram do estado sem-vídeo, o player é o 53, ele **toca de fato** (3min12s) e
+o gate segue **não exigindo assistir** ao vídeo — 7/7 critérios. Com isso o corte do release está
+com **os 7 vídeos no ar**.
+
+**Achado: os ~6 primeiros segundos do 53 são uma capa com o texto "Nome definir"** — placeholder de
+produção que ficou no arquivo. Amostrei frames ao longo do vídeo para não julgar pelo primeiro
+quadro: de ~0s a ~6s é a capa; de ~8s em diante o conteúdo é real e bom (animação 3D do LCA, médico
+falando, legendas queimadas). **É a primeira coisa que o médico e o paciente veem na tela de
+boas-vindas.**
+
+**Encaminhamento recomendado: a equipe de produção reexporta a capa** — mesma leva do achado dos
+vídeos 1 e 3 (capa com nome diferente do da cartilha, registrado acima). Um pedido só, três vídeos.
+
+**Paliativo disponível, NÃO aplicado.** O parâmetro `t` do embed do Bunny funciona (verificado:
+`?t=7` faz o play começar depois da capa), então daria para pular a abertura em uma linha de
+`lib/video.ts`. **Não apliquei de propósito:** (a) esconderia um asset inacabado em vez de
+consertá-lo, e o piloto existe justamente para levantar esse tipo de item; (b) o _poster_ do player
+continuaria mostrando a capa, então o placeholder apareceria de todo modo antes do play; (c) um
+offset mágico no código é dívida silenciosa — quando o vídeo for reexportado, ninguém lembra de
+removê-lo e o app passa a cortar 7s de conteúdo bom. Se o operador preferir o paliativo para a
+demonstração ao médico, é trivial e reversível — mas com nota de remoção amarrada à reexportação.
